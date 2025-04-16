@@ -1,6 +1,9 @@
+#ifndef BINARIZED_SPPF
+#define BINARIZED_SPPF
+
 #include <stdint.h>
 
-enum node_type {SYMBOL, INTERMEDIAT, TERMINAL};
+enum sppf_node_type {SYMBOL, INTERMEDIAT, TERMINAL};
 
 typedef struct {
 	char name[2];
@@ -23,24 +26,26 @@ typedef struct{
 	int right_extent;
 } terminal_node;
 
-union node_p_selector{
+union sppf_node_p_selector{
 	symbol_node* s;
 	intermediat_node* i;
 	terminal_node* t;
 };
 
 typedef struct {
-	node_type node_is; 
-	node_p_selector node;
-} node;
+	sppf_node_type sppf_node_is; 
+	sppf_node_p_selector node;
+} sppf_node;
 
 struct packed_nodes {
 	char* block;
 	int block_point;
 	int pivot;
-	node* nodes;
+	sppf_node* nodes;
 };
 
-void getNodeT(node* c_n, char t, int i, int j);
+int getNodeT(sppf_node* c_n, char t, int i, int j);
 
-void getNodeP(node* c_n, char* block, int block_idx, int w, int z);
+int getNodeP(sppf_node* c_n, char* block, int block_idx, int w, int z);
+
+#endif
