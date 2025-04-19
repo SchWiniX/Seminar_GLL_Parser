@@ -12,4 +12,6 @@ rule* create_rule(char name);
 
 void add(rule* r, char* block);
 
+int is_non_terminal(char character);
+
 #endif

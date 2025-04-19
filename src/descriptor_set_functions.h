@@ -5,25 +5,38 @@
 #include"binarized_sppf.h"
 #include"gss.h"
 
-const int ARRAY_SIZE = 64;
+const uint8_t HASHSET_SIZE = 128; // must be a power of 2!
 
 typedef struct descriptors {
+	uint32_t id;
 	char* grammar_slot;
+	uint8_t grammar_slot_idx;
 	gss_node* gss_node;
-	int in_pos;
+	uint32_t in_pos;
 	sppf_node* sppf_node;
-	//used for linked lists
-	struct descriptors* next;
 } descriptors;
 
 typedef struct descriptors_linked_list {
-	struct descriptors desriptors_arr[ARRAY_SIZE];
+	struct descriptors* descriptors;
 	struct descriptors_linked_list* next;
 } descriptors_linked_list;
 
-int descriptor_hash(descriptors* to_hash);
+uint8_t descriptor_hash(descriptors* to_hash);
 
-int add_descriptor(descriptors_linked_list* linked_list, descriptors* item);
+int in_set(descriptors_linked_list* U_set[], descriptors* item);
 
-descriptors* pop_descriptor(descriptors_linked_list* linked_list);
+int add_descriptor(descriptors_linked_list* R_set[], descriptors_linked_list* U_set[], descriptors* item);
+
+descriptors* pop_descriptor(descriptors_linked_list* R_set[]);
+
+descriptors* create_descriptor(
+		char* grammar_slot,
+		uint8_t grammar_slot_idx,
+		gss_node* gss_node,
+		uint32_t in_pos,
+		sppf_node* sppf_node
+		);
+
+int free_descriptor(descriptors* descriptor);
+
 #endif

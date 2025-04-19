@@ -33,8 +33,8 @@ union sppf_node_p_selector{
 };
 
 typedef struct {
-	sppf_node_type sppf_node_is; 
-	sppf_node_p_selector node;
+	enum sppf_node_type sppf_node_is; 
+	union sppf_node_p_selector node;
 } sppf_node;
 
 struct packed_nodes {
