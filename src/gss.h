@@ -1,10 +1,10 @@
 #ifndef GSS
 #define GSS
 
-#include "binarized_sppf.h"
+#include "descriptor_set_functions.h"
 
-const uint16_t GSS_NODE_LIST_SIZE = 256;
-const uint16_t GSS_EDGE_LIST_SIZE = 256;
+extern uint16_t gss_node_total_array_size;
+extern uint16_t gss_edge_total_array_size;
 
 typedef struct gss_edge {
 	uint16_t src_node;
@@ -13,15 +13,34 @@ typedef struct gss_edge {
 } gss_edge;
 
 typedef struct gss_node{
-	uint16_t* outgoing_edges;
-	char* grammar_slot;
-	uint32_t in_pos;
-	uint16_t edge_list_size;
-	uint8_t grammar_slot_idx;
+	uint16_t grammar_rule_idx;
+	uint16_t grammar_slot_idx;
+	uint16_t grammar_slot_pos;
+	uint16_t in_pos;
 } gss_node;
 
-gss_node* create(gss_node start_node[], const char* grammar_slot, int grammar_slot_pos, int in_pos, sppf_node* record);
+uint16_t create(
+		gss_node gss_nodes[],
+		gss_edge gss_edges[],
+		descriptors R_set[],
+		descriptors U_set[],
+		p_set_entry P_set[],
+		uint16_t grammar_rule_idx,
+		uint16_t grammar_slot_pos,
+		uint16_t grammar_slot_idx,
+		uint16_t in_pos,
+		uint16_t c_n,
+		uint16_t c_u
+		);
 
-int pop(gss_node* c_u, int c_i, sppf_node* c_n);
+int pop(
+		gss_node gss_nodes[],
+		gss_edge gss_edges[],
+		descriptors R_set[],
+		descriptors U_set[],
+		p_set_entry P_set[],
+		uint16_t c_u,
+		int c_i
+		);
 
 #endif

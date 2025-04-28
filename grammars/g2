@@ -1,0 +1,4 @@
+S -> A$
+A -> B | C x | _
+B -> C | y A
+C -> B | w | z
