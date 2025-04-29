@@ -147,11 +147,11 @@ int is_in(char* buff, uint16_t buff_size, char c) {
 }
 
 
-int create_first(rule rules[], char rule) {
+int create_first(rule rules[], char rule, uint8_t temp_val[]) {
 	assert(rules);
 
 	uint16_t rule_idx = rule - 65;
-	rules[rule_idx].temp_val = 1;
+	temp_val[rule_idx] = 1;
 	uint8_t is_nullable = 0;
 
 	char* first_buff = (char*) malloc(init_first_list_size);
@@ -171,7 +171,7 @@ int create_first(rule rules[], char rule) {
 				if(
 					!is_non_terminal(curr_char) ||
 					rules[curr_char - 65].first != NULL ||
-					rules[curr_char - 65].temp_val != 1
+					temp_val[curr_char - 65] != 1
 				) break;
 			}
 		}
@@ -199,10 +199,10 @@ int create_first(rule rules[], char rule) {
 			}
 		} else {
 			if(rules[curr_char - 65].first == NULL) {
-				int res = create_first(rules, curr_char);
+				int res = create_first(rules, curr_char, temp_val);
 				while(res == 1 && start_idx < end_idx - 1) {
 					is_nullable = 1;
-					res = create_first(rules, rules[rule_idx].blocks[++start_idx]);
+					res = create_first(rules, rules[rule_idx].blocks[++start_idx], temp_val);
 				}
 			}
 			

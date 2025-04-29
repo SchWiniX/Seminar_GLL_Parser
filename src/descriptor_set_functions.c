@@ -12,10 +12,9 @@ uint16_t p_total_size = 256;
 
 int in_set(
 		descriptors U_set[],
-		uint16_t grammar_rule_idx,
-		uint16_t grammar_slot_idx,
-		uint16_t grammar_slot_pos,
-		uint16_t in_pos,
+		uint16_t rule,
+		uint16_t block_idx,
+		uint16_t input_idx,
 		uint16_t gss_node_idx
 		) {
 
@@ -24,11 +23,10 @@ int in_set(
 	uint16_t i;
 	for(i = 0; i < u_size; i++) {
 		if(
-				U_set[i].grammar_rule_idx == grammar_rule_idx &&
-				U_set[i].grammar_slot_pos == grammar_slot_pos &&
-				U_set[i].in_pos == in_pos &&
-				U_set[i].gss_node_idx == gss_node_idx &&
-				U_set[i].grammar_slot_idx == grammar_slot_idx
+				U_set[i].rule == rule &&
+				U_set[i].block_idx == block_idx &&
+				U_set[i].input_idx == input_idx &&
+				U_set[i].gss_node_idx == gss_node_idx
 				) {
 			break;
 		}
@@ -40,17 +38,16 @@ int in_set(
 int add_descriptor(
 		descriptors R_set[],
 		descriptors U_set[],
-		uint16_t grammar_rule_idx,
-		uint16_t grammar_slot_idx,
-		uint16_t grammar_slot_pos,
-		uint16_t in_pos,
+		uint16_t rule,
+		uint16_t block_idx,
+		uint16_t input_idx,
 		uint16_t gss_node_idx
 		){
 
 	assert(R_set);
 	assert(U_set);
 
-	if(in_set(U_set, grammar_rule_idx, grammar_slot_idx, grammar_slot_pos, in_pos, gss_node_idx) != -1)
+	if(in_set(U_set, rule, block_idx, input_idx, gss_node_idx) != -1)
 		return 0;
 
 	// if we outgrow the current array resize it
@@ -68,23 +65,21 @@ int add_descriptor(
 	}
 
 	//add to R and U
-	R_set[r_size].grammar_rule_idx = grammar_rule_idx;
-	R_set[r_size].grammar_slot_idx = grammar_slot_idx;
-	R_set[r_size].grammar_slot_pos = grammar_slot_pos;
-	R_set[r_size].in_pos = in_pos;
+	R_set[r_size].rule = rule;
+	R_set[r_size].block_idx = block_idx;
+	R_set[r_size].input_idx = input_idx;
 	R_set[r_size].gss_node_idx = gss_node_idx;
 
-	U_set[u_size].grammar_rule_idx = grammar_rule_idx;
-	U_set[u_size].grammar_slot_idx = grammar_slot_idx;
-	U_set[u_size].grammar_slot_pos = grammar_slot_pos;
-	U_set[u_size].in_pos = in_pos;
+	U_set[u_size].rule = rule;
+	U_set[u_size].block_idx = block_idx;
+	U_set[u_size].input_idx = input_idx;
 	U_set[u_size].gss_node_idx = gss_node_idx;
 
 	u_size += 1;
 	return 0;
 }
 
-int add_p_set_entry(p_set_entry P_set[], uint16_t gss_node_idx, uint16_t in_pos) {
+int add_p_set_entry(p_set_entry P_set[], uint16_t gss_node_idx, uint16_t input_idx) {
 	// if we outgrow the current array resize it
 	assert(P_set);
 	if(p_size >= p_total_size) {
@@ -95,7 +90,7 @@ int add_p_set_entry(p_set_entry P_set[], uint16_t gss_node_idx, uint16_t in_pos)
 
 	// add new p entry
 	P_set[p_size].gss_node_idx = gss_node_idx;
-	P_set[p_size].in_pos = in_pos;
+	P_set[p_size].input_idx = input_idx;
 	p_size += 1;
 
 	return 0;

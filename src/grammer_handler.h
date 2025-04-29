@@ -12,7 +12,6 @@ typedef struct rule {
 	uint16_t first_size;
 	uint16_t follow_size;
 	uint16_t number_of_blocks;
-	uint8_t temp_val;
 	char name;
 } rule;
 
@@ -22,7 +21,7 @@ int combine_rule(rule rules[], char rule, uint16_t* block_sizes, char* blocks, u
 
 int is_non_terminal(char character);
 
-int create_first(rule rules[], char rule);
+int create_first(rule rules[], char rule, uint8_t temp_val[]);
 
 int create_follow(
 		rule rules[],

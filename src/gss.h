@@ -3,20 +3,18 @@
 
 #include "descriptor_set_functions.h"
 
-extern uint16_t gss_node_total_array_size;
-extern uint16_t gss_edge_total_array_size;
+extern uint16_t gss_node_alloc_array_size;
+extern uint16_t gss_edge_alloc_array_size;
 
 typedef struct gss_edge {
 	uint16_t src_node;
 	uint16_t target_node;
-	uint16_t record;
 } gss_edge;
 
 typedef struct gss_node{
-	uint16_t grammar_rule_idx;
-	uint16_t grammar_slot_idx;
-	uint16_t grammar_slot_pos;
-	uint16_t in_pos;
+	uint16_t rule;
+	uint16_t block_idx;
+	uint16_t input_idx;
 } gss_node;
 
 uint16_t create(
@@ -25,12 +23,10 @@ uint16_t create(
 		descriptors R_set[],
 		descriptors U_set[],
 		p_set_entry P_set[],
-		uint16_t grammar_rule_idx,
-		uint16_t grammar_slot_pos,
-		uint16_t grammar_slot_idx,
-		uint16_t in_pos,
-		uint16_t c_n,
-		uint16_t c_u
+		uint16_t rule,
+		uint16_t block_idx,
+		uint16_t input_idx,
+		uint16_t gss_node_idx
 		);
 
 int pop(
