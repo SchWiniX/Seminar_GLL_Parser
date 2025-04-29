@@ -60,7 +60,6 @@ int print_first_and_follow(rule rules[]) {
 }
 
 int main(int argc, char *argv[]) {
-	int nsec = 0;
 	clock_t ticks = clock();
 	print_struct_info();
 	printf("%d arguments\n", argc);
@@ -86,12 +85,13 @@ int main(int argc, char *argv[]) {
 	create_grammar(rules, grammar_file);
 	print_rules(rules);
 
-	//TODO: find first
+	//find first
 	for(int i = 0; i <26; i++) {
 		if(rules[i].name == i + 65)
 			create_first(rules, i + 65);
 	}
 
+	//find follow
 	for(int i = 0; i < 26; i++) {
 		if(rules[i].name == i + 65) {
 			char* follow_buff = (char*) malloc(32);
@@ -103,14 +103,16 @@ int main(int argc, char *argv[]) {
 				temp_vals[i] = 0;
 			}		
 
-			printf("****** started follow of rule %c ******\n", i + 65);
+			//printf("****** started follow of rule %c ******\n", i + 65);
 			create_follow(rules, i + 65, follow_buff, &follow_size, &follow_alloc_size, temp_vals);
 			rules[i].follow = follow_buff;
 			rules[i].follow_size = follow_size;
-			printf("****** ended follow of rule %c ******\n", i + 65);
+			//printf("****** ended follow of rule %c ******\n", i + 65);
 		}
 	}
 	print_first_and_follow(rules);
+
+	//TODO: Actually fucking parse
 
 	ticks = clock() - ticks;
 	printf("Time taken %ld clock ticks, %lf ms\n", ticks, ((double) ticks) * 1000/ CLOCKS_PER_SEC);

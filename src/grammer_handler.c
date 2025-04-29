@@ -10,14 +10,15 @@ const uint16_t init_block_size = 32;
 const uint16_t init_number_of_blocks_arr_size = 8;
 
 int is_non_terminal(char character) {
-	uint16_t char_int = (uint16_t) character;
-	return char_int >= 65 && char_int <= 90;
+	return character >= 65 && character <= 90;
 }
 
 int combine_rule(rule rules[], char rule, uint16_t* block_sizes, char* blocks, uint16_t number_of_blocks) {
+
 	assert(rule);
 	assert(block_sizes);
 	assert(blocks);
+
 	uint8_t idx = ((uint8_t) rule) - 65;
 	if(rules[idx].name != rule) {
 		rules[idx].name = rule;
@@ -136,7 +137,7 @@ int create_grammar(rule rules[], FILE* grammar_file) {
 int is_in(char* buff, uint16_t buff_size, char c) {
 	assert(buff);
 
-	char str[buff_size + 1];
+	//char str[buff_size + 1];
 	//snprintf(str, buff_size + 1, "%s", buff);
 	//printf("checking if %c is in %s\n", c, str);
 	for(int i = 0; i < buff_size; i++) {
@@ -148,6 +149,7 @@ int is_in(char* buff, uint16_t buff_size, char c) {
 
 int create_first(rule rules[], char rule) {
 	assert(rules);
+
 	uint16_t rule_idx = rule - 65;
 	rules[rule_idx].temp_val = 1;
 	uint8_t is_nullable = 0;
@@ -237,7 +239,7 @@ int follow_first(
 		uint8_t temp_info[]
 		) { //naming goes brrr
 
-	printf("follow_first(rule=%c, c=%c)\n", rule, c);
+	//printf("follow_first(rule=%c, c=%c)\n", rule, c);
 	assert(rule);
 	assert(follow_buff);
 	assert(follow_size);
@@ -251,21 +253,22 @@ int follow_first(
 			assert(follow_buff);
 		}
 		if(is_in(follow_buff, *follow_size, c)) return 0;
-		printf("adding %c to follow(%c)\n", c, rule);
+		//printf("adding %c to follow(%c)\n", c, rule);
 		follow_buff[(*follow_size)++] = c;
 		return 0;
 	} 
-	struct rule this_rule = rules[rule - 65];
 	struct rule sub_rule = rules[c - 65];
+
 	for(uint16_t i = 0; i < sub_rule.first_size; i++) {
 		if (sub_rule.first[i] != '_') {
 			if(is_in(follow_buff, *follow_size, sub_rule.first[i])) continue;
+
 			if(*follow_size >= *follow_alloc_size) {
 				*follow_alloc_size *= 2;
 				follow_buff = (char*) realloc(follow_buff, *follow_alloc_size);
 				assert(follow_buff);
 			}
-			printf("adding %c to follow(%c) from first(%c)\n", sub_rule.first[i], rule, c);
+			//printf("adding %c to follow(%c) from first(%c)\n", sub_rule.first[i], rule, c);
 			follow_buff[(*follow_size)++] = sub_rule.first[i];
 			continue;
 		}
@@ -297,13 +300,14 @@ int create_follow(
 		uint16_t* follow_alloc_size,
 		uint8_t temp_info[]
 		) {
-	printf("create_follow(%c)\n", rule);
+	
+	//printf("create_follow(%c)\n", rule);
 	assert(rule);
 	assert(follow_buff);
 	assert(follow_size);
 	assert(follow_alloc_size);
 	assert(is_non_terminal(rule));
-	struct rule this_rule = rules[rule - 65];
+
 	temp_info[rule - 65] = 1;
 	if(rule == 'S') {
 		follow_buff[(*follow_size)++] = '$';
@@ -315,6 +319,7 @@ int create_follow(
 		for(int j = 1; j <= sub_rule.number_of_blocks; j++) {
 			uint16_t start_idx = sub_rule.block_sizes[j-1];
 			uint16_t end_idx = sub_rule.block_sizes[j];
+
 			for(; start_idx < end_idx - 1; start_idx++) {
 				if(sub_rule.blocks[start_idx] != rule) continue;
 				follow_first(

@@ -1,0 +1,6 @@
+S -> a B c | a b C | A b c
+A -> a ' | a ' ' | D
+B -> b ' | b ' ' | E
+C -> c ' | c ' ' | D
+D -> d | dD | ddD | dddD | ddddD | dddddD | ddddddD | dddddddD | ddddddddD
+E -> e | Ee | Eeee | Eeeeeeee | Eeeeeeeeeeeeeeee

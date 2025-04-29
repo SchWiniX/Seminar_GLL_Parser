@@ -25,6 +25,10 @@ uint16_t create(
 		) {
 
 	assert(gss_nodes);	
+	assert(gss_edges);	
+	assert(R_set);
+	assert(U_set);
+	assert(P_set);
 	//check if there is already a gss_node with these values
 	uint16_t idx_node;
 	for(idx_node = 0; idx_node < gss_node_array_size; idx_node++){
@@ -111,6 +115,12 @@ int pop(
 		uint16_t c_u,
 		int c_i
 		) {
+
+	assert(gss_nodes);
+	assert(gss_edges);
+	assert(R_set);
+	assert(U_set);
+	assert(P_set);
 
 	for(int i = 0; i < gss_edge_array_size; i++) {
 		if(gss_edges[i].src_node == c_u) {

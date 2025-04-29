@@ -19,6 +19,8 @@ int in_set(
 		uint16_t gss_node_idx
 		) {
 
+	assert(U_set);
+
 	uint16_t i;
 	for(i = 0; i < u_size; i++) {
 		if(
@@ -45,6 +47,8 @@ int add_descriptor(
 		uint16_t gss_node_idx
 		){
 
+	assert(R_set);
+	assert(U_set);
 
 	if(in_set(U_set, grammar_rule_idx, grammar_slot_idx, grammar_slot_pos, in_pos, gss_node_idx) != -1)
 		return 0;
@@ -80,8 +84,9 @@ int add_descriptor(
 	return 0;
 }
 
-int add_p_set_entry(p_set_entry *P_set, uint16_t gss_node_idx, uint16_t in_pos) {
+int add_p_set_entry(p_set_entry P_set[], uint16_t gss_node_idx, uint16_t in_pos) {
 	// if we outgrow the current array resize it
+	assert(P_set);
 	if(p_size >= p_total_size) {
 		p_total_size *= 2;
 		P_set = (p_set_entry*) realloc(P_set, u_total_size * sizeof(p_set_entry));
@@ -98,13 +103,13 @@ int add_p_set_entry(p_set_entry *P_set, uint16_t gss_node_idx, uint16_t in_pos) 
 
 descriptors* init_descriptor_set(uint16_t size) {
 	descriptors* set = (descriptors*) malloc(sizeof(descriptors) * size);
-	if(!set) return NULL;
+	assert(set);
 	return set;
 }
 
 p_set_entry* init_p_set_entry_set(uint16_t size) {
 	p_set_entry* set = (p_set_entry*) malloc(sizeof(p_set_entry) * size);
-	if(!set) return NULL;
+	assert(set);
 	return set;
 }
 
