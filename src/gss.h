@@ -15,6 +15,7 @@ typedef struct gss_node{
 	uint16_t rule;
 	uint16_t block_idx;
 	uint16_t input_idx;
+	uint8_t do_exec_label;
 } gss_node;
 
 uint16_t create(
@@ -26,7 +27,8 @@ uint16_t create(
 		uint16_t rule,
 		uint16_t block_idx,
 		uint16_t input_idx,
-		uint16_t gss_node_idx
+		uint16_t gss_node_idx,
+		uint8_t do_exec_label
 		);
 
 int pop(

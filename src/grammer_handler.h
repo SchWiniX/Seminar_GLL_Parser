@@ -32,5 +32,11 @@ int create_follow(
 		uint8_t temp_info[]
 		);
 
-int first_follow_test(char* rules, char rule, char c);
+int first_follow_test(
+		rule* rules,
+		char rule,
+		uint16_t block_idx,
+		uint16_t block_end_idx,
+		char c
+		);
 #endif

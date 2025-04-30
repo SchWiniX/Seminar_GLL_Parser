@@ -342,3 +342,44 @@ int create_follow(
 	}
 	return 0;
 }
+
+int first_follow_test(
+		rule*rules,
+		char rule,
+		uint16_t block_idx,
+		uint16_t block_end_idx,
+		char c
+		) {
+
+	assert(rules);
+	assert(is_non_terminal(rule));
+	assert(block_idx < block_end_idx);
+
+	struct rule this_rule = rules[rule - 65];
+	int eps_found = 0;
+	int do_continue = 0;
+	for(; block_idx < block_end_idx; block_idx++) {
+		if(!is_non_terminal(this_rule.blocks[block_idx])) {
+			if(this_rule.blocks[block_idx] == '_') {
+				eps_found = 1;
+				do_continue = 1;
+			} else if(this_rule.blocks[block_idx] == c) {
+				return 1;
+			}
+		} else {
+			struct rule sub_rule = rules[this_rule.blocks[block_idx] - 65];
+			for(int i = 0; i < sub_rule.first_size; i++) {
+				if(sub_rule.first[i] == '_') {
+					eps_found = 1;
+					do_continue = 1;
+				} else if(sub_rule.first[i] == c) {
+					return 1;
+				}
+			}
+		}
+		if(!do_continue) break;
+		do_continue = 0;
+	}
+	if(!eps_found) return 0;
+	return is_in(this_rule.follow, this_rule.follow_size, c);
+}

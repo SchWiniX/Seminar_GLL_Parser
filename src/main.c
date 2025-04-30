@@ -1,12 +1,25 @@
 #include "descriptor_set_functions.h"
 #include "grammer_handler.h"
 #include "gss.h"
+#include <system_error>
 #include <time.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <assert.h>
 #include <stdlib.h>
-#include <wchar.h>
+
+int exec_rule(
+		rule rules[],
+		char rule,
+		descriptors R_set[],
+		descriptors U_set[],
+		p_set_entry P_set[],
+		gss_node gss_nodes[],
+		uint16_t* gss_node_idx,
+		gss_edge gss_edges[],
+		char* input,
+		uint32_t* input_idx
+		);
 
 int print_struct_info() {
 	printf("-----------------------------\nSize of Descriptors: %ld bytes\n", sizeof(descriptors));
@@ -59,10 +72,14 @@ int print_first_and_follow(rule rules[]) {
 
 }
 
+int exec_label() {
+}
+
 int parse_single_char(
 		rule rules[],
 		char rule,
 		uint16_t block_idx,
+		uint16_t block_end_idx,
 		descriptors R_set[],
 		descriptors U_set[],
 		p_set_entry P_set[],
@@ -90,9 +107,20 @@ int parse_single_char(
 			//goto L_0
 		}
 	} else {
-		if(1/*test*/) {
-			*gss_node_idx = create(gss_nodes, gss_edges, R_set, U_set, P_set, rule, block_idx, *input_idx, *gss_node_idx);
-			//goto L_A
+		if(first_follow_test(rules, rule, block_idx, block_end_idx, input[*input_idx])) {
+			*gss_node_idx = create(gss_nodes, gss_edges, R_set, U_set, P_set, rule, block_idx, *input_idx, *gss_node_idx, 0);
+			exec_rule(
+					rules,
+					rule,
+					R_set,
+					U_set,
+					P_set,
+					gss_nodes,
+					gss_node_idx,
+					gss_edges,
+					input,
+					input_idx
+					); //equiv goto L_rule
 		} else {
 			//goto L_0
 		}
@@ -101,7 +129,7 @@ int parse_single_char(
 }
 
 
-int code(
+int exec_production(
 		rule rules[],
 		char rule,
 		uint16_t block_start_idx,
@@ -114,7 +142,7 @@ int code(
 		gss_edge gss_edges[],
 		char* input,
 		uint32_t* input_idx
-		) { // haha the funi function is called code
+		) {
 
 	assert(rules);
 	assert(R_set);
@@ -138,6 +166,7 @@ int code(
 					rules,
 					rule,
 					i,
+					block_end_idx,
 					R_set,
 					U_set,
 					P_set,
@@ -151,9 +180,59 @@ int code(
 		pop(gss_nodes, gss_edges, R_set, U_set, P_set, *gss_node_idx, *input_idx);
 		//goto L_0
 	}
-	*gss_node_idx = create(gss_nodes, gss_edges, R_set, U_set, P_set, rule, block_start_idx, *input_idx, *gss_node_idx);
+
+	*gss_node_idx = create(
+			gss_nodes,
+			gss_edges,
+			R_set,
+			U_set,
+			P_set,
+			rule,
+			block_start_idx,
+			*input_idx,
+			*gss_node_idx,
+			1
+			);
+
+	exec_rule(
+			rules,
+			rule,
+			R_set,
+			U_set,
+			P_set,
+			gss_nodes,
+			gss_node_idx,
+			gss_edges,
+			input,
+			input_idx
+			); //equiv goto L_rule
 
 	return 0;
+}
+
+int exec_rule(
+		rule rules[],
+		char rule,
+		descriptors R_set[],
+		descriptors U_set[],
+		p_set_entry P_set[],
+		gss_node gss_nodes[],
+		uint16_t* gss_node_idx,
+		gss_edge gss_edges[],
+		char* input,
+		uint32_t* input_idx
+		) {
+
+	assert(rules);
+	assert(R_set);
+	assert(U_set);
+	assert(P_set);
+	assert(gss_nodes);
+	assert(gss_edges);
+	assert(input);
+	assert(input_idx);
+
+	 
 }
 
 int main(int argc, char *argv[]) {

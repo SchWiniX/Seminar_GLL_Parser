@@ -19,7 +19,8 @@ uint16_t create(
 		uint16_t rule,
 		uint16_t block_idx,
 		uint16_t input_idx,
-		uint16_t gss_node_idx
+		uint16_t gss_node_idx,
+		uint8_t do_exec_label
 		) {
 
 	assert(gss_nodes);	
@@ -49,6 +50,7 @@ uint16_t create(
 		gss_nodes[gss_node_array_size].rule = rule;
 		gss_nodes[gss_node_array_size].block_idx = block_idx;
 		gss_nodes[gss_node_array_size].input_idx = input_idx;
+		gss_nodes[gss_node_array_size].do_exec_label = do_exec_label;
 
 	}
 
