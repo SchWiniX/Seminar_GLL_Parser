@@ -15,7 +15,7 @@ int in_set(
 		uint16_t rule,
 		uint16_t block_idx,
 		uint16_t block_end_idx,
-		uint16_t input_idx,
+		uint32_t input_idx,
 		uint16_t gss_node_idx,
 		uint8_t label_type
 		) {
@@ -27,7 +27,6 @@ int in_set(
 		if(
 				U_set[i].rule == rule &&
 				U_set[i].block_idx == block_idx &&
-				U_set[i].block_end_idx == block_end_idx &&
 				U_set[i].input_idx == input_idx &&
 				U_set[i].gss_node_idx == gss_node_idx
 				) {
@@ -44,7 +43,7 @@ int add_descriptor(
 		uint16_t rule,
 		uint16_t block_idx,
 		uint16_t block_end_idx,
-		uint16_t input_idx,
+		uint32_t input_idx,
 		uint16_t gss_node_idx,
 		uint8_t label_type
 		){
@@ -88,7 +87,7 @@ int add_descriptor(
 	return 0;
 }
 
-int add_p_set_entry(p_set_entry P_set[], uint16_t gss_node_idx, uint16_t input_idx) {
+int add_p_set_entry(p_set_entry P_set[], uint16_t gss_node_idx, uint32_t input_idx) {
 	// if we outgrow the current array resize it
 	assert(P_set);
 	if(p_size >= p_total_size) {

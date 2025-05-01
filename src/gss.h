@@ -3,10 +3,12 @@
 
 #include "descriptor_set_functions.h"
 
-enum LABEL_TYPE {EMPTY, DO_SINGLE_PARSES, DO_PRODUCTION, DO_RULE, SIZE};
+enum LABEL_TYPE {PARTIAL_PRODUCTION, FULL_PRODUCTION, RULE, BASELOOP, INVALID, SIZE};
 
 extern uint16_t gss_node_alloc_array_size;
 extern uint16_t gss_edge_alloc_array_size;
+extern uint16_t gss_node_array_size;
+extern uint16_t gss_edge_array_size;
 
 typedef struct gss_edge {
 	uint16_t src_node;
@@ -28,11 +30,11 @@ uint16_t create(
 		descriptors U_set[],
 		p_set_entry P_set[],
 		uint32_t input_idx,
-		uint16_t rule,
 		uint16_t block_idx,
 		uint16_t block_end_idx,
 		uint16_t gss_node_idx,
-		uint8_t label_type
+		uint8_t label_type,
+		char rule
 		);
 
 int pop(

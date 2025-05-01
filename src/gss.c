@@ -18,11 +18,11 @@ uint16_t create(
 		descriptors U_set[],
 		p_set_entry P_set[],
 		uint32_t input_idx,
-		uint16_t rule,
 		uint16_t block_idx,
 		uint16_t block_end_idx,
 		uint16_t gss_node_idx,
-		uint8_t label_type
+		uint8_t label_type,
+		char rule
 		) {
 
 	assert(gss_nodes);	
