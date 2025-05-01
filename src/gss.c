@@ -1,4 +1,5 @@
 
+#include <stddef.h>
 #include<stdint.h>
 #include<stdlib.h>
 #include<assert.h>
@@ -16,11 +17,12 @@ uint16_t create(
 		descriptors R_set[],
 		descriptors U_set[],
 		p_set_entry P_set[],
+		uint32_t input_idx,
 		uint16_t rule,
 		uint16_t block_idx,
-		uint16_t input_idx,
+		uint16_t block_end_idx,
 		uint16_t gss_node_idx,
-		uint8_t do_exec_label
+		uint8_t label_type
 		) {
 
 	assert(gss_nodes);	
@@ -49,8 +51,9 @@ uint16_t create(
 
 		gss_nodes[gss_node_array_size].rule = rule;
 		gss_nodes[gss_node_array_size].block_idx = block_idx;
+		gss_nodes[gss_node_array_size].block_end_idx = block_end_idx;
 		gss_nodes[gss_node_array_size].input_idx = input_idx;
-		gss_nodes[gss_node_array_size].do_exec_label = do_exec_label;
+		gss_nodes[gss_node_array_size].label_type = label_type;
 
 	}
 
@@ -88,8 +91,10 @@ uint16_t create(
 					U_set,
 					curr_node.rule,
 					curr_node.block_idx,
+					curr_node.block_end_idx,
 					P_set[i].input_idx,
-					idx_node
+					idx_node,
+					curr_node.label_type
 					);
 			break;
 		}
@@ -118,18 +123,31 @@ int pop(
 	assert(P_set);
 
 	for(int i = 0; i < gss_edge_array_size; i++) {
-		if(gss_edges[i].src_node == c_u) {
+		if(gss_edges[i].src_node == gss_node_idx) {
 			gss_node curr_node = gss_nodes[gss_edges[i].target_node];
 			add_descriptor(
 					R_set,
 					U_set,
 					curr_node.rule,
 					curr_node.block_idx,
-					c_i,
-					c_u
+					curr_node.block_end_idx,
+					input_idx,
+					gss_node_idx,
+					curr_node.label_type
 					);
 		}
 	}
-	add_p_set_entry(P_set, c_u, c_i);
+	add_p_set_entry(P_set, gss_node_idx, input_idx);
 	return 0;
+}
+
+gss_node* init_node_array() {
+	gss_node* arr = (gss_node*) malloc(gss_node_alloc_array_size * sizeof(gss_node));
+	assert(arr);
+	return arr;
+}
+gss_edge* init_edge_array() {
+	gss_edge* arr = (gss_edge*) malloc(gss_node_alloc_array_size * sizeof(gss_edge));
+	assert(arr);
+	return arr;
 }

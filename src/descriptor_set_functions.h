@@ -13,8 +13,10 @@ extern uint16_t p_total_size;
 typedef struct descriptors {
 	uint16_t rule;
 	uint16_t block_idx;
+	uint16_t block_end_idx;
 	uint16_t gss_node_idx;
 	uint16_t input_idx;
+	uint8_t label_type;
 } descriptors;
 
 typedef struct p_set_entry {
@@ -26,8 +28,10 @@ int in_set(
 		descriptors U_set[],
 		uint16_t rule,
 		uint16_t block_idx,
+		uint16_t block_end_idx,
 		uint16_t input_idx,
-		uint16_t gss_node_idx
+		uint16_t gss_node_idx,
+		uint8_t label_type
 		);
 
 int add_descriptor(
@@ -35,8 +39,10 @@ int add_descriptor(
 		descriptors U_set[],
 		uint16_t rule,
 		uint16_t block_idx,
+		uint16_t block_end_idx,
 		uint16_t input_idx,
-		uint16_t gss_node_idx
+		uint16_t gss_node_idx,
+		uint8_t label_type
 		);
 
 int add_p_set_entry(
@@ -46,7 +52,8 @@ int add_p_set_entry(
 		);
 
 descriptors* init_set(uint16_t size);
-
 int free_desc_set(descriptors* set);
 
+p_set_entry* init_p_set_entry_set(uint16_t size);
+int free_p_set_entry_set(p_set_entry* set);
 #endif

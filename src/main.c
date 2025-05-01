@@ -1,7 +1,7 @@
 #include "descriptor_set_functions.h"
 #include "grammer_handler.h"
 #include "gss.h"
-#include <system_error>
+#include <sys/types.h>
 #include <time.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -72,9 +72,6 @@ int print_first_and_follow(rule rules[]) {
 
 }
 
-int exec_label() {
-}
-
 int parse_single_char(
 		rule rules[],
 		char rule,
@@ -108,7 +105,19 @@ int parse_single_char(
 		}
 	} else {
 		if(first_follow_test(rules, rule, block_idx, block_end_idx, input[*input_idx])) {
-			*gss_node_idx = create(gss_nodes, gss_edges, R_set, U_set, P_set, rule, block_idx, *input_idx, *gss_node_idx, 0);
+			*gss_node_idx = create(
+					gss_nodes,
+					gss_edges,
+					R_set,
+					U_set,
+					P_set,
+					rule,
+					block_idx,
+					block_end_idx,
+					*input_idx,
+					*gss_node_idx,
+					EMPTY
+					);
 			exec_rule(
 					rules,
 					rule,
@@ -189,9 +198,10 @@ int exec_production(
 			P_set,
 			rule,
 			block_start_idx,
+			block_end_idx,
 			*input_idx,
 			*gss_node_idx,
-			1
+			DO_SINGLE_PARSES
 			);
 
 	exec_rule(
@@ -232,7 +242,118 @@ int exec_rule(
 	assert(input);
 	assert(input_idx);
 
-	 
+	struct rule this_rule = rules[rule - 65];
+	for(int i = 1; i <= this_rule.number_of_blocks; i++) {
+		uint16_t start_idx = this_rule.block_sizes[i];
+		uint16_t end_idx = this_rule.block_sizes[i - 1];
+		if(first_follow_test(rules, rule, start_idx, end_idx, input[*input_idx])) 
+			add_descriptor(
+					R_set,
+					U_set,
+					rule,
+					start_idx,
+					end_idx,
+					*input_idx,
+					*gss_node_idx,
+					DO_PRODUCTION
+					);
+	}
+	//goto L0
+
+}
+
+int exec_label_descriptor(
+		rule rules[],
+		descriptors R_set[],
+		descriptors U_set[],
+		p_set_entry P_set[],
+		descriptors curr_descriptor,
+		gss_node gss_nodes[],
+		gss_edge gss_edges[],
+		char* input
+		) {
+	
+	assert(rules);
+	assert(R_set);
+	assert(U_set);
+	assert(P_set);
+	assert(gss_nodes);
+	assert(gss_edges);
+	assert(input);
+	assert(curr_descriptor.block_idx < curr_descriptor.block_end_idx);
+
+
+	uint32_t* input_idx;
+	*input_idx = curr_descriptor.input_idx;
+	uint16_t* gss_node_idx;
+	*gss_node_idx = curr_descriptor.gss_node_idx;
+	switch (curr_descriptor.label_type) {
+		case EMPTY:
+			break;
+		case DO_SINGLE_PARSES:
+			for(int i = curr_descriptor.block_idx; i < curr_descriptor.block_end_idx; i++) {
+				parse_single_char(
+						rules,
+						curr_descriptor.rule,
+						i,
+						curr_descriptor.block_end_idx,
+						R_set,
+						U_set,
+						P_set,
+						gss_nodes,
+						gss_node_idx,
+						gss_edges,
+						input,
+						input_idx
+						);
+			}
+			break;
+		case DO_PRODUCTION:
+			exec_production(
+					rules,
+					curr_descriptor.rule,
+					curr_descriptor.block_idx,
+					curr_descriptor.block_end_idx,
+					R_set,
+					U_set,
+					P_set,
+					gss_nodes,
+					gss_node_idx,
+					gss_edges,
+					input,
+					input_idx
+					);
+			break;
+	}
+	return 0;
+}
+
+int gll_l0(
+		rule rules[],
+		descriptors R_set[],
+		descriptors U_set[],
+		p_set_entry P_set[],
+		gss_node gss_nodes[],
+		gss_edge gss_edges[],
+		char* input
+		) {
+
+	if(r_size != 0) {
+		struct descriptors curr_descriptor = R_set[r_size];
+		r_size -= 1;
+		exec_label_descriptor(
+			rules,
+			R_set,
+			U_set,
+			P_set,
+			curr_descriptor,
+			gss_nodes,
+			gss_edges,
+			input
+			);
+	} else if (1/* test in U */) return 0;
+	else return 1;
+
 }
 
 int main(int argc, char *argv[]) {
@@ -289,6 +410,14 @@ int main(int argc, char *argv[]) {
 	print_first_and_follow(rules);
 
 	//TODO: Actually fucking parse
+	uint32_t input_size = 0;
+	gss_node* gss_nodes = init_node_array();
+	gss_edge* gss_edges = init_edge_array();
+	descriptors* R_set = init_set(r_total_size);
+	descriptors* U_set = init_set(u_total_size);
+	p_set_entry* P_set = init_p_set_entry_set(p_total_size);
+
+	gss_nodes[0]
 
 	ticks = clock() - ticks;
 	printf("Time taken %ld clock ticks, %lf ms\n", ticks, ((double) ticks) * 1000/ CLOCKS_PER_SEC);
