@@ -3,29 +3,13 @@
 #include "gss.h"
 #include <stdint.h>
 
-struct rule_info {
-	rule* rules;
-	uint16_t start_idx;
-	uint16_t end_idx;
-	char rule;
-};
-
 struct input_info {
 	char* input;
 	uint32_t input_idx;
+	uint32_t input_size;
 };
 
-struct gss_info {
-	gss_node* gss_nodes;
-	gss_edge* gss_edges;
-	uint16_t gss_node_idx;
-};
-
-struct set_info {
-	descriptors* R_set;
-	descriptors* U_set;
-	p_set_entry* P_set;
-};
+int print_input_info(struct input_info* input_info);
 
 void continue_production(
 		struct rule_info* rule_info,
@@ -35,7 +19,7 @@ void continue_production(
 		);
 
 
-int start_new_production(
+void start_new_production(
 		struct rule_info* rule_info,
 		struct input_info* input_info,
 		struct gss_info* gss_info,

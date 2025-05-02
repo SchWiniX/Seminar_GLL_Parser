@@ -1,6 +1,7 @@
 #include "descriptor_set_functions.h"
 #include "grammer_handler.h"
 #include "gss.h"
+#include "gll_parser.h"
 #include <string.h>
 #include <time.h>
 #include <stdio.h>
@@ -33,14 +34,9 @@ int print_rules(rule rules[]){
 			if (j != rules[i].number_of_blocks) printf(", ");
 		}
 		printf("\n");
-	}
-	return 0;
-}
 
-int print_first_and_follow(rule rules[]) {
-	for(int i = 0; i < 26; i++) {
 		if(rules[i].name != (char) (i + 65)) continue;
-		printf("-----------------------------\nfirst(%c)[%d]: { ", rules[i].name, rules[i].first_size);
+		printf("first(%c)[%d]: { ", rules[i].name, rules[i].first_size);
 		for(int j = 0; j < rules[i].first_size; j++) {
 			printf("%c", rules[i].first[j]);
 			if (j != rules[i].first_size - 1) printf(", ");
@@ -54,9 +50,9 @@ int print_first_and_follow(rule rules[]) {
 		}
 		printf(" }\n");
 
+
 	}
 	return 0;
-
 }
 
 int main(int argc, char *argv[]) {
@@ -83,7 +79,6 @@ int main(int argc, char *argv[]) {
 		temp_vals[i] = 0;
 	}
 	create_grammar(rules, grammar_file);
-	print_rules(rules);
 
 	//find first
 	for(int i = 0; i <26; i++) {
@@ -110,22 +105,26 @@ int main(int argc, char *argv[]) {
 			//printf("****** ended follow of rule %c ******\n", i + 65);
 		}
 	}
-	print_first_and_follow(rules);
 
+	print_rules(rules);
 	//be sure the node array has enought space for atleast the first 2 nodes
 	assert(gss_node_alloc_array_size >= 2);
 
-	uint32_t input_idx = 0;
 	uint32_t input_size = strlen(argv[2]); //this feels hella unsafe... anyway moving on
 	argv[2][input_size] = '$';
 	gss_node* gss_nodes = init_node_array();
 	gss_edge* gss_edges = init_edge_array();
-	uint16_t gss_node_idx = 0;
-	descriptors* R_set = init_set(r_total_size);
-	descriptors* U_set = init_set(u_total_size);
-	p_set_entry* P_set = init_p_set_entry_set(p_total_size);
+	descriptors* R_set = init_descriptor_set(r_alloc_size);
+	descriptors* U_set = init_descriptor_set(u_alloc_size);
+	p_set_entry* P_set = init_p_set_entry_set(p_alloc_size);
 
-	base_loop(rules, argv[2], &input_idx, gss_nodes, gss_edges, &gss_node_idx, R_set, U_set, P_set);
+	struct rule_info rule_info = { .rules = rules, .rule = 'S', . start_idx = 0, .end_idx = 0 };
+	struct input_info input_info = { .input = argv[2], .input_idx = 0, .input_size = input_size }; 
+	struct gss_info gss_info = { .gss_nodes = gss_nodes, .gss_edges = gss_edges, . gss_node_idx = 0 };
+	struct set_info set_info = { .R_set = R_set, .U_set = U_set, .P_set = P_set };
+
+	printf("-----------------------------\nResult:\n-----------------------------\n");
+	printf("Parser returned: %d\n", base_loop(&rule_info, &input_info, &gss_info, &set_info));
 
 	ticks = clock() - ticks;
 	printf("Time taken %ld clock ticks, %lf ms\n", ticks, ((double) ticks) * 1000/ CLOCKS_PER_SEC);

@@ -9,6 +9,20 @@ const uint16_t init_first_list_size = 16;
 const uint16_t init_block_size = 32;
 const uint16_t init_number_of_blocks_arr_size = 8;
 
+int print_rule_info(struct rule_info* rule_info, uint8_t full) {
+	printf("Rule: %c", rule_info->rule);
+	if(!full) {
+		printf("\n");
+		return 0;
+	}
+	printf(" -> ");
+	for(int i = rule_info->start_idx; i < rule_info->end_idx; i++) {
+		printf("%c", rule_info->rules[rule_info->rule - 65].blocks[i]);
+	}
+	printf("\n");
+	return 0;
+}
+
 int is_non_terminal(char character) {
 	return character >= 65 && character <= 90;
 }

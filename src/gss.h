@@ -23,6 +23,14 @@ typedef struct gss_node{
 	uint8_t label_type;
 } gss_node;
 
+struct gss_info {
+	gss_node* gss_nodes;
+	gss_edge* gss_edges;
+	uint16_t gss_node_idx;
+};
+
+int print_gss_info(rule rules[], struct gss_info* gss_info);
+
 uint16_t create(
 		gss_node gss_nodes[],
 		gss_edge gss_edges[],

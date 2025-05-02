@@ -15,6 +15,15 @@ typedef struct rule {
 	char name;
 } rule;
 
+struct rule_info {
+	rule* rules;
+	uint16_t start_idx;
+	uint16_t end_idx;
+	char rule;
+};
+
+int print_rule_info(struct rule_info* rule_info, uint8_t full);
+
 int create_grammar(rule rules[], FILE* grammar_file);
 
 int combine_rule(rule rules[], char rule, uint16_t* block_sizes, char* blocks, uint16_t number_of_blocks);

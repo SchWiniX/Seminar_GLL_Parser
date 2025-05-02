@@ -11,6 +11,44 @@ uint16_t gss_edge_alloc_array_size = 256;
 uint16_t gss_node_array_size = 0;
 uint16_t gss_edge_array_size = 0;
 
+int print_gss_info(rule rules[], struct gss_info* gss_info) {
+
+	printf("gss_nodes: [%d:%d] { ", gss_node_array_size, gss_node_alloc_array_size);
+	if(gss_node_array_size == 0) {
+		printf("}\n");
+		goto EDGES;
+	}
+	printf("(%d: %c, [%d[", 0, gss_info->gss_nodes[0].rule, gss_info->gss_nodes[0].block_idx);
+	for(int j = gss_info->gss_nodes[0].block_idx; j < gss_info->gss_nodes[0].block_end_idx; j++) {
+		printf("%c", rules[gss_info->gss_nodes[0].rule - 65].blocks[j]);
+	}
+	printf("]%d], %d, %d)", gss_info->gss_nodes[0].block_end_idx, gss_info->gss_nodes[0].input_idx, gss_info->gss_nodes[0].label_type);
+
+	for(int i = 1; i < gss_node_array_size; i++) {
+		printf(", (%d: %c, [%d[", i, gss_info->gss_nodes[i].rule, gss_info->gss_nodes[i].block_idx);
+		for(int j = gss_info->gss_nodes[i].block_idx; j < gss_info->gss_nodes[i].block_end_idx; j++) {
+			printf("%c", rules[gss_info->gss_nodes[i].rule - 65].blocks[j]);
+		}
+		printf("]%d], %d, %d)", gss_info->gss_nodes[i].block_end_idx, gss_info->gss_nodes[i].input_idx, gss_info->gss_nodes[i].label_type);
+	}
+	printf(" }, gss_node_idx: %d\n", gss_info->gss_node_idx);
+
+EDGES:
+
+	printf("gss_edges: [%d:%d] { ", gss_edge_array_size, gss_edge_alloc_array_size);
+	if(gss_edge_array_size == 0) {
+		printf("}\n");
+		return 0;
+	}
+	printf("(%d -> %d)", gss_info->gss_edges[0].src_node, gss_info->gss_edges[0].target_node);
+	for(int i = 1; i < gss_edge_array_size; i++) {
+		printf(", (%d -> %d)", gss_info->gss_edges[i].src_node, gss_info->gss_edges[i].target_node);
+	}
+	printf(" }\n");
+
+	return 0;
+}
+
 uint16_t create(
 		gss_node gss_nodes[],
 		gss_edge gss_edges[],
@@ -122,9 +160,12 @@ int pop(
 	assert(U_set);
 	assert(P_set);
 
+	if(gss_node_idx == 0) return 1;
+
 	for(int i = 0; i < gss_edge_array_size; i++) {
 		if(gss_edges[i].src_node == gss_node_idx) {
 			gss_node curr_node = gss_nodes[gss_edges[i].target_node];
+			printf("Found gss edge %d -> %d, so add descriptor (%c, [%d, %d], %d, %d, %d)\n", gss_node_idx, gss_edges[i].target_node, curr_node.rule, curr_node.block_idx, curr_node.block_end_idx, input_idx, gss_node_idx, curr_node.label_type);
 			add_descriptor(
 					R_set,
 					U_set,
