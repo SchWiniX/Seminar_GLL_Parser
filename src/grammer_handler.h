@@ -3,26 +3,11 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include "info_struct.h"
 
-typedef struct rule {
-	uint16_t* block_sizes;
-	char* blocks;
-	char* first;
-	char* follow;
-	uint16_t first_size;
-	uint16_t follow_size;
-	uint16_t number_of_blocks;
-	char name;
-} rule;
+int print_rules(rule rules[]);
 
-struct rule_info {
-	rule* rules;
-	uint16_t start_idx;
-	uint16_t end_idx;
-	char rule;
-};
-
-int print_rule_info(struct rule_info* rule_info, uint8_t full);
+int print_rule_info(const struct rule_info* rule_info, uint8_t full);
 
 int create_grammar(rule rules[], FILE* grammar_file);
 
@@ -33,7 +18,7 @@ int is_non_terminal(char character);
 int create_first(rule rules[], char rule, uint8_t temp_val[]);
 
 int create_follow(
-		rule rules[],
+		const rule rules[],
 		char rule,
 		char* follow_buff,
 		uint16_t* follow_size,
@@ -41,11 +26,8 @@ int create_follow(
 		uint8_t temp_info[]
 		);
 
-int first_follow_test(
-		rule* rules,
-		char rule,
-		uint16_t block_idx,
-		uint16_t block_end_idx,
-		char c
-		);
+//assumes rules itself is stack allocated only its components are freed
+int free_rules(rule rules[]);
+
+int first_follow_test(const struct rule_info* rule_info, const char c);
 #endif

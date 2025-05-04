@@ -1,6 +1,10 @@
-E -> TR
+E -> T R
 F -> ( E ) | i
-S -> E $
+S -> E
 R -> + T R | _
 T -> F Y
 Y -> * F Y | _
+#
+i*(i+i)+i 1
+i*i 1
+ 0

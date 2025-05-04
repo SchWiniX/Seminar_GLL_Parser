@@ -1,13 +1,15 @@
-#include "descriptor_set_functions.h"
-#include "grammer_handler.h"
-#include "gss.h"
-#include "gll_parser.h"
 #include <string.h>
 #include <time.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <assert.h>
 #include <stdlib.h>
+
+#include "descriptor_set_functions.h"
+#include "grammer_handler.h"
+#include "gss.h"
+#include "gll_parser.h"
+#include "info_struct.h"
 
 int print_struct_info() {
 	printf("-----------------------------\nSize of Descriptors: %ld bytes\n", sizeof(descriptors));
@@ -16,51 +18,12 @@ int print_struct_info() {
 	return 0;
 }
 
-int print_rules(rule rules[]){
-	for(int i = 0; i < 26; i++) {
-		if(rules[i].name != (char) (i + 65)) continue;
-		printf("-----------------------------\nrule: %c\n", rules[i].name);
-		printf("number of blocks: %d:\n", rules[i].number_of_blocks);
-		printf("blocks_sizes: ");
-		printf("%d", rules[i].block_sizes[0]);
-		for(int j = 1; j <= rules[i].number_of_blocks; j++) {
-			printf(", %d", rules[i].block_sizes[j]);
-		}
-		printf("\nblocks: ");
-		for(int j = 1; j <= rules[i].number_of_blocks; j++) {
-			for(int k = rules[i].block_sizes[j - 1]; k < rules[i].block_sizes[j]; k++) {
-				printf("%c", rules[i].blocks[k]);
-			}
-			if (j != rules[i].number_of_blocks) printf(", ");
-		}
-		printf("\n");
-
-		if(rules[i].name != (char) (i + 65)) continue;
-		printf("first(%c)[%d]: { ", rules[i].name, rules[i].first_size);
-		for(int j = 0; j < rules[i].first_size; j++) {
-			printf("%c", rules[i].first[j]);
-			if (j != rules[i].first_size - 1) printf(", ");
-		}
-		printf(" }\n");
-
-		printf("follow(%c)[%d]: { ", rules[i].name, rules[i].follow_size);
-		for(int j = 0; j < rules[i].follow_size; j++) {
-			printf("%c", rules[i].follow[j]);
-			if (j != rules[i].follow_size - 1) printf(", ");
-		}
-		printf(" }\n");
-
-
-	}
-	return 0;
-}
-
 int main(int argc, char *argv[]) {
 	clock_t ticks = clock();
-	print_struct_info();
-	printf("%d arguments\n", argc);
-	for(int i = 0; i < argc; i++)
-		printf(" %d: %s\n", i, argv[i]);
+	//print_struct_info();
+	//printf("%d arguments\n", argc);
+	//for(int i = 0; i < argc; i++)
+	//	printf(" %d: %s\n", i, argv[i]);
 	
 	if(argc != 3) {
 		printf("Wrong number of arguments. Please provide a path to the grammar file and an input string\n");
@@ -98,36 +61,64 @@ int main(int argc, char *argv[]) {
 				temp_vals[i] = 0;
 			}		
 
-			//printf("****** started follow of rule %c ******\n", i + 65);
 			create_follow(rules, i + 65, follow_buff, &follow_size, &follow_alloc_size, temp_vals);
 			rules[i].follow = follow_buff;
 			rules[i].follow_size = follow_size;
-			//printf("****** ended follow of rule %c ******\n", i + 65);
 		}
 	}
 
-	print_rules(rules);
-	//be sure the node array has enought space for atleast the first 2 nodes
-	assert(gss_node_alloc_array_size >= 2);
+
+	uint16_t gss_node_alloc_size = 256;
+	uint16_t gss_edge_alloc_size = 256;
+	uint16_t r_alloc_size = 128;
+	uint16_t u_alloc_size = 512;
+	uint16_t p_alloc_size = 128;
 
 	uint32_t input_size = strlen(argv[2]); //this feels hella unsafe... anyway moving on
-	argv[2][input_size] = '$';
-	gss_node* gss_nodes = init_node_array();
-	gss_edge* gss_edges = init_edge_array();
+	gss_node* gss_nodes = init_node_array(gss_node_alloc_size);
+	gss_edge* gss_edges = init_edge_array(gss_edge_alloc_size);
 	descriptors* R_set = init_descriptor_set(r_alloc_size);
 	descriptors* U_set = init_descriptor_set(u_alloc_size);
 	p_set_entry* P_set = init_p_set_entry_set(p_alloc_size);
 
 	struct rule_info rule_info = { .rules = rules, .rule = 'S', . start_idx = 0, .end_idx = 0 };
 	struct input_info input_info = { .input = argv[2], .input_idx = 0, .input_size = input_size }; 
-	struct gss_info gss_info = { .gss_nodes = gss_nodes, .gss_edges = gss_edges, . gss_node_idx = 0 };
-	struct set_info set_info = { .R_set = R_set, .U_set = U_set, .P_set = P_set };
+	struct gss_info gss_info = {
+		.gss_nodes = gss_nodes,
+		.gss_edges = gss_edges,
+		.gss_node_idx = 0,
+		.gss_node_alloc_array_size = gss_node_alloc_size,
+		.gss_edge_alloc_array_size = gss_edge_alloc_size,
+		.gss_node_array_size = 0,
+		.gss_edge_array_size = 0,
+	};
+	struct set_info set_info = {
+		.R_set = R_set,
+		.U_set = U_set,
+		.P_set = P_set,
+		.r_alloc_size = r_alloc_size,
+		.u_alloc_size = u_alloc_size,
+		.p_alloc_size = p_alloc_size,
+		.r_size = 0,
+		.u_size = 0,
+		.p_size = 0,
+	};
 
-	printf("-----------------------------\nResult:\n-----------------------------\n");
+	//printf("-----------------------------\nResult:\n-----------------------------\n");
 	printf("Parser returned: %d\n", base_loop(&rule_info, &input_info, &gss_info, &set_info));
 
 	ticks = clock() - ticks;
 	printf("Time taken %ld clock ticks, %lf ms\n", ticks, ((double) ticks) * 1000/ CLOCKS_PER_SEC);
-	//TODO: stop leaking memory all over the floor
+
+	free_desc_set(set_info.R_set);
+	set_info.R_set = NULL;
+	free_desc_set(set_info.U_set);
+	set_info.U_set = NULL;
+	free_p_set_entry_set(set_info.P_set);
+	set_info.P_set = NULL;
+	free_gss(gss_info.gss_nodes, gss_info.gss_edges);
+	gss_info.gss_nodes = NULL;
+	gss_info.gss_edges = NULL;
+	free_rules(rules);
 	return 0;
 }

@@ -4,12 +4,50 @@
 #include <stdint.h>
 #include <string.h>
 #include "grammer_handler.h"
+#include "info_struct.h"
 
 const uint16_t init_first_list_size = 16;
-const uint16_t init_block_size = 32;
+const uint16_t init_block_size = 64;
 const uint16_t init_number_of_blocks_arr_size = 8;
 
-int print_rule_info(struct rule_info* rule_info, uint8_t full) {
+int print_rules(rule rules[]){
+	for(int i = 0; i < 26; i++) {
+		if(rules[i].name != (char) (i + 65)) continue;
+		printf("-----------------------------\nrule: %c\n", rules[i].name);
+		printf("number of blocks: %d:\n", rules[i].number_of_blocks);
+		printf("blocks_sizes: ");
+		printf("%d", rules[i].block_sizes[0]);
+		for(int j = 1; j <= rules[i].number_of_blocks; j++) {
+			printf(", %d", rules[i].block_sizes[j]);
+		}
+		printf("\nblocks: ");
+		for(int j = 1; j <= rules[i].number_of_blocks; j++) {
+			for(int k = rules[i].block_sizes[j - 1]; k < rules[i].block_sizes[j]; k++) {
+				printf("%c", rules[i].blocks[k]);
+			}
+			if (j != rules[i].number_of_blocks) printf(", ");
+		}
+		printf("\n");
+
+		if(rules[i].name != (char) (i + 65)) continue;
+		printf("first(%c)[%d]: { ", rules[i].name, rules[i].first_size);
+		for(int j = 0; j < rules[i].first_size; j++) {
+			printf("%c", rules[i].first[j]);
+			if (j != rules[i].first_size - 1) printf(", ");
+		}
+		printf(" }\n");
+
+		printf("follow(%c)[%d]: { ", rules[i].name, rules[i].follow_size);
+		for(int j = 0; j < rules[i].follow_size; j++) {
+			printf("%c", rules[i].follow[j]);
+			if (j != rules[i].follow_size - 1) printf(", ");
+		}
+		printf(" }\n");
+	}
+	return 0;
+}
+
+int print_rule_info(const struct rule_info* rule_info, uint8_t full) {
 	printf("Rule: %c", rule_info->rule);
 	if(!full) {
 		printf("\n");
@@ -82,7 +120,6 @@ int create_grammar(rule rules[], FILE* grammar_file) {
 	while((curr_char = fgetc(grammar_file)) != EOF) {
 		if(!is_processing_rule){
 			if(!is_non_terminal(curr_char)) {
-				printf("faulty formatting found terminating rule_file read early\n");
 				return 1;
 			}
 			name = curr_char;
@@ -241,7 +278,7 @@ int create_first(rule rules[], char rule, uint8_t temp_val[]) {
 }
 
 int follow_first(
-		rule rules[],
+		const rule rules[],
 		char rule,
 		char* follow_buff,
 		uint16_t* follow_size,
@@ -307,7 +344,7 @@ int follow_first(
 }
 
 int create_follow(
-		rule rules[],
+		const rule rules[],
 		char rule,
 		char* follow_buff,
 		uint16_t* follow_size,
@@ -324,7 +361,7 @@ int create_follow(
 
 	temp_info[rule - 65] = 1;
 	if(rule == 'S') {
-		follow_buff[(*follow_size)++] = '$';
+		follow_buff[(*follow_size)++] = '\0';
 	}
 
 	for(int i = 0; i < 26; i++) {
@@ -357,31 +394,49 @@ int create_follow(
 	return 0;
 }
 
-int first_follow_test(
-		rule*rules,
-		char rule,
-		uint16_t block_idx,
-		uint16_t block_end_idx,
-		char c
-		) {
+int free_rules(rule rules[]) {
+	for(int i = 0; i < 26; i++) {
+		if(rules[i].name != i + 65) continue;
+		if(!rules[i].block_sizes) {
+			free(rules[i].block_sizes);
+			rules[i].block_sizes = NULL;
+		}
+		if(!rules[i].blocks) {
+			free(rules[i].blocks);
+			rules[i].blocks= NULL;
+		}
+		if(!rules[i].first) {
+			free(rules[i].first);
+			rules[i].first = NULL;
+		}
+		if(!rules[i].follow) {
+			free(rules[i].follow);
+			rules[i].follow = NULL;
+		}
+	}
+	return 0;
+}
 
-	assert(rules);
-	assert(is_non_terminal(rule));
-	assert(block_idx < block_end_idx);
+int first_follow_test(const struct rule_info* rule_info, const char c) {
 
-	struct rule this_rule = rules[rule - 65];
+	assert(rule_info);
+	assert(rule_info->rules);
+	assert(is_non_terminal(rule_info->rule));
+	assert(rule_info->start_idx < rule_info->end_idx);
+
+	struct rule this_rule = rule_info->rules[rule_info->rule - 65];
 	int eps_found = 0;
 	int do_continue = 0;
-	for(; block_idx < block_end_idx; block_idx++) {
-		if(!is_non_terminal(this_rule.blocks[block_idx])) {
-			if(this_rule.blocks[block_idx] == '_') {
+	for(int start_idx = rule_info->start_idx; start_idx < rule_info->end_idx; start_idx++) {
+		if(!is_non_terminal(this_rule.blocks[start_idx])) {
+			if(this_rule.blocks[start_idx] == '_') {
 				eps_found = 1;
 				do_continue = 1;
-			} else if(this_rule.blocks[block_idx] == c) {
+			} else if(this_rule.blocks[start_idx] == c) {
 				return 1;
 			}
 		} else {
-			struct rule sub_rule = rules[this_rule.blocks[block_idx] - 65];
+			struct rule sub_rule = rule_info->rules[this_rule.blocks[start_idx] - 65];
 			for(int i = 0; i < sub_rule.first_size; i++) {
 				if(sub_rule.first[i] == '_') {
 					eps_found = 1;

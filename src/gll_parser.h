@@ -1,13 +1,9 @@
+#ifndef GLLPARSER
+#define GLLPARSER
+
+#include <stdint.h>
 #include "descriptor_set_functions.h"
 #include "grammer_handler.h"
-#include "gss.h"
-#include <stdint.h>
-
-struct input_info {
-	char* input;
-	uint32_t input_idx;
-	uint32_t input_size;
-};
 
 int print_input_info(struct input_info* input_info);
 
@@ -40,3 +36,5 @@ int base_loop(
 		struct gss_info* gss_info,
 		struct set_info* set_info
 		);
+
+#endif

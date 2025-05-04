@@ -1,4 +1,10 @@
-S -> A$
+S -> A
 A -> B | C x | _
 B -> C | y A
 C -> B | w | z
+#
+ywx 1
+ 1
+yx 1
+xxx 0
+wx 1

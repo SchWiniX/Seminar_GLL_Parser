@@ -1,61 +1,29 @@
 #ifndef GSS
 #define GSS
 
-#include "descriptor_set_functions.h"
+#include "info_struct.h"
 
 enum LABEL_TYPE {PARTIAL_PRODUCTION, FULL_PRODUCTION, RULE, BASELOOP, INVALID, SIZE};
-
-extern uint16_t gss_node_alloc_array_size;
-extern uint16_t gss_edge_alloc_array_size;
-extern uint16_t gss_node_array_size;
-extern uint16_t gss_edge_array_size;
-
-typedef struct gss_edge {
-	uint16_t src_node;
-	uint16_t target_node;
-} gss_edge;
-
-typedef struct gss_node{
-	uint16_t rule;
-	uint16_t block_idx;
-	uint16_t block_end_idx;
-	uint32_t input_idx;
-	uint8_t label_type;
-} gss_node;
-
-struct gss_info {
-	gss_node* gss_nodes;
-	gss_edge* gss_edges;
-	uint16_t gss_node_idx;
-};
 
 int print_gss_info(rule rules[], struct gss_info* gss_info);
 
 uint16_t create(
-		gss_node gss_nodes[],
-		gss_edge gss_edges[],
-		descriptors R_set[],
-		descriptors U_set[],
-		p_set_entry P_set[],
-		uint32_t input_idx,
-		uint16_t block_idx,
-		uint16_t block_end_idx,
-		uint16_t gss_node_idx,
-		uint8_t label_type,
-		char rule
+		const struct rule_info* rule_info,
+		const struct input_info* input_info,
+		struct gss_info* gss_info,
+		struct set_info* set_info,
+		uint8_t label_type
 		);
 
 int pop(
-		gss_node gss_nodes[],
-		gss_edge gss_edges[],
-		descriptors R_set[],
-		descriptors U_set[],
-		p_set_entry P_set[],
-		uint16_t c_u,
-		int c_i
+		const struct input_info* input_info,
+		const struct gss_info* gss_info,
+		struct set_info* set_info
 		);
 
-gss_node* init_node_array();
-gss_edge* init_edge_array();
+gss_node* init_node_array(uint16_t size);
+gss_edge* init_edge_array(uint16_t size);
+
+int free_gss(gss_node* gss_nodes, gss_edge* gss_edges);
 
 #endif

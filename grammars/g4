@@ -10,3 +10,7 @@ D -> t h a t | t h i s | a | t h e
 K -> b o o k | f l i g h t | m e a l | m a n
 B -> b o o k | i n c l u d e | r e a d
 A -> d o e s
+#
+thatbookflightincludeameal 1
+thatabcdefg 0
+book 1
