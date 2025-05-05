@@ -7,7 +7,7 @@ enum LABEL_TYPE {PARTIAL_PRODUCTION, FULL_PRODUCTION, RULE, BASELOOP, INVALID, S
 
 int print_gss_info(rule rules[], struct gss_info* gss_info);
 
-uint16_t create(
+uint32_t create(
 		const struct rule_info* rule_info,
 		const struct input_info* input_info,
 		struct gss_info* gss_info,
@@ -21,8 +21,8 @@ int pop(
 		struct set_info* set_info
 		);
 
-gss_node* init_node_array(uint16_t size);
-gss_edge* init_edge_array(uint16_t size);
+gss_node* init_node_array(uint32_t size);
+gss_edge* init_edge_array(uint32_t size);
 
 int free_gss(gss_node* gss_nodes, gss_edge* gss_edges);
 

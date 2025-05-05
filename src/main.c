@@ -10,6 +10,8 @@
 #include "gss.h"
 #include "gll_parser.h"
 #include "info_struct.h"
+#include "debug.h"
+
 
 int print_struct_info() {
 	printf("-----------------------------\nSize of Descriptors: %ld bytes\n", sizeof(descriptors));
@@ -20,10 +22,12 @@ int print_struct_info() {
 
 int main(int argc, char *argv[]) {
 	clock_t ticks = clock();
-	//print_struct_info();
-	//printf("%d arguments\n", argc);
-	//for(int i = 0; i < argc; i++)
-	//	printf(" %d: %s\n", i, argv[i]);
+#ifdef DEBUG
+	print_struct_info();
+	printf("%d arguments\n", argc);
+	for(int i = 0; i < argc; i++)
+		printf(" %d: %s\n", i, argv[i]);
+#endif
 	
 	if(argc != 3) {
 		printf("Wrong number of arguments. Please provide a path to the grammar file and an input string\n");
@@ -68,11 +72,11 @@ int main(int argc, char *argv[]) {
 	}
 
 
-	uint16_t gss_node_alloc_size = 256;
-	uint16_t gss_edge_alloc_size = 256;
+	uint32_t gss_node_alloc_size = 1024;
+	uint32_t gss_edge_alloc_size = 2048;
 	uint16_t r_alloc_size = 128;
 	uint16_t u_alloc_size = 512;
-	uint16_t p_alloc_size = 128;
+	uint32_t p_alloc_size = 128;
 
 	uint32_t input_size = strlen(argv[2]); //this feels hella unsafe... anyway moving on
 	gss_node* gss_nodes = init_node_array(gss_node_alloc_size);
@@ -96,12 +100,17 @@ int main(int argc, char *argv[]) {
 		.R_set = R_set,
 		.U_set = U_set,
 		.P_set = P_set,
-		.r_alloc_size = r_alloc_size,
-		.u_alloc_size = u_alloc_size,
+		.lesser_input_idx = 0,
+		.p_size = 0,
 		.p_alloc_size = p_alloc_size,
 		.r_size = 0,
+		.r_lower_idx = r_alloc_size >> 1,
+		.r_higher_idx = r_alloc_size >> 1,
+		.r_alloc_size = r_alloc_size,
 		.u_size = 0,
-		.p_size = 0,
+		.u_lower_idx = u_alloc_size >> 1,
+		.u_higher_idx = u_alloc_size >> 1,
+		.u_alloc_size = u_alloc_size,
 	};
 
 	//printf("-----------------------------\nResult:\n-----------------------------\n");

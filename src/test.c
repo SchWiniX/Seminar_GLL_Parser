@@ -1,3 +1,5 @@
+#undef DEBUG
+
 #include <string.h>
 #include <time.h>
 #include <stdio.h>
@@ -13,6 +15,7 @@
 #include "gll_parser.h"
 #include "info_struct.h"
 
+
 int main(int argc, char* argv[]) {
 	if(argc != 2) {
 		printf("Wrong number of arguments. Please provide a path to the grammar file and an input string\n");
@@ -22,8 +25,8 @@ int main(int argc, char* argv[]) {
 	struct dirent* de;
 	DIR* dr = opendir(argv[1]);
 	assert(dr);
-	printf("Grammar\tinput_size\tResult\tShould\tClock ticks\tTime\t\tu_size\tgss_nodes\tgss_edges\tstatus\n");
-	printf("----------------------------------------------------------------------------------------------------------------------\n");
+	printf("Grammar\tinput_size\tResult\tShould\tClock ticks\tTime\t\tU Set\t\tP Set\t\tgss_nodes\tgss_edges\tstatus\n");
+	printf("-----------------------------------------------------------------------------------------------------------------------------------------------\n");
 
 	while ((de = readdir(dr)) != NULL) {
 		if(!strncmp(de->d_name, ".", 3)) continue;
@@ -113,11 +116,11 @@ int main(int argc, char* argv[]) {
 
 			
 			clock_t ticks = clock();
-			uint16_t gss_node_alloc_size = 256;
-			uint16_t gss_edge_alloc_size = 256;
+			uint32_t gss_node_alloc_size = 1024;
+			uint32_t gss_edge_alloc_size = 2048;
 			uint16_t r_alloc_size = 128;
 			uint16_t u_alloc_size = 512;
-			uint16_t p_alloc_size = 128;
+			uint32_t p_alloc_size = 128;
 		
 			gss_node* gss_nodes = init_node_array(gss_node_alloc_size);
 			gss_edge* gss_edges = init_edge_array(gss_edge_alloc_size);
@@ -140,11 +143,16 @@ int main(int argc, char* argv[]) {
 				.R_set = R_set,
 				.U_set = U_set,
 				.P_set = P_set,
+				.lesser_input_idx = 0,
+				.r_size = 0,
+				.r_lower_idx = r_alloc_size >> 1,
+				.r_higher_idx = r_alloc_size >> 1,
 				.r_alloc_size = r_alloc_size,
+				.u_size = 0,
+				.u_lower_idx = u_alloc_size >> 1,
+				.u_higher_idx = u_alloc_size >> 1,
 				.u_alloc_size = u_alloc_size,
 				.p_alloc_size = p_alloc_size,
-				.r_size = 0,
-				.u_size = 0,
 				.p_size = 0,
 			};
 
@@ -152,20 +160,21 @@ int main(int argc, char* argv[]) {
 			ticks = clock() - ticks + rule_init_ticks;
 
 			printf(
-					" %s\t%10d\t%4d\t%4d\t%5ld ticks\t%.3lf ms\t%6d\t%9d\t%9d\t",
+					" %s\t%10d\t%4d\t%4d\t%5ld ticks\t%.3lf ms\t%.2lf kB\t\t%.2lf kB\t\t%.2lf kB\t%.2lf kB\t",
 					de->d_name,
 					input_size,
 					res,
 					should,
 					ticks,
 					(double) ticks * 1000 / CLOCKS_PER_SEC,
-					set_info.u_size,
-					gss_info.gss_node_array_size,
-					gss_info.gss_edge_array_size
+					(double) set_info.u_alloc_size * sizeof(descriptors) / 1024,
+					(double) set_info.p_alloc_size * sizeof(p_alloc_size) / 1024,
+					(double) gss_info.gss_node_alloc_array_size * sizeof(gss_node) / 1024,
+					(double) gss_info.gss_edge_alloc_array_size * sizeof(gss_edge) / 1024
 					);
 		
-			if(res == should) printf("\x1b[32m" "passed\n" "\x1b[0m");
-			else printf("\x1b[31m" "failed\n" "\x1b[0m");
+			if(res == should) printf("\x1b[32m" "passed" "\x1b[0m\n");
+			else printf("\x1b[31m" "failed" "\x1b[0m\n");
 			free_desc_set(set_info.R_set);
 			set_info.R_set = NULL;
 			free_desc_set(set_info.U_set);

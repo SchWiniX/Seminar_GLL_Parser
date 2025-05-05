@@ -8,7 +8,9 @@
 #include "gss.h"
 #include "descriptor_set_functions.h"
 #include "info_struct.h"
+#include "debug.h"
 
+#ifdef DEBUG
 int print_gss_info(rule rules[], struct gss_info* gss_info) {
 
 	printf("gss_nodes: [%d:%d] { ", gss_info->gss_node_array_size, gss_info->gss_node_alloc_array_size);
@@ -46,8 +48,9 @@ EDGES:
 
 	return 0;
 }
-
-uint16_t create(
+#endif
+ 
+uint32_t create(
 		const struct rule_info* rule_info,
 		const struct input_info* input_info,
 		struct gss_info* gss_info,
@@ -68,7 +71,7 @@ uint16_t create(
 	assert(set_info->P_set);
 
 	//check if there is already a gss_node with these values
-	uint16_t idx_node;
+	uint32_t idx_node;
 	for(idx_node = 0; idx_node < gss_info->gss_node_array_size; idx_node++){
 		if(
 				gss_info->gss_nodes[idx_node].rule == rule_info->rule &&
@@ -95,7 +98,7 @@ uint16_t create(
 	}
 
 	//check if there exists an edge from gss_nodes[idx_node] to c_n
-	uint16_t idx_edge;
+	uint32_t idx_edge;
 	for(idx_edge = 0; idx_edge < gss_info->gss_edge_array_size; idx_edge++) {
 		if(
 				gss_info->gss_edges[idx_edge].src_node == idx_node &&
@@ -119,7 +122,7 @@ uint16_t create(
 	}
 
 	//add if in P
-	int i;
+	uint32_t i;
 	for(i = 0; i < set_info->p_size; i++) {
 		if(idx_node != set_info->P_set[i].gss_node_idx) continue;
 		gss_node curr_node = gss_info->gss_nodes[idx_node];
@@ -198,12 +201,12 @@ int pop(
 	return 0;
 }
 
-gss_node* init_node_array(uint16_t size) {
+gss_node* init_node_array(uint32_t size) {
 	gss_node* arr = (gss_node*) malloc(size * sizeof(gss_node));
 	assert(arr);
 	return arr;
 }
-gss_edge* init_edge_array(uint16_t size) {
+gss_edge* init_edge_array(uint32_t size) {
 	gss_edge* arr = (gss_edge*) malloc(size * sizeof(gss_edge));
 	assert(arr);
 	return arr;

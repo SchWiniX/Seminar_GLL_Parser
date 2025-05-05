@@ -8,10 +8,11 @@
 #include "gll_parser.h"
 #include "grammer_handler.h"
 #include "gss.h"
+#include "debug.h"
 
 jmp_buf L0_jump_buf;
 
-
+#ifdef DEBUG
 int print_input_info(struct input_info* input_info) {
 	printf("Input [%d, %d]: ", input_info->input_idx, input_info->input_size);
 	for(int i = 0; i <= input_info->input_size; i++) {
@@ -24,12 +25,17 @@ int print_input_info(struct input_info* input_info) {
 	printf("\n");
 	return 0;
 }
+#endif
 
-int check_success(descriptors U_set[], uint16_t u_size, uint16_t rule, uint32_t input_idx) {
+int check_success(descriptors U_set[], uint16_t u_lower_idx, uint16_t u_higher_idx, uint16_t rule, uint32_t input_idx) {
 	assert(U_set);
-	return U_set[u_size - 1].rule == rule &&
-		U_set[u_size - 1].input_idx == input_idx &&
-		U_set[u_size - 1].block_idx == U_set[u_size - 1].block_end_idx;
+	int its_higher = U_set[u_higher_idx - 1].rule == rule &&
+		U_set[u_higher_idx - 1].input_idx == input_idx &&
+		U_set[u_higher_idx - 1].block_idx == U_set[u_higher_idx - 1].block_end_idx;
+	int its_lower = U_set[u_lower_idx].rule == rule &&
+		U_set[u_lower_idx].input_idx == input_idx &&
+		U_set[u_lower_idx].block_idx == U_set[u_lower_idx].block_end_idx;
+	return its_higher || its_lower;
 }
 
 #pragma GCC diagnostic ignored "-Winfinite-recursion"
@@ -52,7 +58,9 @@ void continue_production(
 	assert(set_info->U_set);
 	assert(set_info->P_set);
 
-	//printf("entered continue_production\n");
+#ifdef DEBUG
+	printf("entered continue_production\n");
+#endif
 
 	struct rule this_rule = rule_info->rules[rule_info->rule - 65];
 	uint16_t start_idx = rule_info->start_idx;
@@ -65,7 +73,9 @@ void continue_production(
 		if(this_rule.blocks[start_idx] == input_info->input[input_info->input_idx]) {
 			input_info->input_idx += 1;
 			rule_info->start_idx += 1;
-			continue_production(rule_info, input_info, gss_info, set_info);
+			add_descriptor(rule_info, set_info, input_info->input_idx, gss_info->gss_node_idx, PARTIAL_PRODUCTION);
+			longjmp(L0_jump_buf, 1);
+			//continue_production(rule_info, input_info, gss_info, set_info);
 		} else longjmp(L0_jump_buf, 1); //goback to base_loop
 	} else {
 		if(first_follow_test(rule_info, input_info->input[input_info->input_idx])) {
@@ -104,7 +114,9 @@ void start_new_production(
 	assert(set_info->U_set);
 	assert(set_info->P_set);
 
-	//printf("entered start_new_production\n");
+#ifdef DEBUG
+	printf("entered start_new_production\n");
+#endif
 
 	struct rule this_rule = rule_info->rules[rule_info->rule - 65];
 	uint16_t start_idx = rule_info->start_idx;
@@ -116,7 +128,9 @@ void start_new_production(
 	} else if(!is_non_terminal(this_rule.blocks[start_idx])) {
 		input_info->input_idx += 1;
 		rule_info->start_idx += 1;
-		continue_production(rule_info, input_info, gss_info, set_info);
+		add_descriptor(rule_info, set_info, input_info->input_idx, gss_info->gss_node_idx, PARTIAL_PRODUCTION);
+		longjmp(L0_jump_buf, 1); //goback to base_loop
+		//continue_production(rule_info, input_info, gss_info, set_info);
 	} else {
 		rule_info->start_idx += 1;
 		gss_info->gss_node_idx = create(
@@ -154,7 +168,9 @@ void init_rule(
 	assert(set_info->U_set);
 	assert(set_info->P_set);
 
-	//printf("entered init_rule for %c\n", rule_info->rule);
+#ifdef DEBUG
+	printf("entered init_rule for %c\n", rule_info->rule);
+#endif
 
 	struct rule this_rule = rule_info->rules[rule_info->rule - 65];
 	for(int i = 0; i < this_rule.number_of_blocks; i++) {
@@ -208,8 +224,12 @@ int base_loop(
 	input_info->input_idx = 0;
 
 	if(!setjmp(L0_jump_buf)) {
-		//printf("entered base loop initialy\n");
-		//print_gss_info(rule_info->rules, gss_info);
+
+#ifdef DEBUG
+		printf("entered base loop initialy\n");
+		print_gss_info(rule_info->rules, gss_info);
+#endif
+
 		uint8_t first_check = 0;
 		for(int i = 0; i < rule_info->rules[rule_info->rule - 65].first_size; i++) {
 			if(input_info->input[input_info->input_idx] == rule_info->rules[rule_info->rule - 65].first[i]) first_check = 1;
@@ -219,27 +239,31 @@ int base_loop(
 		else return 0;
 	}
 
-	//printf("\nfell back to base loop\n");
-	//print_set_info(rule_info->rules, set_info);
-	
-	//if(set_info->r_size == 0) {
-	//	printf(
-	//			"Parser is done checking success by looking for: (S, (.*), %d, *, *)\n",
-	//			input_info->input_size
-	//			);
-	//}
-	if(check_success(set_info->U_set, set_info->u_size, '0', input_info->input_size)) return 1;
+#ifdef DEBUG
+	printf("\nfell back to base loop\n");
+	print_set_info(rule_info->rules, set_info);
+#endif	
+
+	if(check_success(set_info->U_set, set_info->u_lower_idx, set_info->u_higher_idx, '0', input_info->input_size)) return 1;
 	else if(set_info->r_size != 0) {
-		struct descriptors curr_descriptor = set_info->R_set[--set_info->r_size];
+		struct descriptors curr_descriptor = set_info->R_set[set_info->r_lower_idx];
+		set_info->r_lower_idx = (set_info->r_lower_idx + 1) % set_info->r_alloc_size;
+		set_info->r_size -= 1;
 		input_info->input_idx = curr_descriptor.input_idx;
 		gss_info->gss_node_idx = curr_descriptor.gss_node_idx;
 		rule_info->rule = curr_descriptor.rule;
 		rule_info->start_idx = curr_descriptor.block_idx;
 		rule_info->end_idx = curr_descriptor.block_end_idx;
 
-		//printf("popping from R_set:\n");
-		//print_input_info(input_info);
-		//print_gss_info(rule_info->rules, gss_info);
+		if(curr_descriptor.input_idx > set_info->lesser_input_idx) {
+			clean_lesser_from_U(set_info);
+		}
+
+#ifdef DEBUG
+		printf("popping from R_set:\n");
+		print_input_info(input_info);
+		print_gss_info(rule_info->rules, gss_info);
+#endif
 
 
 		switch (curr_descriptor.label_type) {
@@ -274,7 +298,6 @@ int base_loop(
 				exit(-1);
 		}
 		printf("that shouldn't happen\n");
-		return -1;
+		exit(-1);
 	} else return 0;
 }
-

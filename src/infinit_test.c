@@ -11,39 +11,21 @@
 #include "gss.h"
 #include "gll_parser.h"
 #include "info_struct.h"
-
-struct input_gen {
-	char** input_parts;
-	uint32_t rep_count;
-	uint32_t number_of_parts;
-	uint8_t first_repeat;
-};
+#include "debug.h"
 
 int main(int argc, char* argv[]) {
-	if(argc != 3) {
-		printf("Wrong number of arguments. Please provide a path to the grammar file and an input string\n");
+	if(argc < 2) {
+		printf("Wrong number of arguments.\n");
 		return 1;
 	}
 
-	printf("Grammar\tinput_size\tResult\tShould\tClock ticks\tTime\t\tstatus\n");
-	printf("------------------------------------------------------------------------------\n");
+	printf("Grammar\tinput_size\tResult\tShould\tClock ticks\tTime\t\tU Set\t\tP Set\t\tgss_nodes\tgss_edges\tstatus\n");
+	printf("-----------------------------------------------------------------------------------------------------------------------------------------------\n");
 
-	uint32_t input_len = strlen(argv[2]); //funi unsafe shit happening here
-	char* input_parts[input_len];
-	struct input_gen input_gen = { .input_parts = input_parts, .rep_count = 0, .number_of_parts = 0 };
-	int char_count = 0;
-	for(int i = 0; i < input_len; i++) {
-		if(argv[2][i] == '*') {
-			int count = argv[2][i + 1] - 48 + i + 2;
-			input_gen.number_of_parts += 1;
-			if(i == 0) input_gen.first_repeat = 0;
-			else input_gen.first_repeat = 1;
-			for(; i < count; i++)
-				input_gen.input_parts[input_gen.number_of_parts][char_count++] = argv[2][i];
-			input_gen.number_of_parts += 1;
-		}
-		input_gen.input_parts[input_gen.number_of_parts][char_count++] = argv[2][i];
-	}
+	uint32_t gen_size = argc - 2;
+	uint32_t repetition_counter = 1;
+	char** input_generator = argv + 2;
+	uint8_t should = 1;
 	clock_t rule_init_ticks = clock();
 	FILE* grammar_file = fopen(argv[1], "r");
 	assert(grammar_file);
@@ -82,47 +64,34 @@ int main(int argc, char* argv[]) {
 	}
 	rule_init_ticks = clock() - rule_init_ticks;
 
-	char next_char;
 	while(1) {
-		uint32_t input_alloc_size = 128;
-		uint32_t input_size = 0;
-		char* input = malloc(input_alloc_size);
-		assert(input);
-		if(next_char != '\n')
-			input[input_size++] = next_char;
-		for(int i = 0; i < input_gen.number_of_parts; i++) {
-			if(input_size >= input_alloc_size) {
-				input_alloc_size *= 2;
-				input = realloc(input, input_alloc_size);
-				assert(input);
+		int input_size = 0;
+		for(int i = 0; i < gen_size; i ++) {
+			if(i % 2 == 1) input_size += strlen(input_generator[i]) * repetition_counter;
+			else input_size += strlen(input_generator[i]);
+		}
+		char* input = (char*) malloc(input_size + 1);
+		input[0] = '\0';
+		for(int i = 0; i < gen_size; i++) {
+			if(i % 2 == 1) {
+				for(int j = 0; j < repetition_counter; j++) {
+					strcat(input, input_generator[i]);
+				}
+			} else {
+				strcat(input, input_generator[i]);
 			}
-			input[input_size++] = next_char;
-		}
-		if(input_size >= input_alloc_size) {
-				input_size *= 2;
-				input = realloc(input, input_alloc_size);
-				assert(input);
-		}
-		input[input_size] = '\0';
-		switch (fgetc(grammar_file)) {
-			case '0':
-				should = 0;
-				break;
-			case '1':
-				should = 1;
-				break;
-			default:
-					printf("Faulty Grammar file\n");
-					exit(1);
-		}
 
+		}
+		repetition_counter += 1;
+		input[input_size] = '\0';
 		
 		clock_t ticks = clock();
-		uint16_t gss_node_alloc_size = 256;
-		uint16_t gss_edge_alloc_size = 256;
+
+		uint32_t gss_node_alloc_size = 1024;
+		uint32_t gss_edge_alloc_size = 2048;
 		uint16_t r_alloc_size = 128;
 		uint16_t u_alloc_size = 512;
-		uint16_t p_alloc_size = 128;
+		uint32_t p_alloc_size = 128;
 	
 		gss_node* gss_nodes = init_node_array(gss_node_alloc_size);
 		gss_edge* gss_edges = init_edge_array(gss_edge_alloc_size);
@@ -141,15 +110,21 @@ int main(int argc, char* argv[]) {
 			.gss_node_array_size = 0,
 			.gss_edge_array_size = 0,
 		};
+
 		struct set_info set_info = {
 			.R_set = R_set,
 			.U_set = U_set,
 			.P_set = P_set,
+			.lesser_input_idx = 0,
+			.r_size = 0,
+			.r_lower_idx = r_alloc_size >> 1,
+			.r_higher_idx = r_alloc_size >> 1,
 			.r_alloc_size = r_alloc_size,
+			.u_size = 0,
+			.u_lower_idx = u_alloc_size >> 1,
+			.u_higher_idx = u_alloc_size >> 1,
 			.u_alloc_size = u_alloc_size,
 			.p_alloc_size = p_alloc_size,
-			.r_size = 0,
-			.u_size = 0,
 			.p_size = 0,
 		};
 
@@ -157,17 +132,21 @@ int main(int argc, char* argv[]) {
 		ticks = clock() - ticks + rule_init_ticks;
 
 		printf(
-				" %s\t%10d\t%4d\t%4d\t%5ld ticks\t%.3lf ms\t",
+				" %s\t%10d\t%4d\t%4d\t%5ld ticks\t%.3lf ms\t%.2lf kB\t\t%.2lf kB\t\t%.2lf kB\t%.2lf kB\t",
 				argv[1],
 				input_size,
 				res,
 				should,
 				ticks,
-				(double) ticks * 1000 / CLOCKS_PER_SEC
+				(double) ticks * 1000 / CLOCKS_PER_SEC,
+				(double) set_info.u_alloc_size * sizeof(descriptors) / 1024,
+				(double) set_info.p_alloc_size * sizeof(p_alloc_size) / 1024,
+				(double) gss_info.gss_node_alloc_array_size * sizeof(gss_node) / 1024,
+				(double) gss_info.gss_edge_alloc_array_size * sizeof(gss_edge) / 1024
 				);
 	
-		if(res == should) printf("\x1b[32m" "passed\n" "\x1b[0m");
-		else printf("\x1b[31m" "failed\n" "\x1b[0m");
+		if(res == should) printf("\x1b[32m" "passed" "\x1b[0m\n");
+		else printf("\x1b[31m" "failed" "\x1b[0m\n");
 		free_desc_set(set_info.R_set);
 		set_info.R_set = NULL;
 		free_desc_set(set_info.U_set);

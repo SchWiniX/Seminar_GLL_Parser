@@ -3,13 +3,16 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+
 #include "grammer_handler.h"
 #include "info_struct.h"
+#include "debug.h"
 
 const uint16_t init_first_list_size = 16;
 const uint16_t init_block_size = 64;
 const uint16_t init_number_of_blocks_arr_size = 8;
 
+#ifdef DEBUG
 int print_rules(rule rules[]){
 	for(int i = 0; i < 26; i++) {
 		if(rules[i].name != (char) (i + 65)) continue;
@@ -60,6 +63,7 @@ int print_rule_info(const struct rule_info* rule_info, uint8_t full) {
 	printf("\n");
 	return 0;
 }
+#endif
 
 int is_non_terminal(char character) {
 	return character >= 65 && character <= 90;
