@@ -22,8 +22,8 @@ int main(int argc, char* argv[]) {
 	struct dirent* de;
 	DIR* dr = opendir(argv[1]);
 	assert(dr);
-	printf("Grammar\tinput_size\tResult\tShould\tClock ticks\tTime\t\tstatus\n");
-	printf("------------------------------------------------------------------------------\n");
+	printf("Grammar\tinput_size\tResult\tShould\tClock ticks\tTime\t\tu_size\tgss_nodes\tgss_edges\tstatus\n");
+	printf("----------------------------------------------------------------------------------------------------------------------\n");
 
 	while ((de = readdir(dr)) != NULL) {
 		if(!strncmp(de->d_name, ".", 3)) continue;
@@ -94,7 +94,7 @@ int main(int argc, char* argv[]) {
 			}
 			if(next_char == EOF) break;
 			if(input_size >= input_alloc_size) {
-					input_size *= 2;
+					input_alloc_size *= 2;
 					input = realloc(input, input_alloc_size);
 					assert(input);
 			}
@@ -152,13 +152,16 @@ int main(int argc, char* argv[]) {
 			ticks = clock() - ticks + rule_init_ticks;
 
 			printf(
-					" %s\t%10d\t%4d\t%4d\t%5ld ticks\t%.3lf ms\t",
+					" %s\t%10d\t%4d\t%4d\t%5ld ticks\t%.3lf ms\t%6d\t%9d\t%9d\t",
 					de->d_name,
 					input_size,
 					res,
 					should,
 					ticks,
-					(double) ticks * 1000 / CLOCKS_PER_SEC
+					(double) ticks * 1000 / CLOCKS_PER_SEC,
+					set_info.u_size,
+					gss_info.gss_node_array_size,
+					gss_info.gss_edge_array_size
 					);
 		
 			if(res == should) printf("\x1b[32m" "passed\n" "\x1b[0m");
