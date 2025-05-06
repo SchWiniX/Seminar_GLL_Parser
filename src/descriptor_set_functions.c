@@ -88,7 +88,7 @@ int in_set(
 	assert(rule_info);
 	assert(U_set);
 
-	for(uint16_t i = u_higher_idx; i != u_lower_idx; i = (i + 1) % u_alloc_size) {
+	for(uint16_t i = u_lower_idx; i != u_higher_idx; i = (i + 1) % u_alloc_size) {
 		if(
 				U_set[i].rule == rule_info->rule &&
 				U_set[i].block_idx == rule_info->start_idx &&
@@ -116,8 +116,8 @@ int add_descriptor(
 	if(in_set(
 				rule_info,
 				set_info->U_set,
-				set_info->u_higher_idx,
 				set_info->u_lower_idx,
+				set_info->u_higher_idx,
 				set_info->u_alloc_size,
 				input_idx,
 				gss_node_idx,
@@ -128,13 +128,13 @@ int add_descriptor(
 	// if we outgrow the current array resize it
 	if(set_info->r_size >= set_info->r_alloc_size) {
 		assert(set_info->r_lower_idx == set_info->r_higher_idx);
-		realloc_descriptor_set(set_info, RSET);
+		realloc_set(set_info, RSET);
 	}
 
 	// if we outgrow the current array resize it
 	if(set_info->u_size >= set_info->u_alloc_size) {
 		assert(set_info->u_lower_idx == set_info->u_higher_idx);
-		realloc_descriptor_set(set_info, USET);
+		realloc_set(set_info, USET);
 	}
 
 	//add to R and U
@@ -186,6 +186,10 @@ int add_descriptor(
 }
 
 int clean_lesser_from_U(struct set_info* set_info) {
+
+	assert(set_info);
+	assert(set_info->U_set);
+
 	uint16_t u_lower_idx = set_info->u_lower_idx;
 	uint16_t u_size = set_info->u_size;
 	uint16_t u_alloc_size = set_info->u_alloc_size;
@@ -204,10 +208,41 @@ int clean_lesser_from_U(struct set_info* set_info) {
 	return 0;
 }
 
-int is_in_p_set(const p_set_entry P_set[], const uint32_t p_size, uint32_t gss_node_idx, uint32_t input_idx) {
-	assert(P_set);
+int clean_lesser_from_P(struct set_info* set_info) {
 
-	for(int i = 0; i < p_size; i++) {
+	assert(set_info);
+	assert(set_info->P_set);
+
+	uint16_t p_lower_idx = set_info->p_lower_idx;
+	uint16_t p_size = set_info->p_size;
+	uint16_t p_alloc_size = set_info->p_alloc_size;
+	uint32_t lesser_input_idx = set_info->lesser_input_idx;
+	p_set_entry* P_set = set_info->P_set;
+
+	while(P_set[p_lower_idx].input_idx == lesser_input_idx && p_size > 0) {
+		p_size -= 1;
+		p_lower_idx = (p_lower_idx + 1) % p_alloc_size;
+	}
+
+	set_info->p_size = p_size;
+	set_info->p_lower_idx = p_lower_idx;
+	return 0;
+}
+
+int is_in_p_set(
+		const p_set_entry P_set[],
+		const uint32_t p_lower_idx,
+		const uint32_t p_higher_idx,
+		const uint32_t p_size,
+		const uint32_t p_alloc_size,
+		uint32_t gss_node_idx,
+		uint32_t input_idx
+		) {
+
+	assert(P_set);
+	if(p_size == 0) return 0;
+
+	for(int i = p_lower_idx; i != p_higher_idx; i = (i + 1) % p_alloc_size) {
 		if(
 				P_set[i].gss_node_idx == gss_node_idx &&
 				P_set[i].input_idx == input_idx
@@ -217,35 +252,77 @@ int is_in_p_set(const p_set_entry P_set[], const uint32_t p_size, uint32_t gss_n
 }
 
 int add_p_set_entry(struct set_info* set_info, uint32_t gss_node_idx, uint32_t input_idx) {
-	if(is_in_p_set(set_info->P_set, set_info->p_size, gss_node_idx, input_idx)) return 1;
+
+	assert(set_info);
+	assert(set_info->P_set);
+
+	if(is_in_p_set(
+				set_info->P_set,
+				set_info->p_lower_idx,
+				set_info->p_higher_idx,
+				set_info->p_size,
+				set_info->p_alloc_size,
+				gss_node_idx,
+				input_idx
+				)) return 1;
 
 	// if we outgrow the current array resize it
-	assert(set_info->P_set);
 	if(set_info->p_size >= set_info->p_alloc_size) {
-		set_info->p_alloc_size *= 2;
-		set_info->P_set = (p_set_entry*) realloc(set_info->P_set, set_info->p_alloc_size * sizeof(p_set_entry));
-		assert(set_info->P_set);
+		realloc_set(set_info, PSET);
 	}
 
 	// add new p entry
-	set_info->P_set[set_info->p_size].gss_node_idx = gss_node_idx;
-	set_info->P_set[set_info->p_size].input_idx = input_idx;
+	set_info->P_set[set_info->p_higher_idx].gss_node_idx = gss_node_idx;
+	set_info->P_set[set_info->p_higher_idx].input_idx = input_idx;
+	set_info->p_higher_idx = (set_info->p_higher_idx + 1) % set_info->p_alloc_size;
 	set_info->p_size += 1;
 
 	return 0;
 }
 
-descriptors* init_descriptor_set(uint16_t size) {
+int add_descriptor_for_P_set(const struct gss_info* gss_info, struct set_info* set_info, const uint32_t new_node) {
+
+	assert(gss_info);
+	assert(gss_info->gss_nodes);
+	assert(set_info);
+	assert(set_info->P_set);
+
+	uint32_t i;
+	for(i = set_info->p_lower_idx; i < set_info->p_higher_idx; i = (i + 1) % set_info->p_alloc_size) {
+		if(new_node != set_info->P_set[i].gss_node_idx) continue;
+		gss_node curr_node = gss_info->gss_nodes[new_node];
+		struct rule_info r = {
+			.rules = NULL,
+			.rule = curr_node.rule,
+			.start_idx = curr_node.block_idx,
+			.end_idx = curr_node.block_end_idx,
+		};
+		assert(
+				set_info->P_set[i].input_idx == set_info->lesser_input_idx ||
+				set_info->P_set[i].input_idx + 1 == set_info->lesser_input_idx);
+
+		add_descriptor(
+				&r,
+				set_info,
+				set_info->P_set[i].input_idx,
+				gss_info->gss_node_idx,
+				curr_node.label_type
+				);
+	}
+	return 0;
+}
+
+descriptors* init_descriptor_set(const uint16_t size) {
 	descriptors* set = (descriptors*) malloc(sizeof(descriptors) * size);
 	assert(set);
 	return set;
 }
 
-descriptors* realloc_descriptor_set(struct set_info* set_info, set_type s) {
+int realloc_set(struct set_info* set_info, const set_type s) {
 	assert(set_info);
 	assert(set_info->R_set);
 	assert(set_info->U_set);
-	assert(s < PSET);
+	assert(s <= PSET);
 
 	if(s == USET) {
 		descriptors* buff = malloc(2 * set_info->u_alloc_size * sizeof(descriptors));
@@ -283,11 +360,30 @@ descriptors* realloc_descriptor_set(struct set_info* set_info, set_type s) {
 		set_info->r_lower_idx = set_info->r_alloc_size >> 1;
 		set_info->r_higher_idx = i;
 		set_info->r_alloc_size *= 2;
+	} else {
+		p_set_entry* buff = malloc(2 * set_info->p_alloc_size * sizeof(p_set_entry));
+		assert(buff);
+
+		uint16_t i = set_info->p_alloc_size >> 1;
+		uint16_t j = set_info->p_lower_idx;
+		//the first set needs to be unrolled to avoid triggering the while condition instandly
+		buff[i++] = set_info->P_set[j];
+		j = (j + 1) % set_info->p_alloc_size;
+		while(j != set_info->p_higher_idx) {
+			buff[i++] = set_info->P_set[j];
+			j = (j + 1) % set_info->p_alloc_size;
+		}
+		free(set_info->P_set);
+		set_info->P_set = buff;
+		set_info->p_lower_idx = set_info->p_alloc_size >> 1;
+		set_info->p_higher_idx = i;
+		set_info->p_alloc_size *= 2;
 	}
+
 	return 0;
 }
 
-p_set_entry* init_p_set_entry_set(uint32_t size) {
+p_set_entry* init_p_set_entry_set(const uint32_t size) {
 	p_set_entry* set = (p_set_entry*) malloc(sizeof(p_set_entry) * size);
 	assert(set);
 	return set;

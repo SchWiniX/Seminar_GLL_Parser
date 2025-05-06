@@ -119,32 +119,10 @@ uint32_t create(
 		gss_info->gss_edges[gss_info->gss_edge_array_size].target_node = gss_info->gss_node_idx;
 		
 		gss_info->gss_edge_array_size += 1;
-		uint32_t i;
-		for(i = 0; i < set_info->p_size; i++) {
-			if(idx_node != set_info->P_set[i].gss_node_idx) continue;
-			gss_node curr_node = gss_info->gss_nodes[idx_node];
-			struct rule_info r = {
-				.rules = NULL,
-				.rule = curr_node.rule,
-				.start_idx = curr_node.block_idx,
-				.end_idx = curr_node.block_end_idx,
-			};
-			assert(set_info->P_set[i].input_idx == set_info->lesser_input_idx || set_info->P_set[i].input_idx + 1 == set_info->lesser_input_idx);
-
-			add_descriptor(
-					&r,
-					set_info,
-					set_info->P_set[i].input_idx,
-					gss_info->gss_node_idx,
-					curr_node.label_type
-					);
-			break;
-			
-		}
 	}
 
-	//add if in P
-	
+	add_descriptor_for_P_set(gss_info, set_info, idx_node);
+
 	if(idx_node == gss_info->gss_node_array_size) {//if node has been added
 		gss_info->gss_node_array_size += 1;
 	}
@@ -170,22 +148,10 @@ int pop(
 
 	if(gss_info->gss_node_idx == 0) return 1;
 
-	//printf("pop with src_node: %d\n", gss_info->gss_node_idx);
 	add_p_set_entry(set_info, gss_info->gss_node_idx, input_info->input_idx);
 	for(int i = 0; i < gss_info->gss_edge_array_size; i++) {
 		if(gss_info->gss_edges[i].src_node == gss_info->gss_node_idx) {
 			gss_node curr_node = gss_info->gss_nodes[gss_info->gss_node_idx];
-			//printf(
-			//		"Found gss edge %d -> %d, so add descriptor (%c, [%d, %d], %d, %d, %d)\n",
-			//		gss_info->gss_edges[i].src_node,
-			//		gss_info->gss_edges[i].target_node,
-			//		curr_node.rule,
-			//		curr_node.block_idx,
-			//		curr_node.block_end_idx,
-			//		input_info->input_idx,
-			//		gss_info->gss_edges[i].target_node,
-			//		curr_node.label_type
-			//		);
 			struct rule_info r = {
 				.rules = NULL,
 				.rule = curr_node.rule,

@@ -144,6 +144,10 @@ int main(int argc, char* argv[]) {
 				.U_set = U_set,
 				.P_set = P_set,
 				.lesser_input_idx = 0,
+				.p_size = 0,
+				.p_lower_idx = p_alloc_size >> 1,
+				.p_higher_idx = p_alloc_size >> 1,
+				.p_alloc_size = p_alloc_size,
 				.r_size = 0,
 				.r_lower_idx = r_alloc_size >> 1,
 				.r_higher_idx = r_alloc_size >> 1,
@@ -152,8 +156,6 @@ int main(int argc, char* argv[]) {
 				.u_lower_idx = u_alloc_size >> 1,
 				.u_higher_idx = u_alloc_size >> 1,
 				.u_alloc_size = u_alloc_size,
-				.p_alloc_size = p_alloc_size,
-				.p_size = 0,
 			};
 
 			uint8_t res = base_loop(&rule_info, &input_info, &gss_info, &set_info);

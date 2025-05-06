@@ -256,6 +256,7 @@ int base_loop(
 		rule_info->end_idx = curr_descriptor.block_end_idx;
 
 		if(curr_descriptor.input_idx > set_info->lesser_input_idx) {
+			clean_lesser_from_P(set_info);
 			clean_lesser_from_U(set_info);
 		}
 

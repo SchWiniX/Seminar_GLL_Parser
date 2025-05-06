@@ -102,6 +102,8 @@ int main(int argc, char *argv[]) {
 		.P_set = P_set,
 		.lesser_input_idx = 0,
 		.p_size = 0,
+		.p_lower_idx = p_alloc_size >> 1,
+		.p_higher_idx = p_alloc_size >> 1,
 		.p_alloc_size = p_alloc_size,
 		.r_size = 0,
 		.r_lower_idx = r_alloc_size >> 1,

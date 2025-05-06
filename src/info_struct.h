@@ -70,6 +70,8 @@ struct set_info {
 	p_set_entry* P_set;
 	uint32_t lesser_input_idx;
 	uint32_t p_size;
+	uint32_t p_lower_idx;
+	uint32_t p_higher_idx;
 	uint32_t p_alloc_size;
 	uint16_t r_size;
 	uint16_t r_lower_idx;
