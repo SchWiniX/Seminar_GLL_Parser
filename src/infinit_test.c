@@ -19,13 +19,20 @@ int main(int argc, char* argv[]) {
 		return 1;
 	}
 
-	printf("Grammar\tinput_size\tResult\tShould\tClock ticks\tTime\t\tU Set\t\tP Set\t\tgss_nodes\tgss_edges\tstatus\n");
-	printf("-----------------------------------------------------------------------------------------------------------------------------------------------\n");
 
 	uint32_t gen_size = argc - 2;
 	uint32_t repetition_counter = 1;
 	char** input_generator = argv + 2;
 	uint8_t should = 1;
+	printf("Input generator: ");
+	for(int i = 0; i < gen_size; i++) {
+		if(i % 2 == 1) printf("*(%s)", input_generator[i]);
+		else printf("%s", input_generator[i]);
+	}
+	printf("\n");
+	printf("Grammar\t\tinput_size\tResult\tShould\tClock ticks\tTime\t\tU Set\t\tP Set\t\tgss_nodes\tgss_edges\tstatus\n");
+	printf("-----------------------------------------------------------------------------------------------------------------------------------------------\n");
+
 	clock_t rule_init_ticks = clock();
 	FILE* grammar_file = fopen(argv[1], "r");
 	assert(grammar_file);
