@@ -15,7 +15,7 @@
 
 void print_help() {
 	printf("Please provide vaild arguments:\n\n\tgll_parser_test grammer_file repetitions count op substr0 substr1 ...\n\n");
-	printf(" - 'grammer_file' contains grammers of format:\n");
+	printf(" - 'grammer_file' should be a path to a file containing grammers of format:\n");
 	printf("X -> X_1 | X_2 | ...\n");
 	printf("Y -> Y_1 | Y_2 | ...\n");
 	printf("...\n");
@@ -78,7 +78,7 @@ int main(int argc, char* argv[]) {
 		else printf("%s", input_generator[i]);
 	}
 	printf("\n");
-	printf("Grammar:input_size:Result:Should:Clock ticks:CPU Time:U Set size:P Set size:gss_nodes size:gss_edges size:status\n");
+	printf("Grammar:input_size:Result:Should:Clock ticks:CPU Time:R Set size:U Set size:P Set size:gss_nodes size:gss_edges size:status\n");
 
 	clock_t rule_init_ticks = clock();
 	FILE* grammer_file = fopen(argv[1], "r");

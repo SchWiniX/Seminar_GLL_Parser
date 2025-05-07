@@ -49,7 +49,7 @@ int main(int argc, char* argv[]) {
 	struct dirent* de;
 	DIR* dr = opendir(argv[1]);
 	assert(dr);
-	printf("Grammar:input_size:Result:Should:Clock ticks:CPU Time:U Set size:P Set size:gss_nodes size:gss_edges size:status\n");
+	printf("Grammar:input_size:Result:Should:Clock ticks:CPU Time:R Set size:U Set size:P Set size:gss_nodes size:gss_edges size:status\n");
 
 	while ((de = readdir(dr)) != NULL) {
 		if(!strncmp(de->d_name, ".", 3)) continue;
