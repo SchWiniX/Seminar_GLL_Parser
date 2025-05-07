@@ -17,11 +17,13 @@ int print_struct_info() {
 	printf("-----------------------------\nSize of Descriptors: %ld bytes\n", sizeof(descriptors));
 	printf("Size of gss_node: %ld bytes\n", sizeof(gss_node));
 	printf("Size of gss_edge: %ld bytes\n", sizeof(gss_edge));
+	printf("Size of rules: %ld bytes\n", sizeof(rule));
 	return 0;
 }
 
 int main(int argc, char *argv[]) {
 	clock_t ticks = clock();
+
 #ifdef DEBUG
 	print_struct_info();
 	printf("%d arguments\n", argc);
@@ -30,12 +32,12 @@ int main(int argc, char *argv[]) {
 #endif
 	
 	if(argc != 3) {
-		printf("Wrong number of arguments. Please provide a path to the grammar file and an input string\n");
+		printf("Wrong number of arguments. Please provide a path to the grammer file and an input string\n");
 		return 1;
 	}
 
-	FILE* grammar_file = fopen(argv[1], "r");
-	assert(grammar_file);
+	FILE* grammer_file = fopen(argv[1], "r");
+	assert(grammer_file);
 
 	//parse grammer input
 	rule rules[26];
@@ -48,7 +50,7 @@ int main(int argc, char *argv[]) {
 		rules[i].follow[1] = 0;
 		temp_vals[i] = 0;
 	}
-	create_grammar(rules, grammar_file);
+	create_grammer(rules, grammer_file);
 
 	//find first
 	for(int i = 0; i <26; i++) {
@@ -72,11 +74,6 @@ int main(int argc, char *argv[]) {
 
 #ifdef DEBUG
 	print_rules(rules);
-	printf(
-			"a in first of A: %d, %016lx%016lx\n",
-			is_in_first_follow(rules[0].first, 'a'),
-			rules[0].first[1], rules[0].first[0]
-			);
 #endif
 
 	uint32_t gss_node_alloc_size = 1024;
@@ -122,8 +119,8 @@ int main(int argc, char *argv[]) {
 		.u_alloc_size = u_alloc_size,
 	};
 
-	//printf("-----------------------------\nResult:\n-----------------------------\n");
-	printf("Parser returned: %d\n", base_loop(&rule_info, &input_info, &gss_info, &set_info));
+	int res = base_loop(&rule_info, &input_info, &gss_info, &set_info);
+	printf("------------------\nParsing result: %d\n------------------\n", res);
 
 	ticks = clock() - ticks;
 	printf("Time taken %ld clock ticks, %lf ms\n", ticks, ((double) ticks) * 1000/ CLOCKS_PER_SEC);

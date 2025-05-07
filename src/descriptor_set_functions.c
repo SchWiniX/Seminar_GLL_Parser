@@ -10,14 +10,15 @@
 #ifdef DEBUG
 int print_set_info(const struct rule rules[], struct set_info* set_info) {
 	printf("R_set: %d[%d:%d]%d { ", set_info->r_lower_idx, set_info->r_size, set_info->r_alloc_size, set_info->r_higher_idx);
+	int i = 0;
 	if(!set_info->r_size) {
 		printf("}\n");
 		goto USET;
 	}
-	int i = set_info->r_lower_idx;
+	i = set_info->r_lower_idx;
 	printf("(%c, [%d[", set_info->R_set[i].rule, set_info->R_set[i].block_idx);
 	for(int j = set_info->R_set[i].block_idx; j < set_info->R_set[i].block_end_idx; j++) {
-		printf("%c", rules[set_info->R_set[i].rule - 65].blocks[j]);
+		printf("%c", rules[set_info->R_set[i].rule - 'A'].blocks[j]);
 	}
 	printf("]%d], %d, %d, %d)", set_info->R_set[i].block_end_idx, set_info->R_set[i].input_idx, set_info->R_set[i].gss_node_idx, set_info->R_set[i].label_type);
 
@@ -25,7 +26,7 @@ int print_set_info(const struct rule rules[], struct set_info* set_info) {
 	while(i != set_info->r_higher_idx) {
 		printf(", (%c, [%d[", set_info->R_set[i].rule, set_info->R_set[i].block_idx);
 		for(int j = set_info->R_set[i].block_idx; j < set_info->R_set[i].block_end_idx; j++) {
-			printf("%c", rules[set_info->R_set[i].rule - 65].blocks[j]);
+			printf("%c", rules[set_info->R_set[i].rule - 'A'].blocks[j]);
 		}
 		printf("]%d], %d, %d, %d)", set_info->R_set[i].block_end_idx, set_info->R_set[i].input_idx, set_info->R_set[i].gss_node_idx, set_info->R_set[i].label_type);
 		i = (i + 1) % set_info->r_alloc_size;
@@ -42,7 +43,7 @@ USET:
 	i = set_info->u_lower_idx;
 	printf("(%c, [%d[", set_info->U_set[i].rule, set_info->U_set[i].block_idx);
 	for(int j = set_info->U_set[i].block_idx; j < set_info->U_set[i].block_end_idx; j++) {
-		printf("%c", rules[set_info->U_set[i].rule - 65].blocks[j]);
+		printf("%c", rules[set_info->U_set[i].rule - 'A'].blocks[j]);
 	}
 	printf("]%d], %d, %d, %d)", set_info->U_set[i].block_end_idx, set_info->U_set[i].input_idx, set_info->U_set[i].gss_node_idx, set_info->U_set[i].label_type);
 
@@ -50,7 +51,7 @@ USET:
 	while(i != set_info->u_higher_idx) {
 		printf(", (%c, [%d[", set_info->U_set[i].rule, set_info->U_set[i].block_idx);
 		for(int j = set_info->U_set[i].block_idx; j < set_info->U_set[i].block_end_idx; j++) {
-			printf("%c", rules[set_info->U_set[i].rule - 65].blocks[j]);
+			printf("%c", rules[set_info->U_set[i].rule - 'A'].blocks[j]);
 		}
 		printf("]%d], %d, %d, %d)", set_info->U_set[i].block_end_idx, set_info->U_set[i].input_idx, set_info->U_set[i].gss_node_idx, set_info->U_set[i].label_type);
 		i = (i + 1) % set_info->u_alloc_size;
@@ -59,14 +60,17 @@ USET:
 
 PSET:
 
-	printf("P_set: [%d:%d] { ", set_info->p_size, set_info->p_alloc_size);
-	if(set_info->p_size == 0) {
+	if(!set_info->p_size) {
 		printf("}\n");
 		return 0;
 	}
-	printf("(%d, %d)", set_info->P_set[0].input_idx, set_info->P_set[0].gss_node_idx);
-	for(int i = 1; i < set_info->p_size; i++) {
+	printf("P_set: [%d:%d] { ", set_info->p_size, set_info->p_alloc_size);
+	i = set_info->p_lower_idx;
+	printf("(%d, %d)", set_info->P_set[i].input_idx, set_info->P_set[i].gss_node_idx);
+	i = (i + 1) % set_info->p_alloc_size;
+	while(i != set_info->p_higher_idx) {
 		printf(", (%d, %d)", set_info->P_set[i].input_idx, set_info->P_set[i].gss_node_idx);
+		i = (i + 1) % set_info->p_alloc_size;
 	}
 	printf(" }\n");
 
@@ -137,6 +141,12 @@ int add_descriptor(
 		realloc_set(set_info, USET);
 	}
 
+	descriptors* R_set = set_info->R_set;
+	descriptors* U_set = set_info->U_set;
+	uint16_t r_index = 0;
+	uint16_t u_index = 0;
+
+
 	//add to R and U
 	if(input_idx == set_info->lesser_input_idx) {
 		if(set_info->r_lower_idx == 0)
@@ -148,35 +158,29 @@ int add_descriptor(
 			set_info->u_lower_idx = set_info->u_alloc_size - 1;
 		else
 			set_info->u_lower_idx -= 1;
-
-		set_info->R_set[set_info->r_lower_idx].rule = rule_info->rule;
-		set_info->R_set[set_info->r_lower_idx].block_idx = rule_info->start_idx;
-		set_info->R_set[set_info->r_lower_idx].block_end_idx = rule_info->end_idx;
-		set_info->R_set[set_info->r_lower_idx].input_idx = input_idx;
-		set_info->R_set[set_info->r_lower_idx].gss_node_idx = gss_node_idx;
-		set_info->R_set[set_info->r_lower_idx].label_type = label_type;
-
-		set_info->U_set[set_info->u_lower_idx].rule = rule_info->rule;
-		set_info->U_set[set_info->u_lower_idx].block_idx = rule_info->start_idx;
-		set_info->U_set[set_info->u_lower_idx].block_end_idx = rule_info->end_idx;
-		set_info->U_set[set_info->u_lower_idx].input_idx = input_idx;
-		set_info->U_set[set_info->u_lower_idx].gss_node_idx = gss_node_idx;
-		set_info->U_set[set_info->u_lower_idx].label_type = label_type;
+		r_index = set_info->r_lower_idx;
+		u_index = set_info->u_lower_idx;
 	} else {
-		set_info->R_set[set_info->r_higher_idx].rule = rule_info->rule;
-		set_info->R_set[set_info->r_higher_idx].block_idx = rule_info->start_idx;
-		set_info->R_set[set_info->r_higher_idx].block_end_idx = rule_info->end_idx;
-		set_info->R_set[set_info->r_higher_idx].input_idx = input_idx;
-		set_info->R_set[set_info->r_higher_idx].gss_node_idx = gss_node_idx;
-		set_info->R_set[set_info->r_higher_idx].label_type = label_type;
+		r_index = set_info->r_higher_idx;
+		u_index = set_info->u_higher_idx;
+	}
 
-		set_info->U_set[set_info->u_higher_idx].rule = rule_info->rule;
-		set_info->U_set[set_info->u_higher_idx].block_idx = rule_info->start_idx;
-		set_info->U_set[set_info->u_higher_idx].block_end_idx = rule_info->end_idx;
-		set_info->U_set[set_info->u_higher_idx].input_idx = input_idx;
-		set_info->U_set[set_info->u_higher_idx].gss_node_idx = gss_node_idx;
-		set_info->U_set[set_info->u_higher_idx].label_type = label_type;
 
+	R_set[r_index].rule = rule_info->rule;
+	R_set[r_index].block_idx = rule_info->start_idx;
+	R_set[r_index].block_end_idx = rule_info->end_idx;
+	R_set[r_index].input_idx = input_idx;
+	R_set[r_index].gss_node_idx = gss_node_idx;
+	R_set[r_index].label_type = label_type;
+
+	U_set[u_index].rule = rule_info->rule;
+	U_set[u_index].block_idx = rule_info->start_idx;
+	U_set[u_index].block_end_idx = rule_info->end_idx;
+	U_set[u_index].input_idx = input_idx;
+	U_set[u_index].gss_node_idx = gss_node_idx;
+	U_set[u_index].label_type = label_type;
+
+	if(input_idx != set_info->lesser_input_idx) {
 		set_info->r_higher_idx = (set_info->r_higher_idx + 1) % set_info->r_alloc_size;
 		set_info->u_higher_idx = (set_info->u_higher_idx + 1) % set_info->u_alloc_size;
 	}

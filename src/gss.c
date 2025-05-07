@@ -20,14 +20,14 @@ int print_gss_info(rule rules[], struct gss_info* gss_info) {
 	}
 	printf("(%d: %c, [%d[", 0, gss_info->gss_nodes[0].rule, gss_info->gss_nodes[0].block_idx);
 	for(int j = gss_info->gss_nodes[0].block_idx; j < gss_info->gss_nodes[0].block_end_idx; j++) {
-		printf("%c", rules[gss_info->gss_nodes[0].rule - 65].blocks[j]);
+		printf("%c", rules[gss_info->gss_nodes[0].rule - 'A'].blocks[j]);
 	}
 	printf("]%d], %d, %d)", gss_info->gss_nodes[0].block_end_idx, gss_info->gss_nodes[0].input_idx, gss_info->gss_nodes[0].label_type);
 
 	for(int i = 1; i < gss_info->gss_node_array_size; i++) {
 		printf(", (%d: %c, [%d[", i, gss_info->gss_nodes[i].rule, gss_info->gss_nodes[i].block_idx);
 		for(int j = gss_info->gss_nodes[i].block_idx; j < gss_info->gss_nodes[i].block_end_idx; j++) {
-			printf("%c", rules[gss_info->gss_nodes[i].rule - 65].blocks[j]);
+			printf("%c", rules[gss_info->gss_nodes[i].rule - 'A'].blocks[j]);
 		}
 		printf("]%d], %d, %d)", gss_info->gss_nodes[i].block_end_idx, gss_info->gss_nodes[i].input_idx, gss_info->gss_nodes[i].label_type);
 	}

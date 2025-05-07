@@ -62,7 +62,7 @@ void continue_production(
 	printf("entered continue_production\n");
 #endif
 
-	struct rule this_rule = rule_info->rules[rule_info->rule - 65];
+	struct rule this_rule = rule_info->rules[rule_info->rule - 'A'];
 	uint16_t start_idx = rule_info->start_idx;
 	uint16_t end_idx = rule_info->end_idx;
 	if(start_idx == end_idx) {
@@ -118,7 +118,7 @@ void start_new_production(
 	printf("entered start_new_production\n");
 #endif
 
-	struct rule this_rule = rule_info->rules[rule_info->rule - 65];
+	struct rule this_rule = rule_info->rules[rule_info->rule - 'A'];
 	uint16_t start_idx = rule_info->start_idx;
 	uint16_t end_idx = rule_info->end_idx;
 	if(start_idx + 1 == end_idx && this_rule.blocks[start_idx] == '_') {
@@ -172,7 +172,7 @@ void init_rule(
 	printf("entered init_rule for %c\n", rule_info->rule);
 #endif
 
-	struct rule this_rule = rule_info->rules[rule_info->rule - 65];
+	struct rule this_rule = rule_info->rules[rule_info->rule - 'A'];
 	for(int i = 0; i < this_rule.number_of_blocks; i++) {
 		rule_info->start_idx = this_rule.block_sizes[i];
 		rule_info->end_idx = this_rule.block_sizes[i + 1];

@@ -15,7 +15,7 @@ const uint16_t init_number_of_blocks_arr_size = 8;
 #ifdef DEBUG
 int print_rules(rule rules[]){
 	for(int i = 0; i < 26; i++) {
-		if(rules[i].name != (char) (i + 65)) continue;
+		if(rules[i].name != (char) (i + 'A')) continue;
 		printf("-----------------------------\nrule: %c\n", rules[i].name);
 		printf("number of blocks: %d:\n", rules[i].number_of_blocks);
 		printf("blocks_sizes: ");
@@ -32,7 +32,7 @@ int print_rules(rule rules[]){
 		}
 		printf("\n");
 
-		if(rules[i].name != (char) (i + 65)) continue;
+		if(rules[i].name != (char) (i + 'A')) continue;
 		printf("first(%c): { ", rules[i].name);
 		for(unsigned char j = 0; j < 128; j++) {
 			if(!is_in_first_follow(rules[i].first, (signed char) j)) continue;
@@ -58,7 +58,7 @@ int print_rule_info(const struct rule_info* rule_info, uint8_t full) {
 	}
 	printf(" -> ");
 	for(int i = rule_info->start_idx; i < rule_info->end_idx; i++) {
-		printf("%c", rule_info->rules[rule_info->rule - 65].blocks[i]);
+		printf("%c", rule_info->rules[rule_info->rule - 'A'].blocks[i]);
 	}
 	printf("\n");
 	return 0;
@@ -66,7 +66,7 @@ int print_rule_info(const struct rule_info* rule_info, uint8_t full) {
 #endif
 
 int is_non_terminal(char character) {
-	return character >= 65 && character <= 90;
+	return character >= 'A' && character <= 90;
 }
 
 int combine_rule(rule rules[], char rule, uint16_t* block_sizes, char* blocks, uint16_t number_of_blocks) {
@@ -75,7 +75,7 @@ int combine_rule(rule rules[], char rule, uint16_t* block_sizes, char* blocks, u
 	assert(block_sizes);
 	assert(blocks);
 
-	uint8_t idx = ((uint8_t) rule) - 65;
+	uint8_t idx = ((uint8_t) rule) - 'A';
 	if(rules[idx].name != rule) {
 		rules[idx].name = rule;
 		rules[idx].blocks = blocks;
@@ -104,11 +104,11 @@ int combine_rule(rule rules[], char rule, uint16_t* block_sizes, char* blocks, u
 	return 1;
 }
 
-// Assumes grammar file contains only well-formated grammars of type
+// Assumes grammer file contains only well-formated grammers of type
 // X -> a1 | a2 | ... | an for X a nonterminal and ai strings of terminals and nonterminals
-int create_grammar(rule rules[], FILE* grammar_file) {
+int create_grammer(rule rules[], FILE* grammer_file) {
 	assert(rules);
-	assert(grammar_file);
+	assert(grammer_file);
 
 	uint8_t is_processing_rule = 0;
 	uint16_t block_size = 0;
@@ -121,13 +121,13 @@ int create_grammar(rule rules[], FILE* grammar_file) {
 	char curr_char = '\0';
 	char name;
 
-	while((curr_char = fgetc(grammar_file)) != EOF) {
+	while((curr_char = fgetc(grammer_file)) != EOF) {
 		if(!is_processing_rule){
 			if(!is_non_terminal(curr_char)) {
 				return 1;
 			}
 			name = curr_char;
-			fgets(arrow_buff, 4, grammar_file);
+			fgets(arrow_buff, 4, grammer_file);
 			arrow_buff[4] = '\0';
 			if(strncmp(arrow_buff, " ->", 5)) {
 				printf("faulty formatting found terminating rule_file read earlys\n");
@@ -214,7 +214,7 @@ int add_to_first_follow(uint64_t first_follow[2], const signed char c) {
 int create_first(rule rules[], char rule, uint64_t first[2], uint8_t temp_val[]) {
 	assert(rules);
 
-	uint16_t rule_idx = rule - 65;
+	uint16_t rule_idx = rule - 'A';
 	if(temp_val[rule_idx] == 1) return is_in_first_follow(rules[rule_idx].first, '_');
 	temp_val[rule_idx] = 1;
 	uint8_t is_nullable = 0;
@@ -263,7 +263,7 @@ int follow_first(
 		add_to_first_follow(follow, c);
 		return 0;
 	} 
-	struct rule sub_rule = rules[c - 65];
+	struct rule sub_rule = rules[c - 'A'];
 
 	for(unsigned char i = 0; i < 128; i++) {
 		if(!is_in_first_follow(sub_rule.first, i)) continue;
@@ -296,13 +296,13 @@ int create_follow(const rule rules[], char rule, uint64_t follow[2], uint8_t tem
 	assert(temp_info);
 	assert(is_non_terminal(rule));
 
-	temp_info[rule - 65] = 1;
+	temp_info[rule - 'A'] = 1;
 	if(rule == 'S') {
 		add_to_first_follow(follow, '\0');
 	}
 
 	for(int i = 0; i < 26; i++) {
-		if(rules[i].name != i + 65) continue;
+		if(rules[i].name != i + 'A') continue;
 		struct rule sub_rule = rules[i];
 		for(int j = 1; j <= sub_rule.number_of_blocks; j++) {
 			uint16_t start_idx = sub_rule.block_sizes[j-1];
@@ -331,7 +331,7 @@ int create_follow(const rule rules[], char rule, uint64_t follow[2], uint8_t tem
 
 int free_rules(rule rules[]) {
 	for(int i = 0; i < 26; i++) {
-		if(rules[i].name != i + 65) continue;
+		if(rules[i].name != i + 'A') continue;
 		if(!rules[i].block_sizes) {
 			free(rules[i].block_sizes);
 			rules[i].block_sizes = NULL;
@@ -351,7 +351,7 @@ int first_follow_test(const struct rule_info* rule_info, const char c) {
 	assert(is_non_terminal(rule_info->rule));
 	assert(rule_info->start_idx < rule_info->end_idx);
 
-	struct rule this_rule = rule_info->rules[rule_info->rule - 65];
+	struct rule this_rule = rule_info->rules[rule_info->rule - 'A'];
 	int eps_found = 0;
 	int do_continue = 0;
 	for(int start_idx = rule_info->start_idx; start_idx < rule_info->end_idx; start_idx++) {
@@ -363,7 +363,7 @@ int first_follow_test(const struct rule_info* rule_info, const char c) {
 				return 1;
 			}
 		} else {
-			struct rule sub_rule = rule_info->rules[this_rule.blocks[start_idx] - 65];
+			struct rule sub_rule = rule_info->rules[this_rule.blocks[start_idx] - 'A'];
 			if(is_in_first_follow(sub_rule.first, c)) {
 				return 1;
 			} else if(is_in_first_follow(sub_rule.first, '_')) {
