@@ -6,10 +6,8 @@
 typedef struct rule {
 	uint16_t* block_sizes;
 	char* blocks;
-	char* first;
-	char* follow;
-	uint16_t first_size;
-	uint16_t follow_size;
+	uint64_t first[2];
+	uint64_t follow[2];
 	uint16_t number_of_blocks;
 	char name;
 } rule;

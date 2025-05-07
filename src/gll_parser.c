@@ -230,10 +230,10 @@ int base_loop(
 		print_gss_info(rule_info->rules, gss_info);
 #endif
 
-		uint8_t first_check = 0;
-		for(int i = 0; i < rule_info->rules[rule_info->rule - 65].first_size; i++) {
-			if(input_info->input[input_info->input_idx] == rule_info->rules[rule_info->rule - 65].first[i]) first_check = 1;
-			if('_' == rule_info->rules[rule_info->rule - 65].first[i] && input_info->input[input_info->input_idx] == '\0') first_check = 1;
+		char first_char = input_info->input[0];
+		uint8_t first_check = is_in_first_follow(rule_info->rules[rule_info->rule - 'A'].first, first_char);
+		if(is_in_first_follow(rule_info->rules[rule_info->rule - 'A'].first, '_')) {
+			first_check = first_check || first_char == '\0';
 		}
 		if(first_check) init_rule(rule_info, input_info, gss_info, set_info);
 		else return 0;

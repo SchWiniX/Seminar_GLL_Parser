@@ -42,31 +42,29 @@ int main(int argc, char* argv[]) {
 	uint8_t temp_vals[26];
 	for(int i = 0; i < 26; i++) {
 		rules[i].name = '\0';
-		rules[i].first = NULL;
-		temp_vals[i] = 0;
+		rules[i].first[0] = 0;
+		rules[i].first[1] = 0;
+		rules[i].follow[0] = 0;
+		rules[i].follow[1] = 0;
 	}
 	create_grammar(rules, grammar_file);
 	//find first
 	for(int i = 0; i < 26; i++) {
-		if(rules[i].name == i + 65)
-			create_first(rules, i + 65, temp_vals);
+		if(rules[i].name == i + 65) {
+			for(int i = 0; i < 26; i++) {
+				temp_vals[i] = 0;
+			}		
+			create_first(rules, i + 65, rules[i].first, temp_vals);
+		}
 	}
 	
 	//find follow
 	for(int i = 0; i < 26; i++) {
 		if(rules[i].name == i + 65) {
-			char* follow_buff = (char*) malloc(32);
-			assert(follow_buff);
-	
-			uint16_t follow_size = 0;
-			uint16_t follow_alloc_size = 32;
 			for(int i = 0; i < 26; i++) {
 				temp_vals[i] = 0;
 			}		
-	
-			create_follow(rules, i + 65, follow_buff, &follow_size, &follow_alloc_size, temp_vals);
-			rules[i].follow = follow_buff;
-			rules[i].follow_size = follow_size;
+			create_follow(rules, i + 65, rules[i].follow, temp_vals);
 		}
 	}
 	rule_init_ticks = clock() - rule_init_ticks;
