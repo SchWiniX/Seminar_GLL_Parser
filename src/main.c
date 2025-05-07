@@ -45,13 +45,13 @@ int main(int argc, char *argv[]) {
 
 	//find first
 	for(int i = 0; i <26; i++) {
-		if(rules[i].name == i + 65)
-			create_first(rules, i + 65, temp_vals);
+		if(rules[i].name == i + 'A')
+			create_first(rules, i + 'A', temp_vals);
 	}
 
 	//find follow
 	for(int i = 0; i < 26; i++) {
-		if(rules[i].name == i + 65) {
+		if(rules[i].name == i + 'A') {
 			char* follow_buff = (char*) malloc(32);
 			assert(follow_buff);
 
@@ -61,7 +61,7 @@ int main(int argc, char *argv[]) {
 				temp_vals[i] = 0;
 			}		
 
-			create_follow(rules, i + 65, follow_buff, &follow_size, &follow_alloc_size, temp_vals);
+			create_follow(rules, i + 'A', follow_buff, &follow_size, &follow_alloc_size, temp_vals);
 			rules[i].follow = follow_buff;
 			rules[i].follow_size = follow_size;
 		}
