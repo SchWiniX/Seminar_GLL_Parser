@@ -100,11 +100,11 @@ int combine_rule(rule rules[], char rule, uint16_t* block_sizes, char* blocks, u
 	return 1;
 }
 
-// Assumes grammar file contains only well-formated grammars of type
+// Assumes grammer file contains only well-formated grammers of type
 // X -> a1 | a2 | ... | an for X a nonterminal and ai strings of terminals and nonterminals
-int create_grammar(rule rules[], FILE* grammar_file) {
+int create_grammer(rule rules[], FILE* grammer_file) {
 	assert(rules);
-	assert(grammar_file);
+	assert(grammer_file);
 
 	uint8_t is_processing_rule = 0;
 	uint16_t block_size = 0;
@@ -117,13 +117,13 @@ int create_grammar(rule rules[], FILE* grammar_file) {
 	char curr_char = '\0';
 	char name;
 
-	while((curr_char = fgetc(grammar_file)) != EOF) {
+	while((curr_char = fgetc(grammer_file)) != EOF) {
 		if(!is_processing_rule){
 			if(!is_non_terminal(curr_char)) {
 				return 1;
 			}
 			name = curr_char;
-			fgets(arrow_buff, 4, grammar_file);
+			fgets(arrow_buff, 4, grammer_file);
 			arrow_buff[4] = '\0';
 			if(strncmp(arrow_buff, " ->", 5)) {
 				printf("faulty formatting found terminating rule_file read earlys\n");

@@ -1,0 +1,7 @@
+S -> aSa
+S -> bSb
+S -> _
+#
+aabbaabbaa 1
+aabb 0
+aabbaa 1

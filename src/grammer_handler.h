@@ -9,7 +9,7 @@ int print_rules(rule rules[]);
 
 int print_rule_info(const struct rule_info* rule_info, uint8_t full);
 
-int create_grammar(rule rules[], FILE* grammar_file);
+int create_grammer(rule rules[], FILE* grammer_file);
 
 int combine_rule(rule rules[], char rule, uint16_t* block_sizes, char* blocks, uint16_t number_of_blocks);
 

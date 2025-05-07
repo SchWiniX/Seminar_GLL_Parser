@@ -15,6 +15,7 @@ int print_struct_info() {
 	printf("-----------------------------\nSize of Descriptors: %ld bytes\n", sizeof(descriptors));
 	printf("Size of gss_node: %ld bytes\n", sizeof(gss_node));
 	printf("Size of gss_edge: %ld bytes\n", sizeof(gss_edge));
+	printf("Size of rules: %ld bytes\n", sizeof(rule));
 	return 0;
 }
 
@@ -67,9 +68,12 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
+#ifdef DEBUG
+	print_rules(rules);
+#endif
 
-	uint16_t gss_node_alloc_size = 256;
-	uint16_t gss_edge_alloc_size = 256;
+	uint16_t gss_node_alloc_size = 1024;
+	uint16_t gss_edge_alloc_size = 2048;
 	uint16_t r_alloc_size = 128;
 	uint16_t u_alloc_size = 512;
 	uint16_t p_alloc_size = 128;
@@ -104,8 +108,8 @@ int main(int argc, char *argv[]) {
 		.p_size = 0,
 	};
 
-	//printf("-----------------------------\nResult:\n-----------------------------\n");
-	printf("Parser returned: %d\n", base_loop(&rule_info, &input_info, &gss_info, &set_info));
+	int res = base_loop(&rule_info, &input_info, &gss_info, &set_info);
+	printf("------------------\nParsing result: %d\n------------------\n", res);
 
 	ticks = clock() - ticks;
 	printf("Time taken %ld clock ticks, %lf ms\n", ticks, ((double) ticks) * 1000/ CLOCKS_PER_SEC);
