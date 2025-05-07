@@ -295,10 +295,10 @@ int base_loop(
 			case BASELOOP:
 				longjmp(L0_jump_buf, 1);
 			default:
-				printf("that shouldn't happen\n");
+				printf("welp that shouldn't happen\n");
 				exit(-1);
 		}
-		printf("that shouldn't happen\n");
+		printf("welp that shouldn't happen either\n");
 		exit(-1);
 	} else return 0;
 }
