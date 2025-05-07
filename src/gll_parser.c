@@ -27,11 +27,16 @@ int print_input_info(struct input_info* input_info) {
 }
 #endif
 
-int check_success(descriptors U_set[], uint16_t u_lower_idx, uint16_t u_higher_idx, uint16_t rule, uint32_t input_idx) {
+int check_success(descriptors U_set[], uint16_t u_lower_idx, uint16_t u_higher_idx, uint16_t u_alloc_size, uint16_t rule, uint32_t input_idx) {
 	assert(U_set);
-	int its_higher = U_set[u_higher_idx - 1].rule == rule &&
-		U_set[u_higher_idx - 1].input_idx == input_idx &&
-		U_set[u_higher_idx - 1].block_idx == U_set[u_higher_idx - 1].block_end_idx;
+	if(u_higher_idx == 0) {
+		u_higher_idx = u_alloc_size - 1;
+	} else {
+		u_higher_idx -= 1;
+	}
+	int its_higher = U_set[u_higher_idx].rule == rule &&
+		U_set[u_higher_idx].input_idx == input_idx &&
+		U_set[u_higher_idx].block_idx == U_set[u_higher_idx].block_end_idx;
 	int its_lower = U_set[u_lower_idx].rule == rule &&
 		U_set[u_lower_idx].input_idx == input_idx &&
 		U_set[u_lower_idx].block_idx == U_set[u_lower_idx].block_end_idx;
@@ -244,7 +249,13 @@ int base_loop(
 	print_set_info(rule_info->rules, set_info);
 #endif	
 
-	if(check_success(set_info->U_set, set_info->u_lower_idx, set_info->u_higher_idx, '0', input_info->input_size)) return 1;
+	if(check_success(
+				set_info->U_set,
+				set_info->u_lower_idx,
+				set_info->u_higher_idx,
+				set_info->u_alloc_size,
+				'0',
+				input_info->input_size)) return 1;
 	else if(set_info->r_size != 0) {
 		struct descriptors curr_descriptor = set_info->R_set[set_info->r_lower_idx];
 		set_info->r_lower_idx = (set_info->r_lower_idx + 1) % set_info->r_alloc_size;

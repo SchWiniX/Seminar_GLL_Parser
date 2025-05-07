@@ -11,7 +11,15 @@ int print_rule_info(const struct rule_info* rule_info, uint8_t full);
 
 int create_grammer(rule rules[], FILE* grammer_file);
 
-int combine_rule(rule rules[], char rule, uint16_t* block_sizes, char* blocks, uint16_t number_of_blocks);
+int combine_rule(
+		rule rules[],
+		char rule,
+		uint16_t* block_sizes,
+		char* blocks,
+		uint16_t number_of_blocks,
+		uint16_t number_of_blocks_arr_size,
+		uint16_t block_alloc_size
+		);
 
 int is_non_terminal(char character);
 

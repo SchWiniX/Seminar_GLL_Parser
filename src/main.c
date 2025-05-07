@@ -71,6 +71,8 @@ int main(int argc, char *argv[]) {
 			create_follow(rules, i + 65, rules[i].follow, temp_vals);
 		}
 	}
+	fclose(grammer_file);
+	grammer_file = NULL;
 
 #ifdef DEBUG
 	print_rules(rules);
@@ -125,15 +127,26 @@ int main(int argc, char *argv[]) {
 	ticks = clock() - ticks;
 	printf("Time taken %ld clock ticks, %lf ms\n", ticks, ((double) ticks) * 1000/ CLOCKS_PER_SEC);
 
-	free_desc_set(set_info.R_set);
+	if(free_desc_set(set_info.R_set)) {
+		printf("failed to free R_set likely a memory leak\n");
+	}
 	set_info.R_set = NULL;
-	free_desc_set(set_info.U_set);
+	if(free_desc_set(set_info.U_set)) {
+		printf("failed to free U_set likely a memory leak\n");
+	}
 	set_info.U_set = NULL;
-	free_p_set_entry_set(set_info.P_set);
+	if(free_p_set_entry_set(set_info.P_set)) {
+		printf("failed to free P_set likely a memory leak\n");
+	}
 	set_info.P_set = NULL;
-	free_gss(gss_info.gss_nodes, gss_info.gss_edges);
+	if(free_gss(gss_info.gss_nodes, gss_info.gss_edges)) {
+		printf("failed to free gss likely a memory leak\n");
+	}
+
 	gss_info.gss_nodes = NULL;
 	gss_info.gss_edges = NULL;
-	free_rules(rules);
+	if(free_rules(rules)) {
+		printf("failed to free rules likely a memory leak\n");
+	}
 	return 0;
 }

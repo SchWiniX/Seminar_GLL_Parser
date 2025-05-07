@@ -97,6 +97,7 @@ int main(int argc, char* argv[]) {
 				create_follow(rules, i + 'A', rules[i].follow, temp_vals);
 			}
 		}
+
 		rule_init_ticks = clock() - rule_init_ticks;
 
 		char next_char;
@@ -119,9 +120,9 @@ int main(int argc, char* argv[]) {
 			}
 			if(next_char == EOF) break;
 			if(input_size >= input_alloc_size) {
-					input_alloc_size *= 2;
-					input = realloc(input, input_alloc_size);
-					assert(input);
+				input_alloc_size *= 2;
+				input = realloc(input, input_alloc_size);
+				assert(input);
 			}
 			input[input_size] = '\0';
 			switch (fgetc(grammer_file)) {
@@ -197,17 +198,26 @@ int main(int argc, char* argv[]) {
 				p_final_alloc_size = set_info.p_alloc_size;
 				final_res = res;
 
-				free_desc_set(set_info.R_set);
+				if(free_desc_set(set_info.R_set)) {
+					printf("failed to free R_set likely a memory leak\n");
+				}
 				set_info.R_set = NULL;
-				free_desc_set(set_info.U_set);
+				if(free_desc_set(set_info.U_set)) {
+					printf("failed to free U_set likely a memory leak\n");
+				}
 				set_info.U_set = NULL;
-				free_p_set_entry_set(set_info.P_set);
+				if(free_p_set_entry_set(set_info.P_set)) {
+					printf("failed to free P_set likely a memory leak\n");
+				}
 				set_info.P_set = NULL;
-				free_gss(gss_info.gss_nodes, gss_info.gss_edges);
+				if(free_gss(gss_info.gss_nodes, gss_info.gss_edges)) {
+					printf("failed to free gss likely a memory leak\n");
+				}
 				gss_info.gss_nodes = NULL;
 				gss_info.gss_edges = NULL;
 			}
 			free(input);
+			input = NULL;
 
 			char* success;
 			if(final_res == should) success = "\x1b[32mpassed\x1b[0m\n";
@@ -228,6 +238,12 @@ int main(int argc, char* argv[]) {
 					success
 			);
 		}
-		free_rules(rules);
+		fclose(grammer_file);
+		grammer_file = NULL;
+		if(free_rules(rules)) {
+			free_rules(rules);
+		}
 	}
+	closedir(dr);
+	
 }

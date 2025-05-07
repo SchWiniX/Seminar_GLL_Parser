@@ -69,7 +69,15 @@ int is_non_terminal(char character) {
 	return character >= 'A' && character <= 90;
 }
 
-int combine_rule(rule rules[], char rule, uint16_t* block_sizes, char* blocks, uint16_t number_of_blocks) {
+int combine_rule(
+		rule rules[],
+		char rule,
+		uint16_t* block_sizes,
+		char* blocks,
+		uint16_t number_of_blocks,
+		uint16_t number_of_blocks_arr_size,
+		uint16_t block_alloc_size
+		) {
 
 	assert(rule);
 	assert(block_sizes);
@@ -84,23 +92,33 @@ int combine_rule(rule rules[], char rule, uint16_t* block_sizes, char* blocks, u
 		return 0;
 	}
 	//pain
-	rules[idx].blocks = (char*) realloc(rules[idx].blocks, rules[idx].block_sizes[rules[idx].number_of_blocks] + block_sizes[number_of_blocks]);
-	assert(rules[idx].blocks);
-	rules[idx].block_sizes= (uint16_t*) realloc(rules[idx].block_sizes, (rules[idx].number_of_blocks + number_of_blocks) * sizeof(uint16_t));
-	assert(rules[idx].block_sizes);
+	uint16_t old_total_block_size = rules[idx].block_sizes[rules[idx].number_of_blocks]; 
+	uint16_t new_total_block_size = block_sizes[number_of_blocks];
 
-	for(int i = 0; i < block_sizes[number_of_blocks]; i++) {
-		rules[idx].blocks[i + rules[idx].block_sizes[rules[idx].number_of_blocks]] = blocks[i];
+	//loop through old blocks
+	for(int i = 0; i < old_total_block_size; i++) {
+		if(new_total_block_size + i >= block_alloc_size) {
+			block_alloc_size *= 2;
+			blocks = realloc(blocks, block_alloc_size);
+			assert(blocks);
+		}
+		blocks[i + new_total_block_size] = rules[idx].blocks[i];
 	}
+	free(rules[idx].blocks);
+	rules[idx].blocks = blocks;
 
-	uint16_t curr_rule_total_block_size = rules[idx].block_sizes[rules[idx].number_of_blocks];
-	for(int i = 0; i <= number_of_blocks; i++) {
-		rules[idx].block_sizes[i + rules[idx].number_of_blocks] = block_sizes[i] + curr_rule_total_block_size;
+	for(int i = 1; i <= rules[idx].number_of_blocks; i++) {
+		if(number_of_blocks + i >= number_of_blocks_arr_size) {
+			number_of_blocks_arr_size *= 2;
+			block_sizes = realloc(block_sizes, number_of_blocks_arr_size * sizeof(uint16_t));
+			assert(block_sizes);
+		}
+		block_sizes[i + number_of_blocks] = rules[idx].block_sizes[i] + new_total_block_size;
 	}
+	free(rules[idx].block_sizes);
+	rules[idx].block_sizes = block_sizes;
 
 	rules[idx].number_of_blocks += number_of_blocks;
-	free(blocks);
-	free(block_sizes);
 	return 1;
 }
 
@@ -140,7 +158,7 @@ int create_grammer(rule rules[], FILE* grammer_file) {
 			assert(block_buff);
 
 			number_of_blocks = 1;
-			block_size_buff = (uint16_t*) malloc(number_of_blocks_arr_size);
+			block_size_buff = (uint16_t*) malloc(number_of_blocks_arr_size * sizeof(uint16_t));
 			assert(block_size_buff);
 			block_size_buff[0] = 0;
 			continue;
@@ -151,29 +169,29 @@ int create_grammer(rule rules[], FILE* grammer_file) {
 				case '|' :
 					if(number_of_blocks >= number_of_blocks_arr_size) {
 						number_of_blocks_arr_size *= 2;
-						block_size_buff = (uint16_t*) realloc(block_size_buff, number_of_blocks_arr_size);
+						block_size_buff = (uint16_t*) realloc(block_size_buff, number_of_blocks_arr_size * sizeof(uint16_t));
 						assert(block_size_buff);
 					}
 					block_size_buff[number_of_blocks++] = block_size;
 					break;
 				case '\n':
-					if(number_of_blocks >= number_of_blocks_arr_size) {
+					if(number_of_blocks + 1>= number_of_blocks_arr_size) {
 						number_of_blocks_arr_size *= 2;
-						block_size_buff = (uint16_t*) realloc(block_size_buff, number_of_blocks_arr_size);
+						block_size_buff = (uint16_t*) realloc(block_size_buff, number_of_blocks_arr_size * sizeof(uint16_t));
 						assert(block_size_buff);
 					}
 					block_size_buff[number_of_blocks] = block_size;
-					combine_rule(rules, name, block_size_buff, block_buff, number_of_blocks);
+					combine_rule(rules, name, block_size_buff, block_buff, number_of_blocks, number_of_blocks_arr_size, block_alloc_size);
 					is_processing_rule = 0;
 					break;
 				case EOF:
-					if(number_of_blocks >= number_of_blocks_arr_size) {
+					if(number_of_blocks + 1 >= number_of_blocks_arr_size) {
 						number_of_blocks_arr_size *= 2;
-						block_size_buff = (uint16_t*) realloc(block_size_buff, number_of_blocks_arr_size);
+						block_size_buff = (uint16_t*) realloc(block_size_buff, number_of_blocks_arr_size * sizeof(uint16_t));
 						assert(block_size_buff);
 					}
 					block_size_buff[number_of_blocks] = block_size;
-					combine_rule(rules, name, block_size_buff, block_buff, number_of_blocks);
+					combine_rule(rules, name, block_size_buff, block_buff, number_of_blocks, number_of_blocks_arr_size, block_alloc_size);
 					return 0;
 				default:
 					if(block_size >= block_alloc_size) {
@@ -330,18 +348,19 @@ int create_follow(const rule rules[], char rule, uint64_t follow[2], uint8_t tem
 }
 
 int free_rules(rule rules[]) {
+	int res = 0;
 	for(int i = 0; i < 26; i++) {
 		if(rules[i].name != i + 'A') continue;
-		if(!rules[i].block_sizes) {
+		if(rules[i].block_sizes) {
 			free(rules[i].block_sizes);
 			rules[i].block_sizes = NULL;
-		}
-		if(!rules[i].blocks) {
+		} else res += 1;
+		if(rules[i].blocks) {
 			free(rules[i].blocks);
 			rules[i].blocks= NULL;
-		}
+		} else res += 2;
 	}
-	return 0;
+	return res;
 }
 
 int first_follow_test(const struct rule_info* rule_info, const char c) {

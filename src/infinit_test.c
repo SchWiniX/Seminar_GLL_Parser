@@ -115,6 +115,8 @@ int main(int argc, char* argv[]) {
 		}
 	}
 	rule_init_ticks = clock() - rule_init_ticks;
+	fclose(grammer_file);
+	grammer_file = NULL;
 
 	while(count) {
 		if(count != -1) count -= 1;
@@ -208,17 +210,26 @@ int main(int argc, char* argv[]) {
 			p_final_alloc_size = set_info.p_alloc_size;
 			final_res = res;
 		
-			free_desc_set(set_info.R_set);
+			if(free_desc_set(set_info.R_set)) {
+				printf("failed to free R_set likely a memory leak\n");
+			}
 			set_info.R_set = NULL;
-			free_desc_set(set_info.U_set);
+			if(free_desc_set(set_info.U_set)) {
+				printf("failed to free U_set likely a memory leak\n");
+			}
 			set_info.U_set = NULL;
-			free_p_set_entry_set(set_info.P_set);
+			if(free_p_set_entry_set(set_info.P_set)) {
+				printf("failed to free P_set likely a memory leak\n");
+			}
 			set_info.P_set = NULL;
-			free_gss(gss_info.gss_nodes, gss_info.gss_edges);
+			if(free_gss(gss_info.gss_nodes, gss_info.gss_edges)) {
+				printf("failed to free gss likely a memory leak\n");
+			}
 			gss_info.gss_nodes = NULL;
 			gss_info.gss_edges = NULL;
 		}
 		free(input);
+		input = NULL;
 		char* success;
 		if(final_res == should) success = "\x1b[32mpassed\x1b[0m\n";
 		else success = "\x1b[31mfailed\x1b[0m\n";
@@ -239,5 +250,7 @@ int main(int argc, char* argv[]) {
 				success
 		);
 	}
-	free_rules(rules);
+	if(free_rules(rules)) {
+		printf("failed to free rules likely a memory leak\n");
+	}
 }

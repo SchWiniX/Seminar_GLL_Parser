@@ -182,9 +182,10 @@ gss_edge* init_edge_array(uint32_t size) {
 }
 
 int free_gss(gss_node* gss_nodes, gss_edge* gss_edges) {
-	if(!gss_nodes)
-		free(gss_nodes);
-	if(!gss_edges)
-		free(gss_edges);
-	return 0;	
+	int res = 0;
+	if(!gss_nodes) res += 1;
+	free(gss_nodes);
+	if(!gss_edges) res += 2;
+	free(gss_edges);
+	return res;
 }
