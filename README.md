@@ -12,7 +12,7 @@ Assumptions:
 - Capitilized letters are used as non terminals, the set of terminals is then the remainder of characters not mentioned above
 
 ## Compilation
-The makefile uses the gcc compiler and gives 3 options and compiles to 'builds/':
+The makefile uses the gcc compiler and gives (3 + 1) options and compiles to 'builds/':
 
     make build
 Builds gll_parser without any additional debug information
@@ -21,7 +21,10 @@ Builds gll_parser without any additional debug information
 Also builds gll_parser but with the -g flag (see man page of gcc) and additinal log statments. Who print information about the data structure state during execution.
 
     make test
-Build both gll_parser_test and gll_parser_inf_test who's usage is explained in the testing section.
+Build both gll_parser_test and gll_parser_inf_test who's usage is explained in the [#File Testing](#file_testing) and [#Generative Testing](#generative_testing) section respectifly.
+
+    make generator
+Builds input_gen who's usage is explained in the [Input Generator](#input_generator) section.
 
 ## Execution
 ### Default Parser
@@ -41,8 +44,8 @@ Executes the algorithm one with the provided grammer and input.
 ### File Testing
 For each grammer file in the folder at 'folder_path' executes the algorithm 'repetition' times on each 'inputi' in the same grammer_file denoting an execution passed if the parser returns the same value as provided next to the input.
 
-    gll_parser_test 'folder_path' 'repetition'
-- '`folder_path'` is a path to a folder containing files with grammer of format:
+    gll_parser_test 'folder_path' | 'grammer_file" 'repetition'
+- '`folder_path'` is a path to a folder containing files with grammer of format `'grammer_file'` can optionaly be just one specific file:
 
         X -> X1 | X2 | ...
         X -> Z
@@ -68,6 +71,18 @@ Executes the algorithm 'repetition' times on an input concatinated of all substr
  - `'count'` will be the amounts of tests generated (-1 to never terminate)
  - `'op'` is of form \"+N\" or \"*N\" (N being a natural umber) denoting the growth of the input per new test
  - `'substr0...n'` the input given to the parse is the concatination of these substring where all substr's with odd indicies are repeated
+
+### Input Generation
+Generates for a given grammer valid inputs.
+
+    input_gen 'grammer_file' 'count'
+ - `'grammer_file'` should be a path to a file containing grammers of format:
+
+        X -> X_1 | X_2 | ...
+        Y -> Y_1 | Y_2 | ...
+        ...
+
+ - `'count'` will be the amounts of tests generated (-1 to never terminate)
 
 # Implementation details
 The following section will discuss how the algorithm of the paper was implemented as a C program. It is assumed the reader has some understanding of the working pseudo code from the paper.
