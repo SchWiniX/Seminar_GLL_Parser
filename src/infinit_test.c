@@ -14,11 +14,11 @@
 #include "debug.h"
 
 void print_help() {
-	printf("Please provide vaild arguments:\n\n\tgll_parser_test grammer_file repetitions count op substr0 substr1 ...\n\n");
+	printf("usage: gll_parser_test grammer_file repetitions count op substr0 substr1 ...\n\n");
 	printf(" - 'grammer_file' should be a path to a file containing grammers of format:\n");
-	printf("X -> X_1 | X_2 | ...\n");
-	printf("Y -> Y_1 | Y_2 | ...\n");
-	printf("...\n");
+	printf("\tX -> X_1 | X_2 | ...\n");
+	printf("\tY -> Y_1 | Y_2 | ...\n");
+	printf("\t...\n");
 	printf("the grammer will be done reading if it reads EOF or a terminal on the LHS\n");
 	printf(" - 'repetition' is a natural number denoting the amount of times the same input is parsed (time is then averaged)\n");
 	printf(" - 'count' will be the amounts of tests (-1 for non termination)\n");

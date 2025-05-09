@@ -54,3 +54,6 @@ dkms.conf
 
 # Output text files
 *.txt
+
+# ignore generated test files cause they are huge
+gen_test/*
