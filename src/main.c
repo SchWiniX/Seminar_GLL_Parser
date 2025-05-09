@@ -20,8 +20,23 @@ int print_struct_info() {
 	return 0;
 }
 
+void print_help() {
+	printf("usage: gll_parser 'grammer_file' 'input'\n\n");
+	printf(" - 'grammer_file' is a path to a file containing a grammer of format:\n");
+	printf("\tX -> X_1 | X_2 | ...\n");
+	printf("\tY -> Y_1 | Y_2 | ...\n");
+	printf("\t...\n");
+	printf(" - 'input' is a string that the parser will be run on\n");
+	exit(1);
+}
+
 int main(int argc, char *argv[]) {
 	clock_t ticks = clock();
+	switch (argc) {
+		case 3:
+			break;
+		default: print_help();
+	}
 
 #ifdef DEBUG
 	print_struct_info();
@@ -29,11 +44,6 @@ int main(int argc, char *argv[]) {
 	for(int i = 0; i < argc; i++)
 		printf(" %d: %s\n", i, argv[i]);
 #endif
-	
-	if(argc != 3) {
-		printf("Wrong number of arguments. Please provide a path to the grammer file and an input string\n");
-		return 1;
-	}
 
 	FILE* grammer_file = fopen(argv[1], "r");
 	assert(grammer_file);
