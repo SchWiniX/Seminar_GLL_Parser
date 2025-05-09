@@ -12,7 +12,6 @@
 #include "info_struct.h"
 #include "debug.h"
 
-
 int print_struct_info() {
 	printf("-----------------------------\nSize of Descriptors: %ld bytes\n", sizeof(descriptors));
 	printf("Size of gss_node: %ld bytes\n", sizeof(gss_node));

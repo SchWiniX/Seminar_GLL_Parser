@@ -1,1 +1,1 @@
-#undef DEBUG
+#define DEBUG
