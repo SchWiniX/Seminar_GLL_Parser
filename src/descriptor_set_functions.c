@@ -60,11 +60,12 @@ USET:
 
 PSET:
 
+	printf("P_set: [%d:%d] { ", set_info->p_size, set_info->p_alloc_size);
+
 	if(!set_info->p_size) {
 		printf("}\n");
 		return 0;
 	}
-	printf("P_set: [%d:%d] { ", set_info->p_size, set_info->p_alloc_size);
 	i = set_info->p_lower_idx;
 	printf("(%d, %d)", set_info->P_set[i].input_idx, set_info->P_set[i].gss_node_idx);
 	i = (i + 1) % set_info->p_alloc_size;
@@ -284,7 +285,7 @@ int add_p_set_entry(struct set_info* set_info, uint32_t gss_node_idx, uint32_t i
 	return 0;
 }
 
-int add_descriptor_for_P_set(const struct gss_info* gss_info, struct set_info* set_info, const uint32_t new_node) {
+int add_descriptor_for_P_set(const struct gss_info* gss_info, struct set_info* set_info, const uint32_t new_node, const uint32_t new_edge) {
 
 	assert(gss_info);
 	assert(gss_info->gss_nodes);
@@ -295,11 +296,12 @@ int add_descriptor_for_P_set(const struct gss_info* gss_info, struct set_info* s
 	for(i = set_info->p_lower_idx; i < set_info->p_higher_idx; i = (i + 1) % set_info->p_alloc_size) {
 		if(new_node != set_info->P_set[i].gss_node_idx) continue;
 		gss_node curr_node = gss_info->gss_nodes[new_node];
+		gss_edge curr_edge = gss_info->gss_edges[new_edge];
 		struct rule_info r = {
 			.rules = NULL,
 			.rule = curr_node.rule,
-			.start_idx = curr_node.block_idx,
-			.end_idx = curr_node.block_end_idx,
+			.start_idx = curr_edge.block_idx,
+			.end_idx = curr_edge.block_end_idx,
 		};
 		assert(
 				set_info->P_set[i].input_idx == set_info->lesser_input_idx ||
@@ -310,7 +312,7 @@ int add_descriptor_for_P_set(const struct gss_info* gss_info, struct set_info* s
 				set_info,
 				set_info->P_set[i].input_idx,
 				gss_info->gss_node_idx,
-				curr_node.label_type
+				curr_edge.label_type
 				);
 	}
 	return 0;

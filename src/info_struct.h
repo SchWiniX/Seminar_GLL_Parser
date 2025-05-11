@@ -27,15 +27,16 @@ struct input_info {
 
 typedef struct gss_node{
 	uint32_t input_idx;
-	uint16_t block_idx;
-	uint16_t block_end_idx;
-	uint8_t label_type;
 	char rule;
 } gss_node;
 
 typedef struct gss_edge {
 	uint32_t src_node;
 	uint32_t target_node;
+	uint16_t block_idx;
+	uint16_t block_end_idx;
+	char rule;
+	uint8_t label_type;
 } gss_edge;
 
 struct gss_info {

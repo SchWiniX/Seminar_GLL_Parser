@@ -208,19 +208,17 @@ int base_loop(
 	assert(set_info->P_set);
 
 	gss_info->gss_nodes[0].rule = '0';
-	gss_info->gss_nodes[0].block_idx = 0;
-	gss_info->gss_nodes[0].block_end_idx = 0;
 	gss_info->gss_nodes[0].input_idx = 0;
-	gss_info->gss_nodes[0].label_type = INVALID;
 
 	gss_info->gss_nodes[1].rule = '0';
-	gss_info->gss_nodes[1].block_idx = 0;
-	gss_info->gss_nodes[1].block_end_idx = 0;
 	gss_info->gss_nodes[1].input_idx = 0;
-	gss_info->gss_nodes[1].label_type = BASELOOP;
 
 	gss_info->gss_edges[0].src_node = 1;
 	gss_info->gss_edges[0].target_node = 0;
+	gss_info->gss_edges[0].rule = 'S';
+	gss_info->gss_edges[0].block_idx = 0;
+	gss_info->gss_edges[0].block_end_idx = 0;
+	gss_info->gss_edges[0].label_type = BASELOOP;
 
 	gss_info->gss_node_array_size = 2;
 	gss_info->gss_edge_array_size = 1;

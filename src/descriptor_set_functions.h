@@ -33,7 +33,7 @@ int clean_lesser_from_P(struct set_info* set_info);
 
 int add_p_set_entry(struct set_info* set_info, uint32_t gss_node_idx, uint32_t input_idx);
 
-int add_descriptor_for_P_set(const struct gss_info* gss_info, struct set_info* set_info, const uint32_t new_node);
+int add_descriptor_for_P_set(const struct gss_info* gss_info, struct set_info* set_info, const uint32_t new_node, const uint32_t new_edge);
 
 descriptors* init_descriptor_set(const uint16_t size);
 int free_desc_set(descriptors* set);

@@ -18,18 +18,10 @@ int print_gss_info(rule rules[], struct gss_info* gss_info) {
 		printf("}\n");
 		goto EDGES;
 	}
-	printf("(%d: %c, [%d[", 0, gss_info->gss_nodes[0].rule, gss_info->gss_nodes[0].block_idx);
-	for(int j = gss_info->gss_nodes[0].block_idx; j < gss_info->gss_nodes[0].block_end_idx; j++) {
-		printf("%c", rules[gss_info->gss_nodes[0].rule - 'A'].blocks[j]);
-	}
-	printf("]%d], %d, %d)", gss_info->gss_nodes[0].block_end_idx, gss_info->gss_nodes[0].input_idx, gss_info->gss_nodes[0].label_type);
+	printf("(%d: %c, %d)", 0, gss_info->gss_nodes[0].rule, gss_info->gss_nodes[0].input_idx);
 
 	for(int i = 1; i < gss_info->gss_node_array_size; i++) {
-		printf(", (%d: %c, [%d[", i, gss_info->gss_nodes[i].rule, gss_info->gss_nodes[i].block_idx);
-		for(int j = gss_info->gss_nodes[i].block_idx; j < gss_info->gss_nodes[i].block_end_idx; j++) {
-			printf("%c", rules[gss_info->gss_nodes[i].rule - 'A'].blocks[j]);
-		}
-		printf("]%d], %d, %d)", gss_info->gss_nodes[i].block_end_idx, gss_info->gss_nodes[i].input_idx, gss_info->gss_nodes[i].label_type);
+		printf(", (%d: %c, %d)", 0, gss_info->gss_nodes[i].rule, gss_info->gss_nodes[i].input_idx);
 	}
 	printf(" }, gss_node_idx: %d\n", gss_info->gss_node_idx);
 
@@ -40,9 +32,17 @@ EDGES:
 		printf("}\n");
 		return 0;
 	}
-	printf("(%d -> %d)", gss_info->gss_edges[0].src_node, gss_info->gss_edges[0].target_node);
+	printf("(%d -> %d : [%d[)", gss_info->gss_edges[0].src_node, gss_info->gss_edges[0].target_node, gss_info->gss_edges[0].block_idx);
+	for(int j = gss_info->gss_edges[0].block_idx; j < gss_info->gss_edges[0].block_end_idx; j++) {
+		printf("%c", rules[gss_info->gss_edges[0].rule - 'A'].blocks[j]);
+	}
+	printf("]%d], %d)", gss_info->gss_edges[0].block_end_idx, gss_info->gss_edges[0].label_type);
 	for(int i = 1; i < gss_info->gss_edge_array_size; i++) {
-		printf(", (%d -> %d)", gss_info->gss_edges[i].src_node, gss_info->gss_edges[i].target_node);
+		printf(", (%d -> %d : [%d[)", gss_info->gss_edges[i].src_node, gss_info->gss_edges[i].target_node, gss_info->gss_edges[i].block_idx);
+		for(int j = gss_info->gss_edges[i].block_idx; j < gss_info->gss_edges[i].block_end_idx; j++) {
+			printf("%c", rules[gss_info->gss_edges[i].rule - 'A'].blocks[j]);
+		}
+		printf("]%d], %d)", gss_info->gss_edges[i].block_end_idx, gss_info->gss_edges[i].label_type);
 	}
 	printf(" }\n");
 
@@ -70,18 +70,24 @@ uint32_t create(
 	assert(set_info->U_set);
 	assert(set_info->P_set);
 
+#ifdef DEBUG
+	printf("creating GSS node: ");
+#endif
+
+
 	//check if there is already a gss_node with these values
 	uint32_t idx_node;
 	for(idx_node = 0; idx_node < gss_info->gss_node_array_size; idx_node++){
 		if(
 				gss_info->gss_nodes[idx_node].rule == rule_info->rule &&
-				gss_info->gss_nodes[idx_node].block_idx == rule_info->start_idx &&
 				gss_info->gss_nodes[idx_node].input_idx == input_info->input_idx
 			) break;
 	}
 
+
 	//add a new gss_node
 	if(idx_node == gss_info->gss_node_array_size) {
+
 		//Realloc the gss_node array if its to large since we are about to add a new node
 		if(gss_info->gss_node_array_size >= gss_info->gss_node_alloc_array_size) {
 			gss_info->gss_node_alloc_array_size *= 2;
@@ -90,19 +96,22 @@ uint32_t create(
 		}
 
 		gss_info->gss_nodes[gss_info->gss_node_array_size].rule = rule_info->rule;
-		gss_info->gss_nodes[gss_info->gss_node_array_size].block_idx = rule_info->start_idx;
-		gss_info->gss_nodes[gss_info->gss_node_array_size].block_end_idx = rule_info->end_idx;
 		gss_info->gss_nodes[gss_info->gss_node_array_size].input_idx = input_info->input_idx;
-		gss_info->gss_nodes[gss_info->gss_node_array_size].label_type = label_type;
 
+#ifdef DEBUG
+		printf("%d, ", idx_node);
+#endif
 	}
 
-	//check if there exists an edge from gss_nodes[idx_node] to c_n
+	//check if there exists an edge from gss_nodes[idx_node] to gss_node_idx
 	uint32_t idx_edge;
 	for(idx_edge = 0; idx_edge < gss_info->gss_edge_array_size; idx_edge++) {
 		if(
 				gss_info->gss_edges[idx_edge].src_node == idx_node &&
-				gss_info->gss_edges[idx_edge].target_node == gss_info->gss_node_idx
+				gss_info->gss_edges[idx_edge].target_node == gss_info->gss_node_idx &&
+				gss_info->gss_edges[idx_edge].rule == rule_info->rule &&
+				gss_info->gss_edges[idx_edge].block_idx == rule_info->start_idx &&
+				gss_info->gss_edges[idx_edge].label_type == label_type
 			) break;
 	}
 
@@ -117,11 +126,19 @@ uint32_t create(
 		//add a new edge
 		gss_info->gss_edges[gss_info->gss_edge_array_size].src_node = idx_node;
 		gss_info->gss_edges[gss_info->gss_edge_array_size].target_node = gss_info->gss_node_idx;
+		gss_info->gss_edges[gss_info->gss_edge_array_size].rule = rule_info->rule;
+		gss_info->gss_edges[gss_info->gss_edge_array_size].block_idx = rule_info->start_idx;
+		gss_info->gss_edges[gss_info->gss_edge_array_size].block_end_idx = rule_info->end_idx;
+		gss_info->gss_edges[gss_info->gss_edge_array_size].label_type = label_type;
 		
 		gss_info->gss_edge_array_size += 1;
 	}
 
-	add_descriptor_for_P_set(gss_info, set_info, idx_node);
+#ifdef DEBUG
+	printf("%d -> %d\n", idx_node, gss_info->gss_node_idx);
+#endif
+
+	add_descriptor_for_P_set(gss_info, set_info, idx_node, idx_edge);
 
 	if(idx_node == gss_info->gss_node_array_size) {//if node has been added
 		gss_info->gss_node_array_size += 1;
@@ -148,22 +165,23 @@ int pop(
 
 	if(gss_info->gss_node_idx == 0) return 1;
 
-	add_p_set_entry(set_info, gss_info->gss_node_idx, input_info->input_idx);
+	if(add_p_set_entry(set_info, gss_info->gss_node_idx, input_info->input_idx)) return 1;
 	for(int i = 0; i < gss_info->gss_edge_array_size; i++) {
 		if(gss_info->gss_edges[i].src_node == gss_info->gss_node_idx) {
 			gss_node curr_node = gss_info->gss_nodes[gss_info->gss_node_idx];
+			gss_edge curr_edge = gss_info->gss_edges[i];
 			struct rule_info r = {
 				.rules = NULL,
 				.rule = curr_node.rule,
-				.start_idx = curr_node.block_idx,
-				.end_idx = curr_node.block_end_idx,
+				.start_idx = curr_edge.block_idx,
+				.end_idx = curr_edge.block_end_idx,
 			};
 			add_descriptor(
 					&r,
 					set_info,
 					input_info->input_idx,
 					gss_info->gss_edges[i].target_node,
-					curr_node.label_type
+					curr_edge.label_type
 					);
 		}
 	}
