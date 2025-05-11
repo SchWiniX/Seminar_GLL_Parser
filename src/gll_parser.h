@@ -5,9 +5,11 @@
 #include "descriptor_set_functions.h"
 #include "grammer_handler.h"
 
+enum LABEL_TYPE {PARTIAL_ALTERNATIVE, WHOLE_ALTERNATIVE, RULE, BASELOOP, INVALID, SIZE};
+
 int print_input_info(struct input_info* input_info);
 
-void continue_production(
+void continue_alternative(
 		struct rule_info* rule_info,
 		struct input_info* input_info,
 		struct gss_info* gss_info,
@@ -15,7 +17,7 @@ void continue_production(
 		);
 
 
-void start_new_production(
+void start_new_alternative(
 		struct rule_info* rule_info,
 		struct input_info* input_info,
 		struct gss_info* gss_info,

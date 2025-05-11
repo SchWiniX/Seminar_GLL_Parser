@@ -1,4 +1,4 @@
-GLL Parser Implementation
+GLL Recogniser Implementation
 =========================
 
 # Introduction
@@ -83,7 +83,8 @@ Generates for a given grammer valid inputs.
         ...
 
  - `'count'` will be the amounts of tests generated (-1 to never terminate)
-
+> [!CAUTION]  
+> The implementation of input generation is rather naive hence its memory usage is absurd so its highly recommented to not execute it for a prolonged time!!!
 # Implementation details
 The following section will discuss how the algorithm of the paper was implemented as a C program. It is assumed the reader has some understanding of the working pseudo code from the paper.
 ## Topics
@@ -91,7 +92,7 @@ The following section will discuss how the algorithm of the paper was implemente
 2. [GSS](#gss)
 3. [Sets](#sets)
 
-## Lables
+## Labels
 The pseudo code from the paper uses some form of dynamic label onwhich they call goto. Clearly this is not something directly supported by C. Hence we will need a different approach.
 We differentiate between 4 different label types: 
 - `base_loop`
@@ -99,30 +100,31 @@ We differentiate between 4 different label types:
 - `start_new_production`
 - `continue_production`
 
-We can then implement each of these types as its seperate function and just store an enum instead of a label in all datastructures and index into the correct functions.
+We can then implement each of these types as its seperate function and just store a enums (and state information) instead of a label in all data structures and index into the correct functions.
 This however leaves us with a new problem. Since we are jumping from function to function we will at some point fill our call stack.
 We can of course solve this quite quickly we could just change our base_loop from a function that is called everytime to a while loop that checks if R is empty and all other functions just return back when done.
 For this implementation we have however choosen a slightly different approach (not because of it having much of an advantage but mostly just cause we wanted to). We instead of following the normal call/return structure most are familiar with instead use `longjump` and `setjmp`. Hence we call `setjmp` in the `base_loop` function and all the other function when they reach the end of a derivation call `longjump` to return to the `base_loop` conviniently ereasing the call stack used by the derivation.
 The only caviat in this approach is that we must store all changes we want to keep accross jumps in either heap memory or stack memory assigned before the call to `set_jump`
 
 ## GSS
-There is not much to talk about the implementation of the GSS there is two main approaches:There is not much to talk about the implementation of the GSS there is two main approaches:
-- Build a graph based on nodes containing pointers to other nodes
-- Contain the graph nodes in some form of an array/data structure. And store edges as indicies.
-As we have to search throught the nodes the second approach seems much more reasonable. We contain edges as a pair of indicies in a seperate array for the same reason.
+The GSS graph was implemented with the improvments described in [Faster, Practical GLL Parsing](https://ir.cwi.nl/pub/24026/24026B.pdf). The actuall datastructure are just two dynamic array one containing nodes and edges. A comparison to a more traditional GSS can be found in the (performance)[#performace] section.
 
 ## Sets
 This is arguable the most interesting part of any implementation as there is quite a bit of room here for how these sets are implemented. In a higher level language it is probably a good idea to just use some form of a set implementation if that language provieds a good one. C does however to my knowledge not provide such a data structure in its standart library. Hence since I'm quite attached to my sanity we'll need to find a different approach.
 #### Naive Approach
-The naive approach of course is to just implement all 3 sets as dynamically growing array. Where we treat R as a stack. Clearly this brings heavy memory problems as the U and P stuctures may grow large quickly.
+The naive approach of course is to just implement all 3 sets as dynamically growing array. Where we treat $R$ as a stack. Clearly this brings heavy memory problems as the $U$ and $P$ stuctures may grow large quickly.
 
 #### Paper's Approach
-The paper provides an idea of how this could be implemented a bit more efficiently. They propose to make R and U into a 2 dimensional data structures R$_i$, U$_i$. Where $i$ is the input position. This has one main benefit since if R$_i$ is empty (hence we have processed the last descriptor at input pos $i$) we can free U$_i$.
+The paper provides an idea of how this could be implemented a bit more efficiently. They propose to make $R$ and $U$ into a 2 dimensional data structures $R_i, U_i$. Where $i$ is the input position. This has one main benefit since if $R_i$ is empty (hence we have processed the last descriptor at input pos i) we can free $U_i$.
 This implementation would be quite possible in C. Where this is a 2D dynamic array with a pool that instead of freeing unused memory holds on to them for reuse as higher indicies.
 
 #### Ring buffer Approach
-This is the approach used in this implementation. Mainly cause of its simplicity and the fact that we still do not use that much memory with this approach.
-The idea is as follows if we can slightly modify the algorithm s.t. it is garanteed that if it picks a descriptor A from R in the `base_loop` with input pos i. By the time the algorithm writes new descriptors B_1 ... B_n to R derived from computation on A the input position of B_i is either i or i + 1.
+This is the approach used in this implementation. Mainly cause of its simplicity and the fact that it still performes well with how much memory this approach uses.
+The idea is as follows if we can slightly modify the algorithm s.t. it is garanteed that if it picks a descriptor $A$ from $R$ in the `base_loop` with input pos $i$. By the time the algorithm writes new descriptors $B_1$ ... $B_n$ to $R$ derived from computation on $A$ the input position of $B_i$ is either $i$ or $i + 1$.
 Then can implement R, U and P as a sorted ring buffer where descriptors of size i are always added to R on one side (lets call this side left) of the ring and i+1 to the other (right) which ensure it remains sorted. New descriptors are always picked from the left and if our descriptor has a higher input position then the last one we can move the left pointer of U and P past all descriptors with the old input size.
 
 ##### Modifing the algorithm
+If we analize the original pseudo code given in the paper we can see that the only way we will ever parse more then one char before returning back to L0 (baseloop) is in the definition for $code(A::=x_1...x_f, j)$ for when $x_1$ is a terminal. Since we then enter $code(x_2...x_f, j, A)$ which them may parse another character before it then calls $goto L_0$. We can change this quite easily by just having the algorithm instead of entering $code(x_2...x_f, j, A)$, add a descriptor that corresponts to this call.
+
+This modification and the behavior (mainly the sorting) of our ring buffer ensures that we will always try every possibility at a given input position before moving to the next position.
+

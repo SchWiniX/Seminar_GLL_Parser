@@ -32,17 +32,17 @@ EDGES:
 		printf("}\n");
 		return 0;
 	}
-	printf("(%d -> %d : [%d[)", gss_info->gss_edges[0].src_node, gss_info->gss_edges[0].target_node, gss_info->gss_edges[0].block_idx);
-	for(int j = gss_info->gss_edges[0].block_idx; j < gss_info->gss_edges[0].block_end_idx; j++) {
-		printf("%c", rules[gss_info->gss_edges[0].rule - 'A'].blocks[j]);
+	printf("(%d -> %d : [%d[)", gss_info->gss_edges[0].src_node, gss_info->gss_edges[0].target_node, gss_info->gss_edges[0].alternative_start_idx);
+	for(int j = gss_info->gss_edges[0].alternative_start_idx; j < gss_info->gss_edges[0].alternative_end_idx; j++) {
+		printf("%c", rules[gss_info->gss_edges[0].rule - 'A'].alternatives[j]);
 	}
-	printf("]%d], %d)", gss_info->gss_edges[0].block_end_idx, gss_info->gss_edges[0].label_type);
+	printf("]%d], %d)", gss_info->gss_edges[0].alternative_end_idx, gss_info->gss_edges[0].label_type);
 	for(int i = 1; i < gss_info->gss_edge_array_size; i++) {
-		printf(", (%d -> %d : [%d[)", gss_info->gss_edges[i].src_node, gss_info->gss_edges[i].target_node, gss_info->gss_edges[i].block_idx);
-		for(int j = gss_info->gss_edges[i].block_idx; j < gss_info->gss_edges[i].block_end_idx; j++) {
-			printf("%c", rules[gss_info->gss_edges[i].rule - 'A'].blocks[j]);
+		printf(", (%d -> %d : [%d[)", gss_info->gss_edges[i].src_node, gss_info->gss_edges[i].target_node, gss_info->gss_edges[i].alternative_start_idx);
+		for(int j = gss_info->gss_edges[i].alternative_start_idx; j < gss_info->gss_edges[i].alternative_end_idx; j++) {
+			printf("%c", rules[gss_info->gss_edges[i].rule - 'A'].alternatives[j]);
 		}
-		printf("]%d], %d)", gss_info->gss_edges[i].block_end_idx, gss_info->gss_edges[i].label_type);
+		printf("]%d], %d)", gss_info->gss_edges[i].alternative_end_idx, gss_info->gss_edges[i].label_type);
 	}
 	printf(" }\n");
 
@@ -109,8 +109,8 @@ uint32_t create(
 		gss_info->gss_edges[gss_info->gss_edge_array_size].src_node = idx_node;
 		gss_info->gss_edges[gss_info->gss_edge_array_size].target_node = gss_info->gss_node_idx;
 		gss_info->gss_edges[gss_info->gss_edge_array_size].rule = rule_info->rule;
-		gss_info->gss_edges[gss_info->gss_edge_array_size].block_idx = rule_info->start_idx;
-		gss_info->gss_edges[gss_info->gss_edge_array_size].block_end_idx = rule_info->end_idx;
+		gss_info->gss_edges[gss_info->gss_edge_array_size].alternative_start_idx = rule_info->alternative_start_idx;
+		gss_info->gss_edges[gss_info->gss_edge_array_size].alternative_end_idx = rule_info->alternative_end_idx;
 		gss_info->gss_edges[gss_info->gss_edge_array_size].label_type = label_type;
 		
 		gss_info->gss_edge_array_size += 1;
@@ -123,7 +123,7 @@ uint32_t create(
 					gss_info->gss_edges[idx_edge].src_node == idx_node &&
 					gss_info->gss_edges[idx_edge].target_node == gss_info->gss_node_idx &&
 					gss_info->gss_edges[idx_edge].rule == rule_info->rule &&
-					gss_info->gss_edges[idx_edge].block_idx == rule_info->start_idx &&
+					gss_info->gss_edges[idx_edge].alternative_start_idx == rule_info->alternative_start_idx &&
 					gss_info->gss_edges[idx_edge].label_type == label_type
 				) break;
 		}
@@ -140,8 +140,8 @@ uint32_t create(
 			gss_info->gss_edges[gss_info->gss_edge_array_size].src_node = idx_node;
 			gss_info->gss_edges[gss_info->gss_edge_array_size].target_node = gss_info->gss_node_idx;
 			gss_info->gss_edges[gss_info->gss_edge_array_size].rule = rule_info->rule;
-			gss_info->gss_edges[gss_info->gss_edge_array_size].block_idx = rule_info->start_idx;
-			gss_info->gss_edges[gss_info->gss_edge_array_size].block_end_idx = rule_info->end_idx;
+			gss_info->gss_edges[gss_info->gss_edge_array_size].alternative_start_idx = rule_info->alternative_start_idx;
+			gss_info->gss_edges[gss_info->gss_edge_array_size].alternative_end_idx = rule_info->alternative_end_idx;
 			gss_info->gss_edges[gss_info->gss_edge_array_size].label_type = label_type;
 			
 			gss_info->gss_edge_array_size += 1;
@@ -180,8 +180,8 @@ int pop(
 			struct rule_info r = {
 				.rules = NULL,
 				.rule = curr_node.rule,
-				.start_idx = curr_edge.block_idx,
-				.end_idx = curr_edge.block_end_idx,
+				.alternative_start_idx = curr_edge.alternative_start_idx,
+				.alternative_end_idx = curr_edge.alternative_end_idx,
 			};
 			add_descriptor(
 					&r,

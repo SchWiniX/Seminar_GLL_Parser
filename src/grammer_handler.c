@@ -10,25 +10,25 @@
 
 const uint16_t init_first_list_size = 16;
 const uint16_t init_block_size = 64;
-const uint16_t init_number_of_blocks_arr_size = 8;
+const uint16_t init_number_of_alternatives_arr_size = 8;
 
 #ifdef DEBUG
 int print_rules(rule rules[]){
 	for(int i = 0; i < 26; i++) {
 		if(rules[i].name != (char) (i + 'A')) continue;
 		printf("-----------------------------\nrule: %c\n", rules[i].name);
-		printf("number of blocks: %d:\n", rules[i].number_of_blocks);
-		printf("blocks_sizes: ");
-		printf("%d", rules[i].block_sizes[0]);
-		for(int j = 1; j <= rules[i].number_of_blocks; j++) {
-			printf(", %d", rules[i].block_sizes[j]);
+		printf("number of alternatives: %d:\n", rules[i].number_of_alternatives);
+		printf("alternatives_sizes: ");
+		printf("%d", rules[i].alternative_sizes[0]);
+		for(int j = 1; j <= rules[i].number_of_alternatives; j++) {
+			printf(", %d", rules[i].alternative_sizes[j]);
 		}
-		printf("\nblocks: ");
-		for(int j = 1; j <= rules[i].number_of_blocks; j++) {
-			for(int k = rules[i].block_sizes[j - 1]; k < rules[i].block_sizes[j]; k++) {
-				printf("%c", rules[i].blocks[k]);
+		printf("\nalternatives: ");
+		for(int j = 1; j <= rules[i].number_of_alternatives; j++) {
+			for(int k = rules[i].alternative_sizes[j - 1]; k < rules[i].alternative_sizes[j]; k++) {
+				printf("%c", rules[i].alternatives[k]);
 			}
-			if (j != rules[i].number_of_blocks) printf(", ");
+			if (j != rules[i].number_of_alternatives) printf(", ");
 		}
 		printf("\n");
 
@@ -57,8 +57,8 @@ int print_rule_info(const struct rule_info* rule_info, uint8_t full) {
 		return 0;
 	}
 	printf(" -> ");
-	for(int i = rule_info->start_idx; i < rule_info->end_idx; i++) {
-		printf("%c", rule_info->rules[rule_info->rule - 'A'].blocks[i]);
+	for(int i = rule_info->alternative_start_idx; i < rule_info->alternative_end_idx; i++) {
+		printf("%c", rule_info->rules[rule_info->rule - 'A'].alternatives[i]);
 	}
 	printf("\n");
 	return 0;
@@ -72,53 +72,53 @@ int is_non_terminal(char character) {
 int combine_rule(
 		rule rules[],
 		char rule,
-		uint16_t* block_sizes,
-		char* blocks,
-		uint16_t number_of_blocks,
-		uint16_t number_of_blocks_arr_size,
+		uint16_t* alternative_sizes,
+		char* alternatives,
+		uint16_t number_of_alternatives,
+		uint16_t number_of_alternatives_arr_size,
 		uint16_t block_alloc_size
 		) {
 
 	assert(rule);
-	assert(block_sizes);
-	assert(blocks);
+	assert(alternative_sizes);
+	assert(alternatives);
 
 	uint8_t idx = ((uint8_t) rule) - 'A';
 	if(rules[idx].name != rule) {
 		rules[idx].name = rule;
-		rules[idx].blocks = blocks;
-		rules[idx].block_sizes = block_sizes;
-		rules[idx].number_of_blocks = number_of_blocks;
+		rules[idx].alternatives = alternatives;
+		rules[idx].alternative_sizes = alternative_sizes;
+		rules[idx].number_of_alternatives = number_of_alternatives;
 		return 0;
 	}
 	//pain
-	uint16_t old_total_block_size = rules[idx].block_sizes[rules[idx].number_of_blocks]; 
-	uint16_t new_total_block_size = block_sizes[number_of_blocks];
+	uint16_t old_total_block_size = rules[idx].alternative_sizes[rules[idx].number_of_alternatives]; 
+	uint16_t new_total_block_size = alternative_sizes[number_of_alternatives];
 
-	//loop through old blocks
+	//loop through old alternatives
 	for(int i = 0; i < old_total_block_size; i++) {
 		if(new_total_block_size + i >= block_alloc_size) {
 			block_alloc_size *= 2;
-			blocks = realloc(blocks, block_alloc_size);
-			assert(blocks);
+			alternatives = realloc(alternatives, block_alloc_size);
+			assert(alternatives);
 		}
-		blocks[i + new_total_block_size] = rules[idx].blocks[i];
+		alternatives[i + new_total_block_size] = rules[idx].alternatives[i];
 	}
-	free(rules[idx].blocks);
-	rules[idx].blocks = blocks;
+	free(rules[idx].alternatives);
+	rules[idx].alternatives = alternatives;
 
-	for(int i = 1; i <= rules[idx].number_of_blocks; i++) {
-		if(number_of_blocks + i >= number_of_blocks_arr_size) {
-			number_of_blocks_arr_size *= 2;
-			block_sizes = realloc(block_sizes, number_of_blocks_arr_size * sizeof(uint16_t));
-			assert(block_sizes);
+	for(int i = 1; i <= rules[idx].number_of_alternatives; i++) {
+		if(number_of_alternatives + i >= number_of_alternatives_arr_size) {
+			number_of_alternatives_arr_size *= 2;
+			alternative_sizes = realloc(alternative_sizes, number_of_alternatives_arr_size * sizeof(uint16_t));
+			assert(alternative_sizes);
 		}
-		block_sizes[i + number_of_blocks] = rules[idx].block_sizes[i] + new_total_block_size;
+		alternative_sizes[i + number_of_alternatives] = rules[idx].alternative_sizes[i] + new_total_block_size;
 	}
-	free(rules[idx].block_sizes);
-	rules[idx].block_sizes = block_sizes;
+	free(rules[idx].alternative_sizes);
+	rules[idx].alternative_sizes = alternative_sizes;
 
-	rules[idx].number_of_blocks += number_of_blocks;
+	rules[idx].number_of_alternatives += number_of_alternatives;
 	return 1;
 }
 
@@ -130,9 +130,9 @@ int create_grammer(rule rules[], FILE* grammer_file) {
 
 	uint8_t is_processing_rule = 0;
 	uint16_t block_size = 0;
-	uint16_t number_of_blocks = 1;
+	uint16_t number_of_alternatives = 1;
 	uint16_t block_alloc_size = init_block_size;
-	uint16_t number_of_blocks_arr_size = init_number_of_blocks_arr_size;
+	uint16_t number_of_alternatives_arr_size = init_number_of_alternatives_arr_size;
 	char* block_buff;
 	uint16_t* block_size_buff;
 	char arrow_buff[5];
@@ -157,8 +157,8 @@ int create_grammer(rule rules[], FILE* grammer_file) {
 			block_buff = (char*) malloc(block_alloc_size);
 			assert(block_buff);
 
-			number_of_blocks = 1;
-			block_size_buff = (uint16_t*) malloc(number_of_blocks_arr_size * sizeof(uint16_t));
+			number_of_alternatives = 1;
+			block_size_buff = (uint16_t*) malloc(number_of_alternatives_arr_size * sizeof(uint16_t));
 			assert(block_size_buff);
 			block_size_buff[0] = 0;
 			continue;
@@ -167,31 +167,31 @@ int create_grammer(rule rules[], FILE* grammer_file) {
 				case ' ': 
 					break;
 				case '|' :
-					if(number_of_blocks >= number_of_blocks_arr_size) {
-						number_of_blocks_arr_size *= 2;
-						block_size_buff = (uint16_t*) realloc(block_size_buff, number_of_blocks_arr_size * sizeof(uint16_t));
+					if(number_of_alternatives >= number_of_alternatives_arr_size) {
+						number_of_alternatives_arr_size *= 2;
+						block_size_buff = (uint16_t*) realloc(block_size_buff, number_of_alternatives_arr_size * sizeof(uint16_t));
 						assert(block_size_buff);
 					}
-					block_size_buff[number_of_blocks++] = block_size;
+					block_size_buff[number_of_alternatives++] = block_size;
 					break;
 				case '\n':
-					if(number_of_blocks + 1>= number_of_blocks_arr_size) {
-						number_of_blocks_arr_size *= 2;
-						block_size_buff = (uint16_t*) realloc(block_size_buff, number_of_blocks_arr_size * sizeof(uint16_t));
+					if(number_of_alternatives + 1>= number_of_alternatives_arr_size) {
+						number_of_alternatives_arr_size *= 2;
+						block_size_buff = (uint16_t*) realloc(block_size_buff, number_of_alternatives_arr_size * sizeof(uint16_t));
 						assert(block_size_buff);
 					}
-					block_size_buff[number_of_blocks] = block_size;
-					combine_rule(rules, name, block_size_buff, block_buff, number_of_blocks, number_of_blocks_arr_size, block_alloc_size);
+					block_size_buff[number_of_alternatives] = block_size;
+					combine_rule(rules, name, block_size_buff, block_buff, number_of_alternatives, number_of_alternatives_arr_size, block_alloc_size);
 					is_processing_rule = 0;
 					break;
 				case EOF:
-					if(number_of_blocks + 1 >= number_of_blocks_arr_size) {
-						number_of_blocks_arr_size *= 2;
-						block_size_buff = (uint16_t*) realloc(block_size_buff, number_of_blocks_arr_size * sizeof(uint16_t));
+					if(number_of_alternatives + 1 >= number_of_alternatives_arr_size) {
+						number_of_alternatives_arr_size *= 2;
+						block_size_buff = (uint16_t*) realloc(block_size_buff, number_of_alternatives_arr_size * sizeof(uint16_t));
 						assert(block_size_buff);
 					}
-					block_size_buff[number_of_blocks] = block_size;
-					combine_rule(rules, name, block_size_buff, block_buff, number_of_blocks, number_of_blocks_arr_size, block_alloc_size);
+					block_size_buff[number_of_alternatives] = block_size;
+					combine_rule(rules, name, block_size_buff, block_buff, number_of_alternatives, number_of_alternatives_arr_size, block_alloc_size);
 					return 0;
 				default:
 					if(block_size >= block_alloc_size) {
@@ -237,12 +237,12 @@ int create_first(rule rules[], char rule, uint64_t first[2], uint8_t temp_val[])
 	temp_val[rule_idx] = 1;
 	uint8_t is_nullable = 0;
 
-	for(int j = 0; j < rules[rule_idx].number_of_blocks; j++) {
-		uint16_t start_idx = rules[rule_idx].block_sizes[j];
-		uint16_t end_idx = rules[rule_idx].block_sizes[j + 1];
+	for(int j = 0; j < rules[rule_idx].number_of_alternatives; j++) {
+		uint16_t alternative_start_idx = rules[rule_idx].alternative_sizes[j];
+		uint16_t alternative_end_idx = rules[rule_idx].alternative_sizes[j + 1];
 
-		for(int i = start_idx; i < end_idx; i++) {
-			char curr_char = rules[rule_idx].blocks[i];
+		for(int i = alternative_start_idx; i < alternative_end_idx; i++) {
+			char curr_char = rules[rule_idx].alternatives[i];
 			if(curr_char == '_') {
 				add_to_first_follow(first, '_');
 				is_nullable = 1;
@@ -267,7 +267,7 @@ int follow_first(
 		uint64_t follow[2],
 		char c,
 		char origin_rule,
-		uint16_t block_idx,
+		uint16_t alternative_alternative_start_idx,
 		uint16_t block_size,
 		uint8_t temp_info[]
 		) { //naming goes brrr
@@ -289,16 +289,16 @@ int follow_first(
 			add_to_first_follow(follow, (signed char) i);
 			continue;
 		}
-		if(block_idx == block_size - 1 && temp_info[origin_rule - 'A'] != 1) {
+		if(alternative_alternative_start_idx == block_size - 1 && temp_info[origin_rule - 'A'] != 1) {
 			create_follow(rules, origin_rule, follow, temp_info);
 		} else {
 			follow_first(
 					rules,
 					rule,
 					follow,
-					sub_rule.blocks[block_idx + 1],
+					sub_rule.alternatives[alternative_alternative_start_idx + 1],
 					origin_rule,
-					block_idx + 1,
+					alternative_alternative_start_idx + 1,
 					block_size,
 					temp_info
 					);
@@ -322,24 +322,24 @@ int create_follow(const rule rules[], char rule, uint64_t follow[2], uint8_t tem
 	for(int i = 0; i < 26; i++) {
 		if(rules[i].name != i + 'A') continue;
 		struct rule sub_rule = rules[i];
-		for(int j = 1; j <= sub_rule.number_of_blocks; j++) {
-			uint16_t start_idx = sub_rule.block_sizes[j-1];
-			uint16_t end_idx = sub_rule.block_sizes[j];
+		for(int j = 1; j <= sub_rule.number_of_alternatives; j++) {
+			uint16_t alternative_start_idx = sub_rule.alternative_sizes[j-1];
+			uint16_t alternative_end_idx = sub_rule.alternative_sizes[j];
 
-			for(; start_idx < end_idx - 1; start_idx++) {
-				if(sub_rule.blocks[start_idx] != rule) continue;
+			for(; alternative_start_idx < alternative_end_idx - 1; alternative_start_idx++) {
+				if(sub_rule.alternatives[alternative_start_idx] != rule) continue;
 				follow_first(
 						rules,
 						rule,
 						follow,
-						sub_rule.blocks[start_idx + 1],
+						sub_rule.alternatives[alternative_start_idx + 1],
 						sub_rule.name,
-						start_idx + 1,
-						end_idx,
+						alternative_start_idx + 1,
+						alternative_end_idx,
 						temp_info
 						);
 			}
-			if(sub_rule.blocks[end_idx - 1] == rule && sub_rule.name != rule && temp_info[i] != 1) {
+			if(sub_rule.alternatives[alternative_end_idx - 1] == rule && sub_rule.name != rule && temp_info[i] != 1) {
 				create_follow(rules, sub_rule.name, follow, temp_info);
 			}
 		}
@@ -351,13 +351,13 @@ int free_rules(rule rules[]) {
 	int res = 0;
 	for(int i = 0; i < 26; i++) {
 		if(rules[i].name != i + 'A') continue;
-		if(rules[i].block_sizes) {
-			free(rules[i].block_sizes);
-			rules[i].block_sizes = NULL;
+		if(rules[i].alternative_sizes) {
+			free(rules[i].alternative_sizes);
+			rules[i].alternative_sizes = NULL;
 		} else res += 1;
-		if(rules[i].blocks) {
-			free(rules[i].blocks);
-			rules[i].blocks= NULL;
+		if(rules[i].alternatives) {
+			free(rules[i].alternatives);
+			rules[i].alternatives= NULL;
 		} else res += 2;
 	}
 	return res;
@@ -368,21 +368,21 @@ int first_follow_test(const struct rule_info* rule_info, const char c) {
 	assert(rule_info);
 	assert(rule_info->rules);
 	assert(is_non_terminal(rule_info->rule));
-	assert(rule_info->start_idx < rule_info->end_idx);
+	assert(rule_info->alternative_start_idx < rule_info->alternative_end_idx);
 
 	struct rule this_rule = rule_info->rules[rule_info->rule - 'A'];
 	int eps_found = 0;
 	int do_continue = 0;
-	for(int start_idx = rule_info->start_idx; start_idx < rule_info->end_idx; start_idx++) {
-		if(!is_non_terminal(this_rule.blocks[start_idx])) {
-			if(this_rule.blocks[start_idx] == '_') {
+	for(int alternative_start_idx = rule_info->alternative_start_idx; alternative_start_idx < rule_info->alternative_end_idx; alternative_start_idx++) {
+		if(!is_non_terminal(this_rule.alternatives[alternative_start_idx])) {
+			if(this_rule.alternatives[alternative_start_idx] == '_') {
 				eps_found = 1;
 				do_continue = 1;
-			} else if(this_rule.blocks[start_idx] == c) {
+			} else if(this_rule.alternatives[alternative_start_idx] == c) {
 				return 1;
 			}
 		} else {
-			struct rule sub_rule = rule_info->rules[this_rule.blocks[start_idx] - 'A'];
+			struct rule sub_rule = rule_info->rules[this_rule.alternatives[alternative_start_idx] - 'A'];
 			if(is_in_first_follow(sub_rule.first, c)) {
 				return 1;
 			} else if(is_in_first_follow(sub_rule.first, '_')) {
