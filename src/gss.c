@@ -77,7 +77,7 @@ uint32_t create(
 
 	//check if there is already a gss_node with these values
 	uint32_t idx_node;
-	for(idx_node = 0; idx_node < gss_info->gss_node_array_size; idx_node++){
+	for(idx_node = 0; idx_node < gss_info->gss_node_array_size; idx_node++) {
 		if(
 				gss_info->gss_nodes[idx_node].rule == rule_info->rule &&
 				gss_info->gss_nodes[idx_node].input_idx == input_info->input_idx
@@ -98,25 +98,7 @@ uint32_t create(
 		gss_info->gss_nodes[gss_info->gss_node_array_size].rule = rule_info->rule;
 		gss_info->gss_nodes[gss_info->gss_node_array_size].input_idx = input_info->input_idx;
 
-#ifdef DEBUG
-		printf("%d, ", idx_node);
-#endif
-	}
-
-	//check if there exists an edge from gss_nodes[idx_node] to gss_node_idx
-	uint32_t idx_edge;
-	for(idx_edge = 0; idx_edge < gss_info->gss_edge_array_size; idx_edge++) {
-		if(
-				gss_info->gss_edges[idx_edge].src_node == idx_node &&
-				gss_info->gss_edges[idx_edge].target_node == gss_info->gss_node_idx &&
-				gss_info->gss_edges[idx_edge].rule == rule_info->rule &&
-				gss_info->gss_edges[idx_edge].block_idx == rule_info->start_idx &&
-				gss_info->gss_edges[idx_edge].label_type == label_type
-			) break;
-	}
-
-	if(idx_edge == gss_info->gss_edge_array_size) {
-		//Realloc the gss_edge array if its to large since we are about to add a new edge
+		//realloc the gss_edge array if its to large since we are about to add a new edge
 		if(gss_info->gss_edge_array_size >= gss_info->gss_edge_alloc_array_size) {
 			gss_info->gss_edge_alloc_array_size *= 2;
 			gss_info->gss_edges = (gss_edge*) realloc(gss_info->gss_edges, gss_info->gss_edge_alloc_array_size * sizeof(gss_edge));
@@ -132,16 +114,41 @@ uint32_t create(
 		gss_info->gss_edges[gss_info->gss_edge_array_size].label_type = label_type;
 		
 		gss_info->gss_edge_array_size += 1;
-	}
-
-#ifdef DEBUG
-	printf("%d -> %d\n", idx_node, gss_info->gss_node_idx);
-#endif
-
-	add_descriptor_for_P_set(gss_info, set_info, idx_node, idx_edge);
-
-	if(idx_node == gss_info->gss_node_array_size) {//if node has been added
 		gss_info->gss_node_array_size += 1;
+	} else {
+		//check if there exists an edge from gss_nodes[idx_node] to gss_node_idx
+		uint32_t idx_edge;
+		for(idx_edge = 0; idx_edge < gss_info->gss_edge_array_size; idx_edge++) {
+			if(
+					gss_info->gss_edges[idx_edge].src_node == idx_node &&
+					gss_info->gss_edges[idx_edge].target_node == gss_info->gss_node_idx &&
+					gss_info->gss_edges[idx_edge].rule == rule_info->rule &&
+					gss_info->gss_edges[idx_edge].block_idx == rule_info->start_idx &&
+					gss_info->gss_edges[idx_edge].label_type == label_type
+				) break;
+		}
+
+		if(idx_edge == gss_info->gss_edge_array_size) {
+			//realloc the gss_edge array if its to large since we are about to add a new edge
+			if(gss_info->gss_edge_array_size >= gss_info->gss_edge_alloc_array_size) {
+				gss_info->gss_edge_alloc_array_size *= 2;
+				gss_info->gss_edges = (gss_edge*) realloc(gss_info->gss_edges, gss_info->gss_edge_alloc_array_size * sizeof(gss_edge));
+				assert(gss_info->gss_edges);
+			}
+
+			//add a new edge
+			gss_info->gss_edges[gss_info->gss_edge_array_size].src_node = idx_node;
+			gss_info->gss_edges[gss_info->gss_edge_array_size].target_node = gss_info->gss_node_idx;
+			gss_info->gss_edges[gss_info->gss_edge_array_size].rule = rule_info->rule;
+			gss_info->gss_edges[gss_info->gss_edge_array_size].block_idx = rule_info->start_idx;
+			gss_info->gss_edges[gss_info->gss_edge_array_size].block_end_idx = rule_info->end_idx;
+			gss_info->gss_edges[gss_info->gss_edge_array_size].label_type = label_type;
+			
+			gss_info->gss_edge_array_size += 1;
+			add_descriptor_for_P_set(gss_info, set_info, idx_node, idx_edge);
+		}
+
+
 	}
 
 	return idx_node;
