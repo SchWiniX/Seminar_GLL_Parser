@@ -94,13 +94,13 @@ int main(int argc, char *argv[]) {
 	for(int i = 0; i < 26; i++) {
 		if(rules[i].name != i + 'A') continue;
 		printf("%c -> ", i + 'A');
-		for(int j = 0; j < rules[i].number_of_blocks; j++) {
-			uint16_t start_idx = rules[i].block_sizes[j];
-			uint16_t end_idx = rules[i].block_sizes[j + 1];
+		for(int j = 0; j < rules[i].number_of_alternatives; j++) {
+			uint16_t start_idx = rules[i].alternative_sizes[j];
+			uint16_t end_idx = rules[i].alternative_sizes[j + 1];
 			for(; start_idx < end_idx; start_idx++) {
-				printf("%c", rules[i].blocks[start_idx]);
+				printf("%c", rules[i].alternatives[start_idx]);
 			}
-			if(j + 1 < rules[i].number_of_blocks) 
+			if(j + 1 < rules[i].number_of_alternatives) 
 				printf(" | ");
 			else
 				printf("\n");
@@ -173,15 +173,15 @@ int main(int argc, char *argv[]) {
 		}
 		//expand this str_gen for each alternative in the found nonterminal
 		rule this_rule = rules[curr_gen.str[i] - 'A'];
-		for(uint16_t j = 0; j < this_rule.number_of_blocks; j++) {
-			uint16_t start_idx = this_rule.block_sizes[j];
-			uint16_t end_idx = this_rule.block_sizes[j + 1];
+		for(uint16_t j = 0; j < this_rule.number_of_alternatives; j++) {
+			uint16_t start_idx = this_rule.alternative_sizes[j];
+			uint16_t end_idx = this_rule.alternative_sizes[j + 1];
 
 			uint32_t new_size;
 			if(str_ringbuff.size >= str_ringbuff.alloc_size) {
 				realloc_ringbuff(&str_ringbuff);
 			}
-			if(this_rule.blocks[start_idx] == '_') {
+			if(this_rule.alternatives[start_idx] == '_') {
 				new_size = curr_gen.size - 1;
 				str_ringbuff.ringbuff[str_ringbuff.queue_idx].str = malloc(2 * new_size + 1);
 				assert(str_ringbuff.ringbuff[str_ringbuff.queue_idx].str);
@@ -215,7 +215,7 @@ int main(int argc, char *argv[]) {
 					}
 					k += 1;
 					for(uint32_t k1 = start_idx; k1 < end_idx; k1++)
-						str_ringbuff.ringbuff[str_ringbuff.queue_idx].str[idx++] = this_rule.blocks[k1];
+						str_ringbuff.ringbuff[str_ringbuff.queue_idx].str[idx++] = this_rule.alternatives[k1];
 				}
 				str_ringbuff.ringbuff[str_ringbuff.queue_idx].current_position = i + end_idx - start_idx;
 			}

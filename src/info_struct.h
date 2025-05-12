@@ -4,18 +4,18 @@
 #include <stdint.h>
 
 typedef struct rule {
-	uint16_t* block_sizes;
-	char* blocks;
+	uint16_t* alternative_sizes;
+	char* alternatives;
 	uint64_t first[2];
 	uint64_t follow[2];
-	uint16_t number_of_blocks;
+	uint16_t number_of_alternatives;
 	char name;
 } rule;
 
 struct rule_info {
 	rule* rules;
-	uint16_t start_idx;
-	uint16_t end_idx;
+	uint16_t alternative_start_idx;
+	uint16_t alternative_end_idx;
 	char rule;
 };
 
@@ -33,8 +33,8 @@ typedef struct gss_node{
 typedef struct gss_edge {
 	uint32_t src_node;
 	uint32_t target_node;
-	uint16_t block_idx;
-	uint16_t block_end_idx;
+	uint16_t alternative_start_idx;
+	uint16_t alternative_end_idx;
 	char rule;
 	uint8_t label_type;
 } gss_edge;
@@ -52,8 +52,8 @@ struct gss_info {
 typedef struct descriptors {
 	uint32_t input_idx;
 	uint32_t gss_node_idx;
-	uint16_t block_idx;
-	uint16_t block_end_idx;
+	uint16_t alternative_start_idx;
+	uint16_t alternative_end_idx;
 	uint8_t label_type;
 	char rule;
 } descriptors;

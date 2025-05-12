@@ -168,7 +168,7 @@ int main(int argc, char* argv[]) {
 			descriptors* U_set = init_descriptor_set(u_alloc_size);
 			p_set_entry* P_set = init_p_set_entry_set(p_alloc_size);
 		
-			struct rule_info rule_info = { .rules = rules, .rule = 'S', . start_idx = 0, .end_idx = 0 };
+			struct rule_info rule_info = { .rules = rules, .rule = 'S', .alternative_start_idx = 0, .alternative_end_idx = 0 };
 			struct input_info input_info = { .input = input, .input_idx = 0, .input_size = input_size }; 
 			struct gss_info gss_info = {
 				.gss_nodes = gss_nodes,

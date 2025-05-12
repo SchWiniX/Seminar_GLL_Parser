@@ -36,15 +36,15 @@ int check_success(descriptors U_set[], uint16_t u_lower_idx, uint16_t u_higher_i
 	}
 	int its_higher = U_set[u_higher_idx].rule == rule &&
 		U_set[u_higher_idx].input_idx == input_idx &&
-		U_set[u_higher_idx].block_idx == U_set[u_higher_idx].block_end_idx;
+		U_set[u_higher_idx].alternative_start_idx == U_set[u_higher_idx].alternative_end_idx;
 	int its_lower = U_set[u_lower_idx].rule == rule &&
 		U_set[u_lower_idx].input_idx == input_idx &&
-		U_set[u_lower_idx].block_idx == U_set[u_lower_idx].block_end_idx;
+		U_set[u_lower_idx].alternative_start_idx == U_set[u_lower_idx].alternative_end_idx;
 	return its_higher || its_lower;
 }
 
 #pragma GCC diagnostic ignored "-Winfinite-recursion"
-void continue_production(
+void continue_alternative(
 		struct rule_info* rule_info,
 		struct input_info* input_info,
 		struct gss_info* gss_info,
@@ -64,43 +64,43 @@ void continue_production(
 	assert(set_info->P_set);
 
 #ifdef DEBUG
-	printf("entered continue_production\n");
+	printf("entered continue_alternative\n");
 #endif
 
 	struct rule this_rule = rule_info->rules[rule_info->rule - 'A'];
-	uint16_t start_idx = rule_info->start_idx;
-	uint16_t end_idx = rule_info->end_idx;
-	if(start_idx == end_idx) {
+	uint16_t alternative_start_idx = rule_info->alternative_start_idx;
+	uint16_t alternative_end_idx = rule_info->alternative_end_idx;
+	if(alternative_start_idx == alternative_end_idx) {
 		pop(input_info, gss_info, set_info);
 		longjmp(L0_jump_buf, 1); //goback to base_loop
 	}
-	if(!is_non_terminal(this_rule.blocks[start_idx])) {
-		if(this_rule.blocks[start_idx] == input_info->input[input_info->input_idx]) {
+	if(!is_non_terminal(this_rule.alternatives[alternative_start_idx])) {
+		if(this_rule.alternatives[alternative_start_idx] == input_info->input[input_info->input_idx]) {
 			input_info->input_idx += 1;
-			rule_info->start_idx += 1;
-			add_descriptor(rule_info, set_info, input_info->input_idx, gss_info->gss_node_idx, PARTIAL_PRODUCTION);
+			rule_info->alternative_start_idx += 1;
+			add_descriptor(rule_info, set_info, input_info->input_idx, gss_info->gss_node_idx, PARTIAL_ALTERNATIVE);
 			longjmp(L0_jump_buf, 1);
-			//continue_production(rule_info, input_info, gss_info, set_info);
+			//continue_alternative(rule_info, input_info, gss_info, set_info);
 		} else longjmp(L0_jump_buf, 1); //goback to base_loop
 	} else {
 		if(first_follow_test(rule_info, input_info->input[input_info->input_idx])) {
-			rule_info->start_idx += 1;
+			rule_info->alternative_start_idx += 1;
 			gss_info->gss_node_idx = create(
 					rule_info,
 					input_info,
 					gss_info,
 					set_info,
-					PARTIAL_PRODUCTION
+					PARTIAL_ALTERNATIVE
 					);
-			rule_info->start_idx -= 1;
-			rule_info->rule = this_rule.blocks[start_idx];
+			rule_info->alternative_start_idx -= 1;
+			rule_info->rule = this_rule.alternatives[alternative_start_idx];
 			init_rule(rule_info, input_info, gss_info, set_info);
 		} else longjmp(L0_jump_buf, 1); //goback to base_loop
 	}
 }
 
 
-void start_new_production(
+void start_new_alternative(
 		struct rule_info* rule_info,
 		struct input_info* input_info,
 		struct gss_info* gss_info,
@@ -120,33 +120,32 @@ void start_new_production(
 	assert(set_info->P_set);
 
 #ifdef DEBUG
-	printf("entered start_new_production\n");
+	printf("entered start_new_alternative\n");
 #endif
 
 	struct rule this_rule = rule_info->rules[rule_info->rule - 'A'];
-	uint16_t start_idx = rule_info->start_idx;
-	uint16_t end_idx = rule_info->end_idx;
-	if(start_idx + 1 == end_idx && this_rule.blocks[start_idx] == '_') {
+	uint16_t alternative_start_idx = rule_info->alternative_start_idx;
+	uint16_t alternative_end_idx = rule_info->alternative_end_idx;
+	if(alternative_start_idx + 1 == alternative_end_idx && this_rule.alternatives[alternative_start_idx] == '_') {
 		pop(input_info, gss_info, set_info);
-
 		longjmp(L0_jump_buf, 1); //goback to base_loop
-	} else if(!is_non_terminal(this_rule.blocks[start_idx])) {
+	} else if(!is_non_terminal(this_rule.alternatives[alternative_start_idx])) {
 		input_info->input_idx += 1;
-		rule_info->start_idx += 1;
-		add_descriptor(rule_info, set_info, input_info->input_idx, gss_info->gss_node_idx, PARTIAL_PRODUCTION);
+		rule_info->alternative_start_idx += 1;
+		add_descriptor(rule_info, set_info, input_info->input_idx, gss_info->gss_node_idx, PARTIAL_ALTERNATIVE);
 		longjmp(L0_jump_buf, 1); //goback to base_loop
-		//continue_production(rule_info, input_info, gss_info, set_info);
+		//continue_alternative(rule_info, input_info, gss_info, set_info);
 	} else {
-		rule_info->start_idx += 1;
+		rule_info->alternative_start_idx += 1;
 		gss_info->gss_node_idx = create(
 				rule_info,
 				input_info,
 				gss_info,
 				set_info,
-				PARTIAL_PRODUCTION
+				PARTIAL_ALTERNATIVE
 				);
-		rule_info->start_idx -= 1;
-		rule_info->rule = this_rule.blocks[start_idx];
+		rule_info->alternative_start_idx -= 1;
+		rule_info->rule = this_rule.alternatives[alternative_start_idx];
 		init_rule(rule_info, input_info, gss_info, set_info);
 	}
 	//this should be unreachable
@@ -178,11 +177,11 @@ void init_rule(
 #endif
 
 	struct rule this_rule = rule_info->rules[rule_info->rule - 'A'];
-	for(int i = 0; i < this_rule.number_of_blocks; i++) {
-		rule_info->start_idx = this_rule.block_sizes[i];
-		rule_info->end_idx = this_rule.block_sizes[i + 1];
+	for(int i = 0; i < this_rule.number_of_alternatives; i++) {
+		rule_info->alternative_start_idx = this_rule.alternative_sizes[i];
+		rule_info->alternative_end_idx = this_rule.alternative_sizes[i + 1];
 		if(first_follow_test(rule_info, input_info->input[input_info->input_idx])) {
-			add_descriptor(rule_info, set_info, input_info->input_idx, gss_info->gss_node_idx, FULL_PRODUCTION);
+			add_descriptor(rule_info, set_info, input_info->input_idx, gss_info->gss_node_idx, WHOLE_ALTERNATIVE);
 		}
 	}
 	longjmp(L0_jump_buf, 1); //goback to base_loop
@@ -216,8 +215,8 @@ int base_loop(
 	gss_info->gss_edges[0].src_node = 1;
 	gss_info->gss_edges[0].target_node = 0;
 	gss_info->gss_edges[0].rule = 'S';
-	gss_info->gss_edges[0].block_idx = 0;
-	gss_info->gss_edges[0].block_end_idx = 0;
+	gss_info->gss_edges[0].alternative_start_idx = 0;
+	gss_info->gss_edges[0].alternative_end_idx = 0;
 	gss_info->gss_edges[0].label_type = BASELOOP;
 
 	gss_info->gss_node_array_size = 2;
@@ -261,8 +260,8 @@ int base_loop(
 		input_info->input_idx = curr_descriptor.input_idx;
 		gss_info->gss_node_idx = curr_descriptor.gss_node_idx;
 		rule_info->rule = curr_descriptor.rule;
-		rule_info->start_idx = curr_descriptor.block_idx;
-		rule_info->end_idx = curr_descriptor.block_end_idx;
+		rule_info->alternative_start_idx = curr_descriptor.alternative_start_idx;
+		rule_info->alternative_end_idx = curr_descriptor.alternative_end_idx;
 
 		if(curr_descriptor.input_idx > set_info->lesser_input_idx) {
 			clean_lesser_from_P(set_info);
@@ -277,16 +276,16 @@ int base_loop(
 
 
 		switch (curr_descriptor.label_type) {
-			case PARTIAL_PRODUCTION:
-				continue_production(
+			case PARTIAL_ALTERNATIVE:
+				continue_alternative(
 						rule_info,
 						input_info,
 						gss_info,
 						set_info
 						);
 				break;
-			case FULL_PRODUCTION:
-				start_new_production(
+			case WHOLE_ALTERNATIVE:
+				start_new_alternative(
 						rule_info,
 						input_info,
 						gss_info,

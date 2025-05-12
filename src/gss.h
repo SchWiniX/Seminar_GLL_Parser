@@ -3,8 +3,6 @@
 
 #include "info_struct.h"
 
-enum LABEL_TYPE {PARTIAL_PRODUCTION, FULL_PRODUCTION, RULE, BASELOOP, INVALID, SIZE};
-
 int print_gss_info(rule rules[], struct gss_info* gss_info);
 
 uint32_t create(
