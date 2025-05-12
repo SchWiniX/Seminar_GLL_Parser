@@ -18,7 +18,7 @@ int print_set_info(const struct rule rules[], struct set_info* set_info) {
 	i = set_info->r_lower_idx;
 	printf("(%c, [%d[", set_info->R_set[i].rule, set_info->R_set[i].alternative_start_idx);
 	for(int j = set_info->R_set[i].alternative_start_idx; j < set_info->R_set[i].alternative_end_idx; j++) {
-		printf("%c", rules[set_info->R_set[i].rule - 'A'].blocks[j]);
+		printf("%c", rules[set_info->R_set[i].rule - 'A'].alternatives[j]);
 	}
 	printf("]%d], %d, %d, %d)", set_info->R_set[i].alternative_end_idx, set_info->R_set[i].input_idx, set_info->R_set[i].gss_node_idx, set_info->R_set[i].label_type);
 
@@ -26,7 +26,7 @@ int print_set_info(const struct rule rules[], struct set_info* set_info) {
 	while(i != set_info->r_higher_idx) {
 		printf(", (%c, [%d[", set_info->R_set[i].rule, set_info->R_set[i].alternative_start_idx);
 		for(int j = set_info->R_set[i].alternative_start_idx; j < set_info->R_set[i].alternative_end_idx; j++) {
-			printf("%c", rules[set_info->R_set[i].rule - 'A'].blocks[j]);
+			printf("%c", rules[set_info->R_set[i].rule - 'A'].alternatives[j]);
 		}
 		printf("]%d], %d, %d, %d)", set_info->R_set[i].alternative_end_idx, set_info->R_set[i].input_idx, set_info->R_set[i].gss_node_idx, set_info->R_set[i].label_type);
 		i = (i + 1) % set_info->r_alloc_size;
@@ -43,7 +43,7 @@ USET:
 	i = set_info->u_lower_idx;
 	printf("(%c, [%d[", set_info->U_set[i].rule, set_info->U_set[i].alternative_start_idx);
 	for(int j = set_info->U_set[i].alternative_start_idx; j < set_info->U_set[i].alternative_end_idx; j++) {
-		printf("%c", rules[set_info->U_set[i].rule - 'A'].blocks[j]);
+		printf("%c", rules[set_info->U_set[i].rule - 'A'].alternatives[j]);
 	}
 	printf("]%d], %d, %d, %d)", set_info->U_set[i].alternative_end_idx, set_info->U_set[i].input_idx, set_info->U_set[i].gss_node_idx, set_info->U_set[i].label_type);
 
@@ -51,7 +51,7 @@ USET:
 	while(i != set_info->u_higher_idx) {
 		printf(", (%c, [%d[", set_info->U_set[i].rule, set_info->U_set[i].alternative_start_idx);
 		for(int j = set_info->U_set[i].alternative_start_idx; j < set_info->U_set[i].alternative_end_idx; j++) {
-			printf("%c", rules[set_info->U_set[i].rule - 'A'].blocks[j]);
+			printf("%c", rules[set_info->U_set[i].rule - 'A'].alternatives[j]);
 		}
 		printf("]%d], %d, %d, %d)", set_info->U_set[i].alternative_end_idx, set_info->U_set[i].input_idx, set_info->U_set[i].gss_node_idx, set_info->U_set[i].label_type);
 		i = (i + 1) % set_info->u_alloc_size;

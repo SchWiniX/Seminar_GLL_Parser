@@ -42,7 +42,7 @@ Executes the algorithm one with the provided grammer and input.
 
 
 ### File Testing
-For each grammer file in the folder at 'folder_path' executes the algorithm 'repetition' times on each 'inputi' in the same grammer_file denoting an execution passed if the parser returns the same value as provided next to the input.
+For each grammer file in the folder at `'folder_path'` executes the algorithm `'repetition'` times on each `'inputi'` in the same `grammer_file` denoting an execution passed if the parser returns the same value as provided next to the input.
 
     gll_parser_test 'folder_path' | 'grammer_file" 'repetition'
 - '`folder_path'` is a path to a folder containing files with grammer of format `'grammer_file'` can optionaly be just one specific file:
@@ -95,19 +95,19 @@ The following section will discuss how the algorithm of the paper was implemente
 ## Labels
 The pseudo code from the paper uses some form of dynamic label onwhich they call goto. Clearly this is not something directly supported by C. Hence we will need a different approach.
 We differentiate between 4 different label types: 
-- `base_loop`
-- `init_rule`
-- `start_new_production`
-- `continue_production`
+- `base_loop` ~ $L_0$
+- `init_rule` ~ $code(A, j)$
+- `start_new_alternative` ~ $code(A::= \alpha_k, j)$
+- `continue_alternative` ~ $code(\alpha, j, X)$
 
 We can then implement each of these types as its seperate function and just store a enums (and state information) instead of a label in all data structures and index into the correct functions.
 This however leaves us with a new problem. Since we are jumping from function to function we will at some point fill our call stack.
-We can of course solve this quite quickly we could just change our base_loop from a function that is called everytime to a while loop that checks if R is empty and all other functions just return back when done.
+We can of course solve this quite quickly we could just change our `base_loop` from a function that is called everytime to a while loop that checks if $R$ is empty and all other functions just return back when done.
 For this implementation we have however choosen a slightly different approach (not because of it having much of an advantage but mostly just cause we wanted to). We instead of following the normal call/return structure most are familiar with instead use `longjump` and `setjmp`. Hence we call `setjmp` in the `base_loop` function and all the other function when they reach the end of a derivation call `longjump` to return to the `base_loop` conviniently ereasing the call stack used by the derivation.
 The only caviat in this approach is that we must store all changes we want to keep accross jumps in either heap memory or stack memory assigned before the call to `set_jump`
 
 ## GSS
-The GSS graph was implemented with the improvments described in [Faster, Practical GLL Parsing](https://ir.cwi.nl/pub/24026/24026B.pdf). The actuall datastructure are just two dynamic array one containing nodes and edges. A comparison to a more traditional GSS can be found in the (performance)[#performace] section.
+The GSS graph was implemented with the improvments described in [Faster, Practical GLL Parsing](https://ir.cwi.nl/pub/24026/24026B.pdf). The actuall datastructure are just two dynamic array one containing nodes and edges. A comparison to a more traditional GSS can be found in the [performance](#performace) section.
 
 ## Sets
 This is arguable the most interesting part of any implementation as there is quite a bit of room here for how these sets are implemented. In a higher level language it is probably a good idea to just use some form of a set implementation if that language provieds a good one. C does however to my knowledge not provide such a data structure in its standart library. Hence since I'm quite attached to my sanity we'll need to find a different approach.
@@ -121,10 +121,12 @@ This implementation would be quite possible in C. Where this is a 2D dynamic arr
 #### Ring buffer Approach
 This is the approach used in this implementation. Mainly cause of its simplicity and the fact that it still performes well with how much memory this approach uses.
 The idea is as follows if we can slightly modify the algorithm s.t. it is garanteed that if it picks a descriptor $A$ from $R$ in the `base_loop` with input pos $i$. By the time the algorithm writes new descriptors $B_1$ ... $B_n$ to $R$ derived from computation on $A$ the input position of $B_i$ is either $i$ or $i + 1$.
-Then can implement R, U and P as a sorted ring buffer where descriptors of size i are always added to R on one side (lets call this side left) of the ring and i+1 to the other (right) which ensure it remains sorted. New descriptors are always picked from the left and if our descriptor has a higher input position then the last one we can move the left pointer of U and P past all descriptors with the old input size.
+Then can implement $R$, $U$ and $P$ as a sorted ring buffer where descriptors of size $i$ are always added to R on one side (lets call this side left) of the ring and $i+1$ to the other (right) which ensure it remains sorted. New descriptors are always picked from the left and if our descriptor has a higher input position then the last one we can move the left pointer of U and P past all descriptors with the old input size.
 
 ##### Modifing the algorithm
-If we analize the original pseudo code given in the paper we can see that the only way we will ever parse more then one char before returning back to L0 (baseloop) is in the definition for $code(A::=x_1...x_f, j)$ for when $x_1$ is a terminal. Since we then enter $code(x_2...x_f, j, A)$ which them may parse another character before it then calls $goto L_0$. We can change this quite easily by just having the algorithm instead of entering $code(x_2...x_f, j, A)$, add a descriptor that corresponts to this call.
+If we analyse the original pseudo code given in the paper we can see that the only way we will ever parse more then one char before returning back to $L_0$ (baseloop) is in the definition for $code(A::=x_1...x_f, j)$ for when $x_1$ is a terminal. Since we then enter $code(x_2...x_f, j, A)$ which them may parse another character before it then calls $goto$ $L_0$. We can change this quite easily by just having the algorithm instead of entering $code(x_2...x_f, j, A)$, add a descriptor that corresponts to this call.
 
 This modification and the behavior (mainly the sorting) of our ring buffer ensures that we will always try every possibility at a given input position before moving to the next position.
 
+# Performance
+ToDo
