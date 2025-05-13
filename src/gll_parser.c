@@ -10,8 +10,6 @@
 #include "gss.h"
 #include "debug.h"
 
-jmp_buf L0_jump_buf;
-
 #ifdef DEBUG
 int print_input_info(struct input_info* input_info) {
 	printf("Input [%d, %d]: ", input_info->input_idx, input_info->input_size);
@@ -27,7 +25,7 @@ int print_input_info(struct input_info* input_info) {
 }
 #endif
 
-int check_success(descriptors U_set[], uint16_t u_lower_idx, uint16_t u_higher_idx, uint16_t u_alloc_size, uint16_t rule, uint32_t input_idx) {
+inline int check_success(descriptors U_set[], uint16_t u_lower_idx, uint16_t u_higher_idx, uint16_t u_alloc_size, uint16_t rule, uint32_t input_idx) {
 	assert(U_set);
 	if(u_higher_idx == 0) {
 		u_higher_idx = u_alloc_size - 1;
@@ -43,8 +41,7 @@ int check_success(descriptors U_set[], uint16_t u_lower_idx, uint16_t u_higher_i
 	return its_higher || its_lower;
 }
 
-#pragma GCC diagnostic ignored "-Winfinite-recursion"
-void continue_alternative(
+inline void continue_alternative(
 		struct rule_info* rule_info,
 		struct input_info* input_info,
 		struct gss_info* gss_info,
@@ -72,16 +69,15 @@ void continue_alternative(
 	uint16_t alternative_end_idx = rule_info->alternative_end_idx;
 	if(alternative_start_idx == alternative_end_idx) {
 		pop(input_info, gss_info, set_info);
-		longjmp(L0_jump_buf, 1); //goback to base_loop
+		return;
 	}
 	if(!is_non_terminal(this_rule.alternatives[alternative_start_idx])) {
 		if(this_rule.alternatives[alternative_start_idx] == input_info->input[input_info->input_idx]) {
 			input_info->input_idx += 1;
 			rule_info->alternative_start_idx += 1;
 			add_descriptor(rule_info, set_info, input_info->input_idx, gss_info->gss_node_idx, PARTIAL_ALTERNATIVE);
-			longjmp(L0_jump_buf, 1);
-			//continue_alternative(rule_info, input_info, gss_info, set_info);
-		} else longjmp(L0_jump_buf, 1); //goback to base_loop
+			return;
+		} else return;
 	} else {
 		if(first_follow_test(rule_info, input_info->input[input_info->input_idx])) {
 			rule_info->alternative_start_idx += 1;
@@ -95,12 +91,12 @@ void continue_alternative(
 			rule_info->alternative_start_idx -= 1;
 			rule_info->rule = this_rule.alternatives[alternative_start_idx];
 			init_rule(rule_info, input_info, gss_info, set_info);
-		} else longjmp(L0_jump_buf, 1); //goback to base_loop
+		} else return;
 	}
 }
 
 
-void start_new_alternative(
+inline void start_new_alternative(
 		struct rule_info* rule_info,
 		struct input_info* input_info,
 		struct gss_info* gss_info,
@@ -128,12 +124,12 @@ void start_new_alternative(
 	uint16_t alternative_end_idx = rule_info->alternative_end_idx;
 	if(alternative_start_idx + 1 == alternative_end_idx && this_rule.alternatives[alternative_start_idx] == '_') {
 		pop(input_info, gss_info, set_info);
-		longjmp(L0_jump_buf, 1); //goback to base_loop
+		return;
 	} else if(!is_non_terminal(this_rule.alternatives[alternative_start_idx])) {
 		input_info->input_idx += 1;
 		rule_info->alternative_start_idx += 1;
 		add_descriptor(rule_info, set_info, input_info->input_idx, gss_info->gss_node_idx, PARTIAL_ALTERNATIVE);
-		longjmp(L0_jump_buf, 1); //goback to base_loop
+		return;
 		//continue_alternative(rule_info, input_info, gss_info, set_info);
 	} else {
 		rule_info->alternative_start_idx += 1;
@@ -153,7 +149,7 @@ void start_new_alternative(
 }
 
 // sets up the rule by adding each alternative to R
-void init_rule(
+inline void init_rule(
 		struct rule_info* rule_info,
 		struct input_info* input_info,
 		struct gss_info* gss_info,
@@ -184,7 +180,7 @@ void init_rule(
 			add_descriptor(rule_info, set_info, input_info->input_idx, gss_info->gss_node_idx, WHOLE_ALTERNATIVE);
 		}
 	}
-	longjmp(L0_jump_buf, 1); //goback to base_loop
+	return;
 }
 
 int base_loop(
@@ -225,35 +221,33 @@ int base_loop(
 	gss_info->gss_node_idx = 1;
 	input_info->input_idx = 0;
 
-	if(!setjmp(L0_jump_buf)) {
 
 #ifdef DEBUG
-		printf("entered base loop initialy\n");
-		print_gss_info(rule_info->rules, gss_info);
+	printf("entered base loop initialy\n");
+	print_gss_info(rule_info->rules, gss_info);
 #endif
 
-		char first_char = input_info->input[0];
-		uint8_t first_check = is_in_first_follow(rule_info->rules[rule_info->rule - 'A'].first, first_char);
-		if(is_in_first_follow(rule_info->rules[rule_info->rule - 'A'].first, '_')) {
-			first_check = first_check || first_char == '\0';
-		}
-		if(first_check) init_rule(rule_info, input_info, gss_info, set_info);
-		else return 0;
+	char first_char = input_info->input[0];
+	uint8_t first_check = is_in_first_follow(rule_info->rules[rule_info->rule - 'A'].first, first_char);
+	if(is_in_first_follow(rule_info->rules[rule_info->rule - 'A'].first, '_')) {
+		first_check = first_check || first_char == '\0';
 	}
+	if(first_check) init_rule(rule_info, input_info, gss_info, set_info);
+	else return 0;
 
 #ifdef DEBUG
 	printf("\nfell back to base loop\n");
 	print_set_info(rule_info->rules, set_info);
 #endif	
 
-	if(check_success(
-				set_info->U_set,
-				set_info->u_lower_idx,
-				set_info->u_higher_idx,
-				set_info->u_alloc_size,
-				'0',
-				input_info->input_size)) return 1;
-	else if(set_info->r_size != 0) {
+	while(set_info->r_size != 0) {
+		if(check_success(
+					set_info->U_set,
+					set_info->u_lower_idx,
+					set_info->u_higher_idx,
+					set_info->u_alloc_size,
+					'0',
+					input_info->input_size)) return 1;
 		struct descriptors curr_descriptor = set_info->R_set[set_info->r_lower_idx];
 		set_info->r_lower_idx = (set_info->r_lower_idx + 1) % set_info->r_alloc_size;
 		set_info->r_size -= 1;
@@ -283,7 +277,7 @@ int base_loop(
 						gss_info,
 						set_info
 						);
-				break;
+				continue;
 			case WHOLE_ALTERNATIVE:
 				start_new_alternative(
 						rule_info,
@@ -291,7 +285,7 @@ int base_loop(
 						gss_info,
 						set_info
 						);
-				break;
+				continue;
 			case RULE:
 				init_rule(
 						rule_info,
@@ -299,14 +293,15 @@ int base_loop(
 						gss_info,
 						set_info
 						);
-				break;
+				continue;
 			case BASELOOP:
-				longjmp(L0_jump_buf, 1);
+				continue;
 			default:
 				printf("welp that shouldn't happen\n");
 				exit(-1);
 		}
 		printf("welp that shouldn't happen either\n");
 		exit(-1);
-	} else return 0;
+	}
+	return 0;
 }
