@@ -1,3 +1,7 @@
 S -> aSb | aSc | a
 #
 aac 1
+abc 0
+aab 1
+abb 0
+acc 0

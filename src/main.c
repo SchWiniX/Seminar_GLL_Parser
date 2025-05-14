@@ -87,15 +87,12 @@ int main(int argc, char *argv[]) {
 	print_rules(rules);
 #endif
 
-	uint32_t gss_node_alloc_size = 1024;
-	uint32_t gss_edge_alloc_size = 2048;
 	uint16_t r_alloc_size = 128;
 	uint16_t u_alloc_size = 512;
 	uint32_t p_alloc_size = 128;
 
 	uint32_t input_size = strlen(argv[2]); //this feels hella unsafe... anyway moving on
-	gss_node* gss_nodes = init_node_array(gss_node_alloc_size);
-	gss_edge* gss_edges = init_edge_array(gss_edge_alloc_size);
+	gss_node* gss = init_gss(26, input_size);
 	descriptors* R_set = init_descriptor_set(r_alloc_size);
 	descriptors* U_set = init_descriptor_set(u_alloc_size);
 	p_set_entry* P_set = init_p_set_entry_set(p_alloc_size);
@@ -103,13 +100,7 @@ int main(int argc, char *argv[]) {
 	struct rule_info rule_info = { .rules = rules, .rule = 'S', .alternative_start_idx = 0, .alternative_end_idx = 0 };
 	struct input_info input_info = { .input = argv[2], .input_idx = 0, .input_size = input_size }; 
 	struct gss_info gss_info = {
-		.gss_nodes = gss_nodes,
-		.gss_edges = gss_edges,
-		.gss_node_idx = 0,
-		.gss_node_alloc_array_size = gss_node_alloc_size,
-		.gss_edge_alloc_array_size = gss_edge_alloc_size,
-		.gss_node_array_size = 0,
-		.gss_edge_array_size = 0,
+		.gss = gss,
 	};
 	struct set_info set_info = {
 		.R_set = R_set,
@@ -148,12 +139,10 @@ int main(int argc, char *argv[]) {
 		printf("failed to free P_set likely a memory leak\n");
 	}
 	set_info.P_set = NULL;
-	if(free_gss(gss_info.gss_nodes, gss_info.gss_edges)) {
+	if(free_gss(gss_info.gss, 26, input_size)) {
 		printf("failed to free gss likely a memory leak\n");
 	}
-
-	gss_info.gss_nodes = NULL;
-	gss_info.gss_edges = NULL;
+	gss_info.gss = NULL;
 	if(free_rules(rules)) {
 		printf("failed to free rules likely a memory leak\n");
 	}

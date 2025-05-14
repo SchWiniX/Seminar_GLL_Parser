@@ -15,7 +15,7 @@ int in_set(
 		const uint16_t u_higher_idx,
 		const uint16_t u_alloc_size,
 		uint32_t input_idx,
-		uint32_t gss_node_idx,
+		gss_node_idx gss_node_idx,
 		uint8_t label_type
 		);
 
@@ -23,7 +23,7 @@ int add_descriptor(
 		const struct rule_info* rule_info,
 		struct set_info* set_info,
 		uint32_t input_idx,
-		uint32_t gss_node_idx,
+		gss_node_idx gss_node_idx,
 		uint8_t label_type
 		);
 
@@ -31,9 +31,15 @@ int clean_lesser_from_U(struct set_info* set_info);
 
 int clean_lesser_from_P(struct set_info* set_info);
 
-int add_p_set_entry(struct set_info* set_info, uint32_t gss_node_idx, uint32_t input_idx);
+int add_p_set_entry(struct set_info* set_info, gss_node_idx gss_node_idx, uint32_t input_idx);
 
-int add_descriptor_for_P_set(const struct gss_info* gss_info, struct set_info* set_info, const uint32_t new_node, const uint32_t new_edge);
+int add_descriptor_for_P_set(
+		const struct gss_info* gss_info,
+		const struct input_info* input_info,
+		const gss_node_idx new_node,
+		const uint32_t new_edge,
+		struct set_info* set_info
+		);
 
 descriptors* init_descriptor_set(const uint16_t size);
 int free_desc_set(descriptors* set);

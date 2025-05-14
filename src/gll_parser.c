@@ -9,6 +9,7 @@
 #include "grammer_handler.h"
 #include "gss.h"
 #include "debug.h"
+#include "info_struct.h"
 
 jmp_buf L0_jump_buf;
 
@@ -56,8 +57,6 @@ void continue_alternative(
 	assert(input_info);
 	assert(input_info->input);
 	assert(gss_info);
-	assert(gss_info->gss_nodes);
-	assert(gss_info->gss_edges);
 	assert(set_info);
 	assert(set_info->R_set);
 	assert(set_info->U_set);
@@ -112,8 +111,6 @@ void start_new_alternative(
 	assert(input_info);
 	assert(input_info->input);
 	assert(gss_info);
-	assert(gss_info->gss_nodes);
-	assert(gss_info->gss_edges);
 	assert(set_info);
 	assert(set_info->R_set);
 	assert(set_info->U_set);
@@ -165,8 +162,6 @@ void init_rule(
 	assert(input_info);
 	assert(input_info->input);
 	assert(gss_info);
-	assert(gss_info->gss_nodes);
-	assert(gss_info->gss_edges);
 	assert(set_info);
 	assert(set_info->R_set);
 	assert(set_info->U_set);
@@ -199,37 +194,37 @@ int base_loop(
 	assert(input_info);
 	assert(input_info->input);
 	assert(gss_info);
-	assert(gss_info->gss_nodes);
-	assert(gss_info->gss_edges);
 	assert(set_info);
 	assert(set_info->R_set);
 	assert(set_info->U_set);
 	assert(set_info->P_set);
 
-	gss_info->gss_nodes[0].rule = '0';
-	gss_info->gss_nodes[0].input_idx = 0;
+	uint64_t first_node_idx = GET_GSS_IDX(92, 0, input_info->input_size);
+	uint64_t second_node_idx = GET_GSS_IDX(91, 0, input_info->input_size);
 
-	gss_info->gss_nodes[1].rule = '0';
-	gss_info->gss_nodes[1].input_idx = 0;
+	gss_info->gss[first_node_idx].edge_arr = malloc(1 * sizeof(gss_edge));
+	gss_info->gss[first_node_idx].size = 0;
+	gss_info->gss[first_node_idx].alloc_size = 1;
+	gss_info->gss[second_node_idx].edge_arr = malloc(1 * sizeof(gss_edge));
+	gss_info->gss[second_node_idx].size = 1;
+	gss_info->gss[second_node_idx].alloc_size = 1;
 
-	gss_info->gss_edges[0].src_node = 1;
-	gss_info->gss_edges[0].target_node = 0;
-	gss_info->gss_edges[0].rule = 'S';
-	gss_info->gss_edges[0].alternative_start_idx = 0;
-	gss_info->gss_edges[0].alternative_end_idx = 0;
-	gss_info->gss_edges[0].label_type = BASELOOP;
+	gss_info->gss[second_node_idx].edge_arr[0].target_node.rule = 92;
+	gss_info->gss[second_node_idx].edge_arr[0].target_node.input_idx = 0;
+	gss_info->gss[second_node_idx].edge_arr[0].rule = '0';
+	gss_info->gss[second_node_idx].edge_arr[0].alternative_start_idx = 0;
+	gss_info->gss[second_node_idx].edge_arr[0].alternative_end_idx = 0;
+	gss_info->gss[second_node_idx].edge_arr[0].label_type = BASELOOP;
 
-	gss_info->gss_node_array_size = 2;
-	gss_info->gss_edge_array_size = 1;
-	
-	gss_info->gss_node_idx = 1;
+	gss_info->gss_node_idx.rule = 91;
+	gss_info->gss_node_idx.input_idx = 0;
 	input_info->input_idx = 0;
 
 	if(!setjmp(L0_jump_buf)) {
 
 #ifdef DEBUG
 		printf("entered base loop initialy\n");
-		print_gss_info(rule_info->rules, gss_info);
+		print_gss_info(rule_info->rules, gss_info, input_info);
 #endif
 
 		char first_char = input_info->input[0];
@@ -271,7 +266,7 @@ int base_loop(
 #ifdef DEBUG
 		printf("popping from R_set:\n");
 		print_input_info(input_info);
-		print_gss_info(rule_info->rules, gss_info);
+		print_gss_info(rule_info->rules, gss_info, input_info);
 #endif
 
 

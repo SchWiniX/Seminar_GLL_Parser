@@ -4,6 +4,7 @@
 #include <stdio.h>
 
 #include "descriptor_set_functions.h"
+#include "gss.h"
 #include "info_struct.h"
 #include "debug.h"
 
@@ -20,7 +21,7 @@ int print_set_info(const struct rule rules[], struct set_info* set_info) {
 	for(int j = set_info->R_set[i].alternative_start_idx; j < set_info->R_set[i].alternative_end_idx; j++) {
 		printf("%c", rules[set_info->R_set[i].rule - 'A'].alternatives[j]);
 	}
-	printf("]%d], %d, %d, %d)", set_info->R_set[i].alternative_end_idx, set_info->R_set[i].input_idx, set_info->R_set[i].gss_node_idx, set_info->R_set[i].label_type);
+	printf("]%d], %d, (%c, %d), %d)", set_info->R_set[i].alternative_end_idx, set_info->R_set[i].input_idx, set_info->R_set[i].gss_node_idx.rule, set_info->R_set[i].gss_node_idx.input_idx, set_info->R_set[i].label_type);
 
 	i = (i + 1) % set_info->r_alloc_size;
 	while(i != set_info->r_higher_idx) {
@@ -28,7 +29,7 @@ int print_set_info(const struct rule rules[], struct set_info* set_info) {
 		for(int j = set_info->R_set[i].alternative_start_idx; j < set_info->R_set[i].alternative_end_idx; j++) {
 			printf("%c", rules[set_info->R_set[i].rule - 'A'].alternatives[j]);
 		}
-		printf("]%d], %d, %d, %d)", set_info->R_set[i].alternative_end_idx, set_info->R_set[i].input_idx, set_info->R_set[i].gss_node_idx, set_info->R_set[i].label_type);
+		printf("]%d], %d, (%c, %d), %d)", set_info->R_set[i].alternative_end_idx, set_info->R_set[i].input_idx, set_info->R_set[i].gss_node_idx.rule, set_info->R_set[i].gss_node_idx.input_idx, set_info->R_set[i].label_type);
 		i = (i + 1) % set_info->r_alloc_size;
 	}
 	printf(" }\n");
@@ -45,7 +46,7 @@ USET:
 	for(int j = set_info->U_set[i].alternative_start_idx; j < set_info->U_set[i].alternative_end_idx; j++) {
 		printf("%c", rules[set_info->U_set[i].rule - 'A'].alternatives[j]);
 	}
-	printf("]%d], %d, %d, %d)", set_info->U_set[i].alternative_end_idx, set_info->U_set[i].input_idx, set_info->U_set[i].gss_node_idx, set_info->U_set[i].label_type);
+	printf("]%d], %d, (%c, %d), %d)", set_info->U_set[i].alternative_end_idx, set_info->U_set[i].input_idx, set_info->U_set[i].gss_node_idx.rule, set_info->U_set[i].gss_node_idx.input_idx, set_info->U_set[i].label_type);
 
 	i = (i + 1) % set_info->u_alloc_size;
 	while(i != set_info->u_higher_idx) {
@@ -53,7 +54,7 @@ USET:
 		for(int j = set_info->U_set[i].alternative_start_idx; j < set_info->U_set[i].alternative_end_idx; j++) {
 			printf("%c", rules[set_info->U_set[i].rule - 'A'].alternatives[j]);
 		}
-		printf("]%d], %d, %d, %d)", set_info->U_set[i].alternative_end_idx, set_info->U_set[i].input_idx, set_info->U_set[i].gss_node_idx, set_info->U_set[i].label_type);
+	printf("]%d], %d, (%c, %d), %d)", set_info->U_set[i].alternative_end_idx, set_info->U_set[i].input_idx, set_info->U_set[i].gss_node_idx.rule, set_info->U_set[i].gss_node_idx.input_idx, set_info->U_set[i].label_type);
 		i = (i + 1) % set_info->u_alloc_size;
 	}
 	printf(" }\n");
@@ -67,10 +68,10 @@ PSET:
 		return 0;
 	}
 	i = set_info->p_lower_idx;
-	printf("(%d, %d)", set_info->P_set[i].input_idx, set_info->P_set[i].gss_node_idx);
+	printf("((%c, %d), %d)", set_info->P_set[i].gss_node_idx.rule, set_info->P_set[i].gss_node_idx.input_idx, set_info->P_set[i].input_idx);
 	i = (i + 1) % set_info->p_alloc_size;
 	while(i != set_info->p_higher_idx) {
-		printf(", (%d, %d)", set_info->P_set[i].input_idx, set_info->P_set[i].gss_node_idx);
+		printf(", ((%c, %d), %d)", set_info->P_set[i].gss_node_idx.rule, set_info->P_set[i].gss_node_idx.input_idx, set_info->P_set[i].input_idx);
 		i = (i + 1) % set_info->p_alloc_size;
 	}
 	printf(" }\n");
@@ -86,7 +87,7 @@ int in_set(
 		const uint16_t u_higher_idx,
 		const uint16_t u_alloc_size,
 		uint32_t input_idx,
-		uint32_t gss_node_idx,
+		gss_node_idx gss_node_idx,
 		uint8_t label_type
 		) {
 
@@ -98,7 +99,8 @@ int in_set(
 				U_set[i].rule == rule_info->rule &&
 				U_set[i].alternative_start_idx == rule_info->alternative_start_idx &&
 				U_set[i].input_idx == input_idx &&
-				U_set[i].gss_node_idx == gss_node_idx
+				U_set[i].gss_node_idx.rule == gss_node_idx.rule &&
+				U_set[i].gss_node_idx.input_idx == gss_node_idx.input_idx
 				) return i;
 	}
 	return -1;
@@ -108,9 +110,9 @@ int add_descriptor(
 		const struct rule_info* rule_info,
 		struct set_info* set_info,
 		uint32_t input_idx,
-		uint32_t gss_node_idx,
+		gss_node_idx gss_node_idx,
 		uint8_t label_type
-		){
+		) {
 
 	assert(rule_info);
 	assert(set_info);
@@ -201,7 +203,7 @@ int clean_lesser_from_U(struct set_info* set_info) {
 	uint32_t lesser_input_idx = set_info->lesser_input_idx;
 	descriptors* U_set = set_info->U_set;
 
-	while(U_set[u_lower_idx].input_idx == lesser_input_idx && u_size > 0) {
+	while(u_size > 0 && U_set[u_lower_idx].input_idx == lesser_input_idx) {
 		u_size -= 1;
 		u_lower_idx = (u_lower_idx + 1) % u_alloc_size;
 	}
@@ -224,7 +226,7 @@ int clean_lesser_from_P(struct set_info* set_info) {
 	uint32_t lesser_input_idx = set_info->lesser_input_idx;
 	p_set_entry* P_set = set_info->P_set;
 
-	while(P_set[p_lower_idx].input_idx == lesser_input_idx && p_size > 0) {
+	while(p_size > 0 && P_set[p_lower_idx].input_idx == lesser_input_idx) {
 		p_size -= 1;
 		p_lower_idx = (p_lower_idx + 1) % p_alloc_size;
 	}
@@ -240,7 +242,7 @@ int is_in_p_set(
 		const uint32_t p_higher_idx,
 		const uint32_t p_size,
 		const uint32_t p_alloc_size,
-		uint32_t gss_node_idx,
+		gss_node_idx gss_node_idx,
 		uint32_t input_idx
 		) {
 
@@ -249,14 +251,15 @@ int is_in_p_set(
 
 	for(int i = p_lower_idx; i != p_higher_idx; i = (i + 1) % p_alloc_size) {
 		if(
-				P_set[i].gss_node_idx == gss_node_idx &&
+				P_set[i].gss_node_idx.input_idx == gss_node_idx.input_idx &&
+				P_set[i].gss_node_idx.rule == gss_node_idx.rule &&
 				P_set[i].input_idx == input_idx
 			) return 1;
 	}
 	return 0;
 }
 
-int add_p_set_entry(struct set_info* set_info, uint32_t gss_node_idx, uint32_t input_idx) {
+int add_p_set_entry(struct set_info* set_info, gss_node_idx gss_node_idx, uint32_t input_idx) {
 
 	assert(set_info);
 	assert(set_info->P_set);
@@ -285,27 +288,36 @@ int add_p_set_entry(struct set_info* set_info, uint32_t gss_node_idx, uint32_t i
 	return 0;
 }
 
-int add_descriptor_for_P_set(const struct gss_info* gss_info, struct set_info* set_info, const uint32_t new_node, const uint32_t new_edge) {
+int add_descriptor_for_P_set(
+		const struct gss_info* gss_info,
+		const struct input_info* input_info,
+		const gss_node_idx new_node,
+		const uint32_t new_edge,
+		struct set_info* set_info
+		) {
 
 	assert(gss_info);
-	assert(gss_info->gss_nodes);
 	assert(set_info);
 	assert(set_info->P_set);
 
 	uint32_t i;
 	for(i = set_info->p_lower_idx; i < set_info->p_higher_idx; i = (i + 1) % set_info->p_alloc_size) {
-		if(new_node != set_info->P_set[i].gss_node_idx) continue;
-		gss_node curr_node = gss_info->gss_nodes[new_node];
-		gss_edge curr_edge = gss_info->gss_edges[new_edge];
+		if(
+				new_node.input_idx != set_info->P_set[i].gss_node_idx.input_idx ||
+				new_node.rule != set_info->P_set[i].gss_node_idx.rule
+				) continue;
+		gss_edge curr_edge = gss_info->gss[GET_GSS_IDX(new_node.rule, new_node.input_idx, input_info->input_size)].edge_arr[new_edge];
+
 		struct rule_info r = {
 			.rules = NULL,
-			.rule = curr_node.rule,
+			.rule = curr_edge.rule,
 			.alternative_start_idx = curr_edge.alternative_start_idx,
 			.alternative_end_idx = curr_edge.alternative_end_idx,
 		};
 		assert(
 				set_info->P_set[i].input_idx == set_info->lesser_input_idx ||
-				set_info->P_set[i].input_idx + 1 == set_info->lesser_input_idx);
+				set_info->P_set[i].input_idx + 1 == set_info->lesser_input_idx
+				);
 
 		add_descriptor(
 				&r,

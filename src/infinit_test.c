@@ -78,7 +78,7 @@ int main(int argc, char* argv[]) {
 		else printf("%s", input_generator[i]);
 	}
 	printf("\n");
-	printf("Grammar:input_size:Result:Should:Clock ticks:CPU Time:R Set size:U Set size:P Set size:gss_nodes size:gss_edges size:status\n");
+	printf("Grammar:input_size:Result:Should:Clock ticks:CPU Time:R alloc:U alloc:P alloc:gss_nodes:gss_edges:gss_alloc:status\n");
 
 	clock_t rule_init_ticks = clock();
 	FILE* grammer_file = fopen(argv[1], "r");
@@ -146,8 +146,9 @@ int main(int argc, char* argv[]) {
 		
 		//repetition
 
-		uint32_t gss_nodes_final_alloc_size;
-		uint32_t gss_edge_final_alloc_size;
+		uint32_t gss_final_alloc_size = -1;
+		uint32_t gss_node_count = -1;
+		uint32_t gss_edge_count = -1;
 		uint16_t r_final_alloc_size;
 		uint16_t u_final_alloc_size;
 		uint16_t p_final_alloc_size;
@@ -156,14 +157,11 @@ int main(int argc, char* argv[]) {
 		for(int i = 0; i < repetitions; i++) {
 			clock_t ticks = clock();
 
-			uint32_t gss_node_alloc_size = 1024;
-			uint32_t gss_edge_alloc_size = 2048;
 			uint16_t r_alloc_size = 128;
 			uint16_t u_alloc_size = 512;
 			uint32_t p_alloc_size = 128;
 		
-			gss_node* gss_nodes = init_node_array(gss_node_alloc_size);
-			gss_edge* gss_edges = init_edge_array(gss_edge_alloc_size);
+			gss_node* gss = init_gss(26, input_size);
 			descriptors* R_set = init_descriptor_set(r_alloc_size);
 			descriptors* U_set = init_descriptor_set(u_alloc_size);
 			p_set_entry* P_set = init_p_set_entry_set(p_alloc_size);
@@ -171,13 +169,7 @@ int main(int argc, char* argv[]) {
 			struct rule_info rule_info = { .rules = rules, .rule = 'S', .alternative_start_idx = 0, .alternative_end_idx = 0 };
 			struct input_info input_info = { .input = input, .input_idx = 0, .input_size = input_size }; 
 			struct gss_info gss_info = {
-				.gss_nodes = gss_nodes,
-				.gss_edges = gss_edges,
-				.gss_node_idx = 0,
-				.gss_node_alloc_array_size = gss_node_alloc_size,
-				.gss_edge_alloc_array_size = gss_edge_alloc_size,
-				.gss_node_array_size = 0,
-				.gss_edge_array_size = 0,
+				.gss = gss,
 			};
 
 			struct set_info set_info = {
@@ -203,8 +195,9 @@ int main(int argc, char* argv[]) {
 			ticks = clock() - ticks + rule_init_ticks;
 
 			tick_sum += ticks;
-			gss_nodes_final_alloc_size = gss_info.gss_node_alloc_array_size;
-			gss_edge_final_alloc_size = gss_info.gss_edge_alloc_array_size;
+			gss_final_alloc_size = get_gss_total_alloc_size(&gss_info, 26, input_size);
+			gss_node_count = get_gss_node_count(&gss_info, 26, input_size);
+			gss_edge_count = get_gss_edge_count(&gss_info, 26, input_size);
 			r_final_alloc_size = set_info.r_alloc_size;
 			u_final_alloc_size = set_info.u_alloc_size;
 			p_final_alloc_size = set_info.p_alloc_size;
@@ -222,11 +215,10 @@ int main(int argc, char* argv[]) {
 				printf("failed to free P_set likely a memory leak\n");
 			}
 			set_info.P_set = NULL;
-			if(free_gss(gss_info.gss_nodes, gss_info.gss_edges)) {
+			if(free_gss(gss_info.gss, 26, input_size)) {
 				printf("failed to free gss likely a memory leak\n");
 			}
-			gss_info.gss_nodes = NULL;
-			gss_info.gss_edges = NULL;
+			gss_info.gss = NULL;
 		}
 		free(input);
 		input = NULL;
@@ -235,7 +227,7 @@ int main(int argc, char* argv[]) {
 		else success = "\x1b[31mfailed\x1b[0m\n";
 
 		printf(
-				"%s:%d:%d:%d:%ld:%.3lf ms:%.2lf kB:%.2lf kB:%.2lf kB:%.2lf kB:%.2lf kB:%s",
+				"%s:%d:%d:%d:%ld:%.3lf ms:%.2lf kB:%.2lf kB:%.2lf kB:%d:%d:%.2lf kB:%s",
 				argv[1],
 				input_size,
 				final_res,
@@ -245,8 +237,9 @@ int main(int argc, char* argv[]) {
 				(double) r_final_alloc_size * sizeof(descriptors) / 1024,
 				(double) u_final_alloc_size * sizeof(descriptors) / 1024,
 				(double) p_final_alloc_size * sizeof(p_set_entry) / 1024,
-				(double) gss_nodes_final_alloc_size* sizeof(gss_node) / 1024,
-				(double) gss_edge_final_alloc_size * sizeof(gss_edge) / 1024,
+				gss_node_count,
+				gss_edge_count,
+				(double) gss_final_alloc_size / 1024,
 				success
 		);
 	}

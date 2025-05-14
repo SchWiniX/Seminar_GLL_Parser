@@ -8,3 +8,8 @@ E -> e | Ee | Eeee | Eeeeeeee | Eeeeeeeeeeeeeeee
 ab'c 1
 abdddddddddddddddd 1
 dddbc 1
+ab'''ddd 0
+aeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeecc 0
+b' 0
+ddddd 0
+a 0

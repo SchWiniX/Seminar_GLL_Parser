@@ -3,6 +3,9 @@
 
 #include <stdint.h>
 
+#define GET_GSS_IDX(rule, input_idx, input_size) (rule - 'A') * (input_size + 1) + input_idx
+#define GET_GSS_SIZE(rule_count, input_size) (2 + rule_count) * (input_size + 1)
+
 typedef struct rule {
 	uint16_t* alternative_sizes;
 	char* alternatives;
@@ -25,33 +28,33 @@ struct input_info {
 	uint32_t input_size;
 };
 
-typedef struct gss_node{
+typedef struct gss_node_idx {
 	uint32_t input_idx;
 	char rule;
-} gss_node;
+} gss_node_idx;
 
 typedef struct gss_edge {
-	uint32_t src_node;
-	uint32_t target_node;
+	gss_node_idx target_node;
 	uint16_t alternative_start_idx;
 	uint16_t alternative_end_idx;
 	char rule;
 	uint8_t label_type;
 } gss_edge;
 
+typedef struct gss_node {
+	gss_edge* edge_arr;
+	uint32_t alloc_size;
+	uint32_t size;
+} gss_node;
+
 struct gss_info {
-	gss_node* gss_nodes;
-	gss_edge* gss_edges;
-	uint32_t gss_node_idx;
-	uint32_t gss_node_alloc_array_size;
-	uint32_t gss_edge_alloc_array_size;
-	uint32_t gss_node_array_size;
-	uint32_t gss_edge_array_size;
+	gss_node* gss;
+	gss_node_idx gss_node_idx;
 };
 
 typedef struct descriptors {
 	uint32_t input_idx;
-	uint32_t gss_node_idx;
+	gss_node_idx gss_node_idx;
 	uint16_t alternative_start_idx;
 	uint16_t alternative_end_idx;
 	uint8_t label_type;
@@ -60,7 +63,7 @@ typedef struct descriptors {
 
 typedef struct p_set_entry {
 	uint32_t input_idx;
-	uint32_t gss_node_idx;
+	gss_node_idx gss_node_idx;
 } p_set_entry;
 
 struct set_info {
