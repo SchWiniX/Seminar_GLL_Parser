@@ -119,13 +119,6 @@ int main(int argc, char *argv[]) {
 	};
 	assert(str_ringbuff.ringbuff);
 
-	uint32_t stack_pool_alloc_size = 32;
-	struct str_pool str_pool = {
-		.str_buff = malloc(stack_pool_alloc_size),
-		.size = 0,
-		.alloc_size = stack_pool_alloc_size,
-	};
-	assert(str_pool.str_buff);
 
 	//setup starting point
 	str_ringbuff.ringbuff[str_ringbuff.queue_idx].str = malloc(init_str_alloc_size);
@@ -145,14 +138,20 @@ int main(int argc, char *argv[]) {
 		struct str_gen curr_gen = str_ringbuff.ringbuff[str_ringbuff.dequeue_idx];
 		uint8_t done = 1;
 		uint32_t i = 0;
-		if(curr_gen.size != 0) 
-			i = curr_gen.current_position % curr_gen.size;
+		if(curr_gen.size == 0) {
+			printf(" 1\n");
+			str_ringbuff.dequeue_idx = (str_ringbuff.dequeue_idx + 1) % str_ringbuff.alloc_size;
+			str_ringbuff.size -= 1;
+			if(count > 0) count -= 1;
+			continue;
+		}
+		i = curr_gen.current_position % curr_gen.size;
 
 #ifdef DEBUG
 		print_ringbuff(&str_ringbuff);
 #endif
 
-		if(is_non_terminal(curr_gen.str[i]) || curr_gen.size == 0) {
+		if(is_non_terminal(curr_gen.str[i])) {
 			done = 0;
 		} else {
 			for(i = (i + 1) % curr_gen.size; i != curr_gen.current_position % curr_gen.size && done; i = (i + 1) % curr_gen.size) {

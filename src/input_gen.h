@@ -15,12 +15,4 @@ struct str_ringbuff {
 	uint32_t queue_idx;
 };
 
-struct str_pool {
-	struct str_gen* str_buff;
-	uint32_t size;
-	uint32_t alloc_size;
-};
-
-int get_from_pool(struct str_pool* str_pool, struct str_ringbuff* str_ringbuff, uint32_t new_size);
-
 int realloc_ringbuff(struct str_ringbuff* str_ringbuff);
