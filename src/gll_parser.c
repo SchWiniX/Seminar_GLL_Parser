@@ -199,7 +199,7 @@ int base_loop(
 	assert(set_info->U_set);
 	assert(set_info->P_set);
 
-	uint64_t first_node_idx = GET_GSS_IDX(92, 0, input_info->input_size);
+	uint64_t first_node_idx = GET_GSS_IDX(91, 1, input_info->input_size);
 	uint64_t second_node_idx = GET_GSS_IDX(91, 0, input_info->input_size);
 
 	gss_info->gss[first_node_idx].edge_arr = malloc(1 * sizeof(gss_edge));

@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 #define GET_GSS_IDX(rule, input_idx, input_size) (rule - 'A') * (input_size + 1) + input_idx
-#define GET_GSS_SIZE(rule_count, input_size) (2 + rule_count) * (input_size + 1)
+#define GET_GSS_SIZE(rule_count, input_size) rule_count * (input_size + 1) + 2
 
 typedef struct rule {
 	uint16_t* alternative_sizes;
