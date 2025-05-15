@@ -223,11 +223,11 @@ int main(int argc, char* argv[]) {
 		free(input);
 		input = NULL;
 		char* success;
-		if(final_res == should) success = "\x1b[32mpassed\x1b[0m\n";
-		else success = "\x1b[31mfailed\x1b[0m\n";
+		if(final_res == should) success = "\x1b[32mpassed\x1b[0m";
+		else success = "\x1b[31mfailed\x1b[0m";
 
 		printf(
-				"%s:%d:%d:%d:%ld:%.3lf ms:%.2lf kB:%.2lf kB:%.2lf kB:%d:%d:%.2lf kB:%s",
+				"%s:%d:%d:%d:%ld:%.3lf ms:%.2lf kB:%.2lf kB:%.2lf kB:%d:%d:%.2lf kB:%s\n",
 				argv[1],
 				input_size,
 				final_res,

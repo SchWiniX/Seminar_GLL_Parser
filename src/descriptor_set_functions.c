@@ -86,6 +86,7 @@ int in_set(
 		const uint16_t u_lower_idx,
 		const uint16_t u_higher_idx,
 		const uint16_t u_alloc_size,
+		const uint32_t lesser_input_idx,
 		uint32_t input_idx,
 		gss_node_idx gss_node_idx,
 		uint8_t label_type
@@ -94,14 +95,37 @@ int in_set(
 	assert(rule_info);
 	assert(U_set);
 
-	for(uint16_t i = u_lower_idx; i != u_higher_idx; i = (i + 1) % u_alloc_size) {
-		if(
-				U_set[i].rule == rule_info->rule &&
-				U_set[i].alternative_start_idx == rule_info->alternative_start_idx &&
-				U_set[i].input_idx == input_idx &&
-				U_set[i].gss_node_idx.rule == gss_node_idx.rule &&
-				U_set[i].gss_node_idx.input_idx == gss_node_idx.input_idx
-				) return i;
+	assert(lesser_input_idx == input_idx || lesser_input_idx + 1 == input_idx);
+	if(lesser_input_idx == input_idx) {
+		for(uint16_t i = u_lower_idx; i != u_higher_idx; i = (i + 1) % u_alloc_size) {
+			if(U_set[i].input_idx > lesser_input_idx) return -1;
+			if(
+					U_set[i].rule == rule_info->rule &&
+					U_set[i].alternative_start_idx == rule_info->alternative_start_idx &&
+					U_set[i].input_idx == input_idx &&
+					U_set[i].gss_node_idx.rule == gss_node_idx.rule &&
+					U_set[i].gss_node_idx.input_idx == gss_node_idx.input_idx
+					) return i;
+		}
+	} else {
+		uint32_t i;
+		if(u_higher_idx == 0) i = u_alloc_size - 1;
+		else i = u_higher_idx - 1;
+		uint32_t j;
+		if(u_lower_idx == 0) j = u_alloc_size - 1;
+		else j = u_lower_idx - 1;
+		while(i != j) {
+			if(U_set[i].input_idx == lesser_input_idx) return -1;
+			if(
+					U_set[i].rule == rule_info->rule &&
+					U_set[i].alternative_start_idx == rule_info->alternative_start_idx &&
+					U_set[i].input_idx == input_idx &&
+					U_set[i].gss_node_idx.rule == gss_node_idx.rule &&
+					U_set[i].gss_node_idx.input_idx == gss_node_idx.input_idx
+					) return i;
+			if(i == 0) i = u_alloc_size - 1;
+			else i -= 1;
+		}
 	}
 	return -1;
 }
@@ -120,12 +144,15 @@ int add_descriptor(
 	assert(set_info->U_set);
 	assert(input_idx == set_info->lesser_input_idx || input_idx == set_info->lesser_input_idx + 1);
 
-	if(in_set(
+	if(
+			set_info->u_size > 0 &&
+			in_set(
 				rule_info,
 				set_info->U_set,
 				set_info->u_lower_idx,
 				set_info->u_higher_idx,
 				set_info->u_alloc_size,
+				set_info->lesser_input_idx,
 				input_idx,
 				gss_node_idx,
 				label_type

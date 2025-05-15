@@ -14,6 +14,7 @@ int in_set(
 		const uint16_t u_lower_idx,
 		const uint16_t u_higher_idx,
 		const uint16_t u_alloc_size,
+		const uint32_t lesser_input_idx,
 		uint32_t input_idx,
 		gss_node_idx gss_node_idx,
 		uint8_t label_type
