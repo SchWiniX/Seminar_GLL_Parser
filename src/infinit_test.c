@@ -14,7 +14,7 @@
 #include "debug.h"
 
 void print_help() {
-	printf("usage: gll_parser_test grammer_file repetitions count op substr0 substr1 ...\n\n");
+	printf("usage: gll_parser_test 'grammer_file' 'repetitions' 'count' 'input_repetition_start' 'op' substr0 substr1 ...\n\n");
 	printf(" - 'grammer_file' should be a path to a file containing grammers of format:\n");
 	printf("\tX -> X_1 | X_2 | ...\n");
 	printf("\tY -> Y_1 | Y_2 | ...\n");
@@ -22,6 +22,7 @@ void print_help() {
 	printf("the grammer will be done reading if it reads EOF or a terminal on the LHS\n");
 	printf(" - 'repetition' is a natural number denoting the amount of times the same input is parsed (time is then averaged)\n");
 	printf(" - 'count' will be the amounts of tests (-1 for non termination)\n");
+	printf(" - 'input_repetition_start' is a natural number denoting the the amount each repeating substring is already repeated at the beginning\n");
 	printf(" - 'op' is of form \"+N\" or \"*N\" (N being a natural umber) denoting the growth of the input per new test\n");
 	printf(" - 'substr0...n' the input given to the parse is the concatination of these substring where all substr's with odd indicies are repeated\n");
 	exit(1);
@@ -30,6 +31,7 @@ void print_help() {
 int main(int argc, char* argv[]) {
 	int repetitions = 1;
 	int count = -1;
+	int input_rep_start = 1;
 	int inc_num = 1;
 	char op = '\0';
 	switch (argc) {
@@ -44,7 +46,7 @@ int main(int argc, char* argv[]) {
 				print_help();
 			}
 			if(repetitions <= 0) {
-				printf("please provide a strictly position amout of repetitions\n");
+				printf("please provide a strictly positive amout of repetitions\n");
 				print_help();
 			}
 			if(!(count = atoi(argv[3]))) {
@@ -52,14 +54,22 @@ int main(int argc, char* argv[]) {
 				print_help();
 			}
 			if(count == 0 || count < -1) {
-				printf("please provide a strictly position amout of count \n");
+				printf("please provide a strictly positive amout of count \n");
 				print_help();
 			}
-			if((argv[4][0] != '*' && argv[4][0] != '+') || !(inc_num = atoi(argv[4] + 1))) {
+			if(!(input_rep_start = atoi(argv[4]))) {
+				printf("Faulty input for input repetition start\n");
+				print_help();
+			}
+			if(input_rep_start <= 0) {
+				printf("please provide a strictly positive number for input start repetitions\n");
+				print_help();
+			}
+			if((argv[5][0] != '*' && argv[5][0] != '+') || !(inc_num = atoi(argv[5] + 1))) {
 				printf("Faulty input for op\n");
 				print_help();
 			}
-			op = argv[4][0];
+			op = argv[5][0];
 			if(inc_num <= 0) {
 				printf("please provide a strictly position amout of repetitions\n");
 				print_help();
@@ -68,9 +78,9 @@ int main(int argc, char* argv[]) {
 	}
 
 
-	uint32_t gen_size = argc - 5;
-	uint32_t repetition_counter = 1;
-	char** input_generator = argv + 5;
+	uint32_t gen_size = argc - 6;
+	uint32_t repetition_counter = input_rep_start;
+	char** input_generator = argv + 6;
 	uint8_t should = 1;
 	printf("Input generator: ");
 	for(int i = 0; i < gen_size; i++) {
