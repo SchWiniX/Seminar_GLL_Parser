@@ -88,7 +88,7 @@ int main(int argc, char* argv[]) {
 		else printf("%s", input_generator[i]);
 	}
 	printf("\n");
-	printf("Grammar:input_size:Result:Should:Clock ticks:CPU Time:R alloc:U alloc:P alloc:gss_nodes:gss_edges:gss_alloc:status\n");
+	printf("Grammar:input_size:Result:Should:Clock ticks:CPU Time:R alloc:P alloc:gss_nodes:gss_edges:gss_alloc:status\n");
 
 	clock_t rule_init_ticks = clock();
 	FILE* grammer_file = fopen(argv[1], "r");
@@ -160,7 +160,6 @@ int main(int argc, char* argv[]) {
 		uint32_t gss_node_count = -1;
 		uint32_t gss_edge_count = -1;
 		uint16_t r_final_alloc_size;
-		uint16_t u_final_alloc_size;
 		uint16_t p_final_alloc_size;
 		uint8_t final_res;
 		uint64_t tick_sum = 0;
@@ -168,12 +167,10 @@ int main(int argc, char* argv[]) {
 			clock_t ticks = clock();
 
 			uint16_t r_alloc_size = 128;
-			uint16_t u_alloc_size = 512;
 			uint32_t p_alloc_size = 128;
 		
 			gss_node* gss = init_gss(26, input_size);
 			descriptors* R_set = init_descriptor_set(r_alloc_size);
-			descriptors* U_set = init_descriptor_set(u_alloc_size);
 			p_set_entry* P_set = init_p_set_entry_set(p_alloc_size);
 		
 			struct rule_info rule_info = { .rules = rules, .rule = 'S', .alternative_start_idx = 0, .alternative_end_idx = 0 };
@@ -184,7 +181,6 @@ int main(int argc, char* argv[]) {
 
 			struct set_info set_info = {
 				.R_set = R_set,
-				.U_set = U_set,
 				.P_set = P_set,
 				.lesser_input_idx = 0,
 				.p_size = 0,
@@ -195,10 +191,6 @@ int main(int argc, char* argv[]) {
 				.r_lower_idx = r_alloc_size >> 1,
 				.r_higher_idx = r_alloc_size >> 1,
 				.r_alloc_size = r_alloc_size,
-				.u_size = 0,
-				.u_lower_idx = u_alloc_size >> 1,
-				.u_higher_idx = u_alloc_size >> 1,
-				.u_alloc_size = u_alloc_size,
 			};
 
 			uint8_t res = base_loop(&rule_info, &input_info, &gss_info, &set_info);
@@ -209,7 +201,6 @@ int main(int argc, char* argv[]) {
 			gss_node_count = get_gss_node_count(&gss_info, 26, input_size);
 			gss_edge_count = get_gss_edge_count(&gss_info, 26, input_size);
 			r_final_alloc_size = set_info.r_alloc_size;
-			u_final_alloc_size = set_info.u_alloc_size;
 			p_final_alloc_size = set_info.p_alloc_size;
 			final_res = res;
 		
@@ -217,10 +208,6 @@ int main(int argc, char* argv[]) {
 				printf("failed to free R_set likely a memory leak\n");
 			}
 			set_info.R_set = NULL;
-			if(free_desc_set(set_info.U_set)) {
-				printf("failed to free U_set likely a memory leak\n");
-			}
-			set_info.U_set = NULL;
 			if(free_p_set_entry_set(set_info.P_set)) {
 				printf("failed to free P_set likely a memory leak\n");
 			}
@@ -237,7 +224,7 @@ int main(int argc, char* argv[]) {
 		else success = "\x1b[31mfailed\x1b[0m";
 
 		printf(
-				"%s:%d:%d:%d:%ld:%.3lf ms:%.2lf kB:%.2lf kB:%.2lf kB:%d:%d:%.2lf kB:%s\n",
+				"%s:%d:%d:%d:%ld:%.3lf ms:%.2lf kB:%.2lf kB:%d:%d:%.2lf kB:%s\n",
 				argv[1],
 				input_size,
 				final_res,
@@ -245,7 +232,6 @@ int main(int argc, char* argv[]) {
 				tick_sum / repetitions,
 				(double) tick_sum / repetitions * 1000 / CLOCKS_PER_SEC,
 				(double) r_final_alloc_size * sizeof(descriptors) / 1024,
-				(double) u_final_alloc_size * sizeof(descriptors) / 1024,
 				(double) p_final_alloc_size * sizeof(p_set_entry) / 1024,
 				gss_node_count,
 				gss_edge_count,

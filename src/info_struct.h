@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 #define GET_GSS_IDX(rule, input_idx, input_size) (rule - 'A') * (input_size + 1) + input_idx
-#define GET_GSS_SIZE(rule_count, input_size) rule_count * (input_size + 1) + 2
+#define GET_GSS_SIZE(rule_count, input_size) (rule_count + 2) * (input_size + 1)
 
 typedef struct rule {
 	uint16_t* alternative_sizes;
@@ -43,8 +43,13 @@ typedef struct gss_edge {
 
 typedef struct gss_node {
 	gss_edge* edge_arr;
-	uint32_t alloc_size;
-	uint32_t size;
+	struct descriptors* U_set;
+	uint32_t edge_alloc_size;
+	uint32_t edge_size;
+	uint16_t u_lower_idx;
+	uint16_t u_higher_idx;
+	uint16_t u_alloc_size;
+	uint16_t u_size;
 } gss_node;
 
 struct gss_info {
@@ -68,7 +73,6 @@ typedef struct p_set_entry {
 
 struct set_info {
 	descriptors* R_set;
-	descriptors* U_set;
 	p_set_entry* P_set;
 	uint32_t lesser_input_idx;
 	uint32_t p_size;
@@ -79,10 +83,6 @@ struct set_info {
 	uint16_t r_lower_idx;
 	uint16_t r_higher_idx;
 	uint16_t r_alloc_size;
-	uint16_t u_size;
-	uint16_t u_lower_idx;
-	uint16_t u_higher_idx;
-	uint16_t u_alloc_size;
 };
 
 #endif

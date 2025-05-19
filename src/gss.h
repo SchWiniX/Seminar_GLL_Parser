@@ -16,7 +16,7 @@ gss_node_idx create(
 
 uint32_t pop(
 		const struct input_info* input_info,
-		const struct gss_info* gss_info,
+		struct gss_info* gss_info,
 		struct set_info* set_info
 		);
 

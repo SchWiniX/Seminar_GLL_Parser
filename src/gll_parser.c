@@ -59,7 +59,6 @@ void continue_alternative(
 	assert(gss_info);
 	assert(set_info);
 	assert(set_info->R_set);
-	assert(set_info->U_set);
 	assert(set_info->P_set);
 
 #ifdef DEBUG
@@ -77,7 +76,7 @@ void continue_alternative(
 		if(this_rule.alternatives[alternative_start_idx] == input_info->input[input_info->input_idx]) {
 			input_info->input_idx += 1;
 			rule_info->alternative_start_idx += 1;
-			add_descriptor(rule_info, set_info, input_info->input_idx, gss_info->gss_node_idx, PARTIAL_ALTERNATIVE);
+			add_descriptor(rule_info, input_info, set_info, gss_info, PARTIAL_ALTERNATIVE);
 			longjmp(L0_jump_buf, 1);
 			//continue_alternative(rule_info, input_info, gss_info, set_info);
 		} else longjmp(L0_jump_buf, 1); //goback to base_loop
@@ -113,7 +112,6 @@ void start_new_alternative(
 	assert(gss_info);
 	assert(set_info);
 	assert(set_info->R_set);
-	assert(set_info->U_set);
 	assert(set_info->P_set);
 
 #ifdef DEBUG
@@ -129,7 +127,7 @@ void start_new_alternative(
 	} else if(!is_non_terminal(this_rule.alternatives[alternative_start_idx])) {
 		input_info->input_idx += 1;
 		rule_info->alternative_start_idx += 1;
-		add_descriptor(rule_info, set_info, input_info->input_idx, gss_info->gss_node_idx, PARTIAL_ALTERNATIVE);
+		add_descriptor(rule_info, input_info, set_info, gss_info, PARTIAL_ALTERNATIVE);
 		longjmp(L0_jump_buf, 1); //goback to base_loop
 		//continue_alternative(rule_info, input_info, gss_info, set_info);
 	} else {
@@ -164,7 +162,6 @@ void init_rule(
 	assert(gss_info);
 	assert(set_info);
 	assert(set_info->R_set);
-	assert(set_info->U_set);
 	assert(set_info->P_set);
 
 #ifdef DEBUG
@@ -176,7 +173,7 @@ void init_rule(
 		rule_info->alternative_start_idx = this_rule.alternative_sizes[i];
 		rule_info->alternative_end_idx = this_rule.alternative_sizes[i + 1];
 		if(first_follow_test(rule_info, input_info->input[input_info->input_idx])) {
-			add_descriptor(rule_info, set_info, input_info->input_idx, gss_info->gss_node_idx, WHOLE_ALTERNATIVE);
+			add_descriptor(rule_info, input_info, set_info, gss_info, WHOLE_ALTERNATIVE);
 		}
 	}
 	longjmp(L0_jump_buf, 1); //goback to base_loop
@@ -196,22 +193,32 @@ int base_loop(
 	assert(gss_info);
 	assert(set_info);
 	assert(set_info->R_set);
-	assert(set_info->U_set);
 	assert(set_info->P_set);
 
-	uint64_t first_node_idx = GET_GSS_IDX(91, 1, input_info->input_size);
+	uint64_t first_node_idx = GET_GSS_IDX(92, 0, input_info->input_size);
 	uint64_t second_node_idx = GET_GSS_IDX(91, 0, input_info->input_size);
 
 	gss_info->gss[first_node_idx].edge_arr = malloc(1 * sizeof(gss_edge));
-	gss_info->gss[first_node_idx].size = 0;
-	gss_info->gss[first_node_idx].alloc_size = 1;
+	gss_info->gss[first_node_idx].edge_size = 0;
+	gss_info->gss[first_node_idx].edge_alloc_size = 1;
 	gss_info->gss[second_node_idx].edge_arr = malloc(1 * sizeof(gss_edge));
-	gss_info->gss[second_node_idx].size = 1;
-	gss_info->gss[second_node_idx].alloc_size = 1;
+	gss_info->gss[second_node_idx].edge_size = 1;
+	gss_info->gss[second_node_idx].edge_alloc_size = 1;
+
+	gss_info->gss[first_node_idx].U_set = init_descriptor_set(32);
+	gss_info->gss[first_node_idx].u_size = 0;
+	gss_info->gss[first_node_idx].u_lower_idx = 16;
+	gss_info->gss[first_node_idx].u_higher_idx = 16;
+	gss_info->gss[first_node_idx].u_alloc_size = 32; 
+	gss_info->gss[second_node_idx].U_set = init_descriptor_set(32);
+	gss_info->gss[second_node_idx].u_size = 0;
+	gss_info->gss[second_node_idx].u_lower_idx = 16;
+	gss_info->gss[second_node_idx].u_higher_idx = 16;
+	gss_info->gss[second_node_idx].u_alloc_size = 32; 
 
 	gss_info->gss[second_node_idx].edge_arr[0].target_node.rule = 92;
 	gss_info->gss[second_node_idx].edge_arr[0].target_node.input_idx = 0;
-	gss_info->gss[second_node_idx].edge_arr[0].rule = '0';
+	gss_info->gss[second_node_idx].edge_arr[0].rule = 91;
 	gss_info->gss[second_node_idx].edge_arr[0].alternative_start_idx = 0;
 	gss_info->gss[second_node_idx].edge_arr[0].alternative_end_idx = 0;
 	gss_info->gss[second_node_idx].edge_arr[0].label_type = BASELOOP;
@@ -238,16 +245,20 @@ int base_loop(
 
 #ifdef DEBUG
 	printf("\nfell back to base loop\n");
-	print_set_info(rule_info->rules, set_info);
+	print_set_info(rule_info->rules, set_info, input_info, gss_info);
 #endif	
 
+	gss_node* gss = gss_info->gss;
+	uint64_t gss_idx = GET_GSS_IDX(gss_info->gss_node_idx.rule, gss_info->gss_node_idx.input_idx, input_info->input_size);
+
 	if(check_success(
-				set_info->U_set,
-				set_info->u_lower_idx,
-				set_info->u_higher_idx,
-				set_info->u_alloc_size,
-				'0',
-				input_info->input_size)) return 1;
+				gss[gss_idx].U_set,
+				gss[gss_idx].u_lower_idx,
+				gss[gss_idx].u_higher_idx,
+				gss[gss_idx].u_alloc_size,
+				91,
+				input_info->input_size
+				)) return 1;
 	else if(set_info->r_size != 0) {
 		struct descriptors curr_descriptor = set_info->R_set[set_info->r_lower_idx];
 		set_info->r_lower_idx = (set_info->r_lower_idx + 1) % set_info->r_alloc_size;
@@ -260,7 +271,7 @@ int base_loop(
 
 		if(curr_descriptor.input_idx > set_info->lesser_input_idx) {
 			clean_lesser_from_P(set_info);
-			clean_lesser_from_U(set_info);
+			set_info->lesser_input_idx += 1;
 		}
 
 #ifdef DEBUG

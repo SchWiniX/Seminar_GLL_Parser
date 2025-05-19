@@ -88,13 +88,11 @@ int main(int argc, char *argv[]) {
 #endif
 
 	uint16_t r_alloc_size = 128;
-	uint16_t u_alloc_size = 512;
 	uint32_t p_alloc_size = 128;
 
 	uint32_t input_size = strlen(argv[2]); //this feels hella unsafe... anyway moving on
 	gss_node* gss = init_gss(26, input_size);
 	descriptors* R_set = init_descriptor_set(r_alloc_size);
-	descriptors* U_set = init_descriptor_set(u_alloc_size);
 	p_set_entry* P_set = init_p_set_entry_set(p_alloc_size);
 
 	struct rule_info rule_info = { .rules = rules, .rule = 'S', .alternative_start_idx = 0, .alternative_end_idx = 0 };
@@ -104,7 +102,6 @@ int main(int argc, char *argv[]) {
 	};
 	struct set_info set_info = {
 		.R_set = R_set,
-		.U_set = U_set,
 		.P_set = P_set,
 		.lesser_input_idx = 0,
 		.p_size = 0,
@@ -115,10 +112,6 @@ int main(int argc, char *argv[]) {
 		.r_lower_idx = r_alloc_size >> 1,
 		.r_higher_idx = r_alloc_size >> 1,
 		.r_alloc_size = r_alloc_size,
-		.u_size = 0,
-		.u_lower_idx = u_alloc_size >> 1,
-		.u_higher_idx = u_alloc_size >> 1,
-		.u_alloc_size = u_alloc_size,
 	};
 
 	int res = base_loop(&rule_info, &input_info, &gss_info, &set_info);
@@ -131,10 +124,6 @@ int main(int argc, char *argv[]) {
 		printf("failed to free R_set likely a memory leak\n");
 	}
 	set_info.R_set = NULL;
-	if(free_desc_set(set_info.U_set)) {
-		printf("failed to free U_set likely a memory leak\n");
-	}
-	set_info.U_set = NULL;
 	if(free_p_set_entry_set(set_info.P_set)) {
 		printf("failed to free P_set likely a memory leak\n");
 	}

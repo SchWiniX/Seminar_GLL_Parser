@@ -9,7 +9,7 @@
 #include "debug.h"
 
 #ifdef DEBUG
-int print_set_info(const struct rule rules[], struct set_info* set_info) {
+int print_set_info(const struct rule rules[], struct set_info* set_info, struct input_info* input_info, struct gss_info* gss_info) {
 	printf("R_set: %d[%d:%d]%d { ", set_info->r_lower_idx, set_info->r_size, set_info->r_alloc_size, set_info->r_higher_idx);
 	int i = 0;
 	if(!set_info->r_size) {
@@ -36,30 +36,31 @@ int print_set_info(const struct rule rules[], struct set_info* set_info) {
 
 USET:
 
-	printf("U_set: %d[%d:%d]%d { ", set_info->u_lower_idx, set_info->u_size, set_info->u_alloc_size, set_info->u_higher_idx);
-	if(!set_info->u_size) {
-		printf("}\n");
-		goto PSET;
-	}
-	i = set_info->u_lower_idx;
-	printf("(%c, [%d[", set_info->U_set[i].rule, set_info->U_set[i].alternative_start_idx);
-	for(int j = set_info->U_set[i].alternative_start_idx; j < set_info->U_set[i].alternative_end_idx; j++) {
-		printf("%c", rules[set_info->U_set[i].rule - 'A'].alternatives[j]);
-	}
-	printf("]%d], %d, (%c, %d), %d)", set_info->U_set[i].alternative_end_idx, set_info->U_set[i].input_idx, set_info->U_set[i].gss_node_idx.rule, set_info->U_set[i].gss_node_idx.input_idx, set_info->U_set[i].label_type);
-
-	i = (i + 1) % set_info->u_alloc_size;
-	while(i != set_info->u_higher_idx) {
-		printf(", (%c, [%d[", set_info->U_set[i].rule, set_info->U_set[i].alternative_start_idx);
-		for(int j = set_info->U_set[i].alternative_start_idx; j < set_info->U_set[i].alternative_end_idx; j++) {
-			printf("%c", rules[set_info->U_set[i].rule - 'A'].alternatives[j]);
+	printf("U_set:\n");
+	for(int j = 0; j < 28; j++) {
+		for(int i = 0; i < input_info->input_size + 1; i++) {
+			if(!gss_info->gss[j * (input_info->input_size + 1) + i].u_size) continue;
+			gss_node g = gss_info->gss[j * (input_info->input_size + 1) + i];
+			printf("{ '%c', %d, <", j + 'A', i);
+			i = g.u_lower_idx;
+				printf("(%c, [%d[", g.U_set[i].rule, g.U_set[i].alternative_start_idx);
+				for(int j = g.U_set[i].alternative_start_idx; j < g.U_set[i].alternative_end_idx; j++) {
+					printf("%c", rules[g.U_set[i].rule - 'A'].alternatives[j]);
+				}
+				printf("]%d], %d, (%c, %d), %d)", g.U_set[i].alternative_end_idx, g.U_set[i].input_idx, g.U_set[i].gss_node_idx.rule, g.U_set[i].gss_node_idx.input_idx, g.U_set[i].label_type);
+			
+				i = (i + 1) % g.u_alloc_size;
+				while(i != g.u_higher_idx) {
+					printf(", (%c, [%d[", g.U_set[i].rule, g.U_set[i].alternative_start_idx);
+					for(int j = g.U_set[i].alternative_start_idx; j < g.U_set[i].alternative_end_idx; j++) {
+						printf("%c", rules[g.U_set[i].rule - 'A'].alternatives[j]);
+					}
+					printf("]%d], %d, (%c, %d), %d)", g.U_set[i].alternative_end_idx, g.U_set[i].input_idx, g.U_set[i].gss_node_idx.rule, g.U_set[i].gss_node_idx.input_idx, g.U_set[i].label_type);
+					i = (i + 1) % g.u_alloc_size;
+				}
+				printf("> }\n");
 		}
-	printf("]%d], %d, (%c, %d), %d)", set_info->U_set[i].alternative_end_idx, set_info->U_set[i].input_idx, set_info->U_set[i].gss_node_idx.rule, set_info->U_set[i].gss_node_idx.input_idx, set_info->U_set[i].label_type);
-		i = (i + 1) % set_info->u_alloc_size;
 	}
-	printf(" }\n");
-
-PSET:
 
 	printf("P_set: [%d:%d] { ", set_info->p_size, set_info->p_alloc_size);
 
@@ -79,6 +80,55 @@ PSET:
 	return 0;
 }
 #endif
+
+// assumes cleaning to be nessessary
+int in_set_and_clean(
+		const struct rule_info* rule_info,
+		struct gss_node* gss_node,
+		const uint32_t lesser_input_idx,
+		uint32_t input_idx,
+		gss_node_idx gss_node_idx,
+		uint8_t label_type
+		) {
+
+	assert(rule_info);
+	assert(gss_node);
+	assert(gss_node->U_set);
+	assert(gss_node->u_size > 0);
+	assert(gss_node->U_set[gss_node->u_lower_idx].input_idx < lesser_input_idx);
+
+	//u_set is all invalid hence clean it
+	if(lesser_input_idx < input_idx + 1) { 
+		gss_node->u_size = 0;
+		gss_node->u_lower_idx = gss_node->u_alloc_size >> 1;
+		gss_node->u_higher_idx = gss_node->u_alloc_size >> 1;
+		return -1;
+	}
+	//else we assume that the higher halve is still valid
+	uint32_t ret = -1;
+	uint32_t i;
+	if(gss_node->u_higher_idx == 0) i = gss_node->u_alloc_size - 1;
+	else i = gss_node->u_higher_idx - 1;
+	uint32_t j;
+	if(gss_node->u_lower_idx == 0) j = gss_node->u_alloc_size - 1;
+	else j = gss_node->u_lower_idx - 1;
+	while(i != j) {
+		if(gss_node->U_set[i].input_idx + 1 == lesser_input_idx) {
+			gss_node->u_lower_idx = (i + 1) % gss_node->u_alloc_size;
+			return ret;
+		}
+		if(
+				gss_node->U_set[i].rule == rule_info->rule &&
+				gss_node->U_set[i].alternative_start_idx == rule_info->alternative_start_idx &&
+				gss_node->U_set[i].input_idx == input_idx &&
+				gss_node->U_set[i].gss_node_idx.rule == gss_node_idx.rule &&
+				gss_node->U_set[i].gss_node_idx.input_idx == gss_node_idx.input_idx
+				) ret = i;
+		if(i == 0) i = gss_node->u_alloc_size - 1;
+		else i -= 1;
+	}
+	return ret;
+}
 
 int in_set(
 		const struct rule_info* rule_info,
@@ -132,47 +182,75 @@ int in_set(
 
 int add_descriptor(
 		const struct rule_info* rule_info,
+		const struct input_info* input_info,
 		struct set_info* set_info,
-		uint32_t input_idx,
-		gss_node_idx gss_node_idx,
+		struct gss_info* gss_info,
 		uint8_t label_type
 		) {
 
 	assert(rule_info);
+	assert(gss_info);
+	assert(gss_info->gss);
 	assert(set_info);
 	assert(set_info->R_set);
-	assert(set_info->U_set);
-	assert(input_idx == set_info->lesser_input_idx || input_idx == set_info->lesser_input_idx + 1);
+	assert(input_info->input_idx == set_info->lesser_input_idx || input_info->input_idx == set_info->lesser_input_idx + 1);
+
+	gss_node* gss = gss_info->gss;
+	uint32_t input_size = input_info->input_size;
+	uint32_t input_idx = input_info->input_idx;
+	uint64_t gss_idx = GET_GSS_IDX(gss_info->gss_node_idx.rule, gss_info->gss_node_idx.input_idx, input_size);
+
+	const uint32_t init_u_arrey_size = 32;
+	if(!gss[gss_idx].U_set) {
+		gss[gss_idx].U_set = init_descriptor_set(init_u_arrey_size);
+		gss[gss_idx].u_size = 0;
+		gss[gss_idx].u_lower_idx = init_u_arrey_size >> 1;
+		gss[gss_idx].u_higher_idx = init_u_arrey_size >> 1;
+		gss[gss_idx].u_alloc_size = init_u_arrey_size;
+	}
 
 	if(
-			set_info->u_size > 0 &&
-			in_set(
+			gss[gss_idx].u_size > 0 &&
+			gss[gss_idx].U_set[gss[gss_idx].u_lower_idx].input_idx < set_info->lesser_input_idx &&
+			in_set_and_clean(
 				rule_info,
-				set_info->U_set,
-				set_info->u_lower_idx,
-				set_info->u_higher_idx,
-				set_info->u_alloc_size,
+				gss + gss_idx,
 				set_info->lesser_input_idx,
 				input_idx,
-				gss_node_idx,
+				gss_info->gss_node_idx,
 				label_type
-				) != -1)
+			) != -1)
+		return 0;
+	else if(
+			gss[gss_idx].u_size > 0 &&
+			gss[gss_idx].U_set[gss[gss_idx].u_lower_idx].input_idx >= set_info->lesser_input_idx &&
+			in_set(
+				rule_info,
+				gss[gss_idx].U_set,
+				gss[gss_idx].u_lower_idx,
+				gss[gss_idx].u_higher_idx,
+				gss[gss_idx].u_alloc_size,
+				set_info->lesser_input_idx,
+				input_idx,
+				gss_info->gss_node_idx,
+				label_type
+			) != -1)
 		return 0;
 
 	// if we outgrow the current array resize it
 	if(set_info->r_size >= set_info->r_alloc_size) {
 		assert(set_info->r_lower_idx == set_info->r_higher_idx);
-		realloc_set(set_info, RSET);
+		realloc_r_set(set_info);
 	}
 
 	// if we outgrow the current array resize it
-	if(set_info->u_size >= set_info->u_alloc_size) {
-		assert(set_info->u_lower_idx == set_info->u_higher_idx);
-		realloc_set(set_info, USET);
+	if(gss[gss_idx].u_size >= gss[gss_idx].u_alloc_size) {
+		assert(gss[gss_idx].u_lower_idx == gss[gss_idx].u_higher_idx);
+		realloc_u_set(gss_info, input_info, gss_info->gss_node_idx, set_info->lesser_input_idx);
 	}
 
 	descriptors* R_set = set_info->R_set;
-	descriptors* U_set = set_info->U_set;
+	descriptors* U_set = gss[gss_idx].U_set;
 	uint16_t r_index = 0;
 	uint16_t u_index = 0;
 
@@ -184,15 +262,15 @@ int add_descriptor(
 		else
 			set_info->r_lower_idx -= 1;
 
-		if(set_info->u_lower_idx == 0)
-			set_info->u_lower_idx = set_info->u_alloc_size - 1;
+		if(gss[gss_idx].u_lower_idx == 0)
+			gss[gss_idx].u_lower_idx = gss[gss_idx].u_alloc_size - 1;
 		else
-			set_info->u_lower_idx -= 1;
+			gss[gss_idx].u_lower_idx -= 1;
 		r_index = set_info->r_lower_idx;
-		u_index = set_info->u_lower_idx;
+		u_index = gss[gss_idx].u_lower_idx;
 	} else {
 		r_index = set_info->r_higher_idx;
-		u_index = set_info->u_higher_idx;
+		u_index = gss[gss_idx].u_higher_idx;
 	}
 
 
@@ -200,45 +278,45 @@ int add_descriptor(
 	R_set[r_index].alternative_start_idx = rule_info->alternative_start_idx;
 	R_set[r_index].alternative_end_idx = rule_info->alternative_end_idx;
 	R_set[r_index].input_idx = input_idx;
-	R_set[r_index].gss_node_idx = gss_node_idx;
+	R_set[r_index].gss_node_idx = gss_info->gss_node_idx;
 	R_set[r_index].label_type = label_type;
 
 	U_set[u_index].rule = rule_info->rule;
 	U_set[u_index].alternative_start_idx = rule_info->alternative_start_idx;
 	U_set[u_index].alternative_end_idx = rule_info->alternative_end_idx;
 	U_set[u_index].input_idx = input_idx;
-	U_set[u_index].gss_node_idx = gss_node_idx;
+	U_set[u_index].gss_node_idx = gss_info->gss_node_idx;
 	U_set[u_index].label_type = label_type;
 
 	if(input_idx != set_info->lesser_input_idx) {
 		set_info->r_higher_idx = (set_info->r_higher_idx + 1) % set_info->r_alloc_size;
-		set_info->u_higher_idx = (set_info->u_higher_idx + 1) % set_info->u_alloc_size;
+		gss[gss_idx].u_higher_idx = (gss[gss_idx].u_higher_idx + 1) % gss[gss_idx].u_alloc_size;
 	}
 	set_info->r_size += 1;
-	set_info->u_size += 1;
+	gss[gss_idx].u_size += 1;
 	return 0;
 }
 
-int clean_lesser_from_U(struct set_info* set_info) {
+int clean_lesser_from_U(struct gss_info* gss_info, const struct input_info* input_info, const uint32_t lesser_input_idx) {
+	assert(gss_info);
+	assert(gss_info->gss);
+	assert(input_info);
 
-	assert(set_info);
-	assert(set_info->U_set);
+	gss_node* gss = gss_info->gss;
+	uint64_t gss_idx = GET_GSS_IDX(gss_info->gss_node_idx.rule, gss_info->gss_node_idx.input_idx, input_info->input_size);
 
-	uint16_t u_lower_idx = set_info->u_lower_idx;
-	uint16_t u_size = set_info->u_size;
-	uint16_t u_alloc_size = set_info->u_alloc_size;
-	uint32_t lesser_input_idx = set_info->lesser_input_idx;
-	descriptors* U_set = set_info->U_set;
+	uint16_t u_lower_idx = gss[gss_idx].u_lower_idx;
+	uint16_t u_size = gss[gss_idx].u_size;
+	uint16_t u_alloc_size = gss[gss_idx].u_alloc_size;
+	descriptors* U_set = gss[gss_idx].U_set;
 
 	while(u_size > 0 && U_set[u_lower_idx].input_idx == lesser_input_idx) {
 		u_size -= 1;
 		u_lower_idx = (u_lower_idx + 1) % u_alloc_size;
 	}
 
-	set_info->u_size = u_size;
-	set_info->u_lower_idx = u_lower_idx;
-	if(u_size != 0)
-		set_info->lesser_input_idx += 1;
+	gss[gss_idx].u_size = u_size;
+	gss[gss_idx].u_lower_idx = u_lower_idx;
 	return 0;
 }
 
@@ -303,7 +381,7 @@ int add_p_set_entry(struct set_info* set_info, gss_node_idx gss_node_idx, uint32
 
 	// if we outgrow the current array resize it
 	if(set_info->p_size >= set_info->p_alloc_size) {
-		realloc_set(set_info, PSET);
+		realloc_p_set(set_info);
 	}
 
 	// add new p entry
@@ -316,10 +394,10 @@ int add_p_set_entry(struct set_info* set_info, gss_node_idx gss_node_idx, uint32
 }
 
 int add_descriptor_for_P_set(
-		const struct gss_info* gss_info,
 		const struct input_info* input_info,
 		const gss_node_idx new_node,
 		const uint32_t new_edge,
+		struct gss_info* gss_info,
 		struct set_info* set_info
 		) {
 
@@ -341,6 +419,12 @@ int add_descriptor_for_P_set(
 			.alternative_start_idx = curr_edge.alternative_start_idx,
 			.alternative_end_idx = curr_edge.alternative_end_idx,
 		};
+
+		struct input_info in = {
+			.input = NULL,
+			.input_idx = set_info->P_set[i].input_idx,
+			.input_size = input_info->input_size,
+		};
 		assert(
 				set_info->P_set[i].input_idx == set_info->lesser_input_idx ||
 				set_info->P_set[i].input_idx + 1 == set_info->lesser_input_idx
@@ -348,9 +432,9 @@ int add_descriptor_for_P_set(
 
 		add_descriptor(
 				&r,
+				&in,
 				set_info,
-				set_info->P_set[i].input_idx,
-				gss_info->gss_node_idx,
+				gss_info,
 				curr_edge.label_type
 				);
 	}
@@ -363,67 +447,78 @@ descriptors* init_descriptor_set(const uint16_t size) {
 	return set;
 }
 
-int realloc_set(struct set_info* set_info, const set_type s) {
+int realloc_r_set(struct set_info* set_info) {
 	assert(set_info);
 	assert(set_info->R_set);
-	assert(set_info->U_set);
-	assert(s <= PSET);
 
-	if(s == USET) {
-		descriptors* buff = malloc(2 * set_info->u_alloc_size * sizeof(descriptors));
-		assert(buff);
+	descriptors* buff = malloc(2 * set_info->r_alloc_size * sizeof(descriptors));
+	assert(buff);
 
-		uint16_t i = set_info->u_alloc_size >> 1;
-		uint16_t j = set_info->u_lower_idx;
-		//the first set needs to be unrolled to avoid triggering the while condition instandly
-		buff[i++] = set_info->U_set[j];
-		j = (j + 1) % set_info->u_alloc_size;
-		while(j != set_info->u_higher_idx) {
-			buff[i++] = set_info->U_set[j];
-			j = (j + 1) % set_info->u_alloc_size;
-		}
-		free(set_info->U_set);
-		set_info->U_set = buff;
-		set_info->u_lower_idx = set_info->u_alloc_size >> 1;
-		set_info->u_higher_idx = i;
-		set_info->u_alloc_size *= 2;
-	} else if (s == RSET) {
-		descriptors* buff = malloc(2 * set_info->r_alloc_size * sizeof(descriptors));
-		assert(buff);
-
-		uint16_t i = set_info->r_alloc_size >> 1; //start the new buffer in the middle for cache locality
-		uint16_t j = set_info->r_lower_idx;
-		//the first set needs to be unrolled to avoid triggering the while condition instandly
+	uint16_t i = set_info->r_alloc_size >> 1; //start the new buffer in the middle for cache locality
+	uint16_t j = set_info->r_lower_idx;
+	//the first set needs to be unrolled to avoid triggering the while condition instandly
+	buff[i++] = set_info->R_set[j];
+	j = (j + 1) % set_info->r_alloc_size;
+	while(j != set_info->r_higher_idx) {
 		buff[i++] = set_info->R_set[j];
 		j = (j + 1) % set_info->r_alloc_size;
-		while(j != set_info->r_higher_idx) {
-			buff[i++] = set_info->R_set[j];
-			j = (j + 1) % set_info->r_alloc_size;
-		}
-		free(set_info->R_set);
-		set_info->R_set = buff;
-		set_info->r_lower_idx = set_info->r_alloc_size >> 1;
-		set_info->r_higher_idx = i;
-		set_info->r_alloc_size *= 2;
-	} else {
-		p_set_entry* buff = malloc(2 * set_info->p_alloc_size * sizeof(p_set_entry));
-		assert(buff);
+	}
+	free(set_info->R_set);
+	set_info->R_set = buff;
+	set_info->r_lower_idx = set_info->r_alloc_size >> 1;
+	set_info->r_higher_idx = i;
+	set_info->r_alloc_size *= 2;
+	return 0;
+}
 
-		uint16_t i = set_info->p_alloc_size >> 1;
-		uint16_t j = set_info->p_lower_idx;
-		//the first set needs to be unrolled to avoid triggering the while condition instandly
+int realloc_p_set(struct set_info* set_info) {
+	assert(set_info);
+	assert(set_info->P_set);
+
+	p_set_entry* buff = malloc(2 * set_info->p_alloc_size * sizeof(p_set_entry));
+	assert(buff);
+
+	uint16_t i = set_info->p_alloc_size >> 1;
+	uint16_t j = set_info->p_lower_idx;
+	//the first set needs to be unrolled to avoid triggering the while condition instandly
+	buff[i++] = set_info->P_set[j];
+	j = (j + 1) % set_info->p_alloc_size;
+	while(j != set_info->p_higher_idx) {
 		buff[i++] = set_info->P_set[j];
 		j = (j + 1) % set_info->p_alloc_size;
-		while(j != set_info->p_higher_idx) {
-			buff[i++] = set_info->P_set[j];
-			j = (j + 1) % set_info->p_alloc_size;
-		}
-		free(set_info->P_set);
-		set_info->P_set = buff;
-		set_info->p_lower_idx = set_info->p_alloc_size >> 1;
-		set_info->p_higher_idx = i;
-		set_info->p_alloc_size *= 2;
 	}
+	free(set_info->P_set);
+	set_info->P_set = buff;
+	set_info->p_lower_idx = set_info->p_alloc_size >> 1;
+	set_info->p_higher_idx = i;
+	set_info->p_alloc_size *= 2;
+	return 0;
+	}
+
+int realloc_u_set(struct gss_info* gss_info, const struct input_info* input_info, const gss_node_idx gss_node_idx, const uint32_t lesser_input_idx) {
+	assert(gss_info);
+	assert(gss_info->gss);
+
+	gss_node* gss = gss_info->gss;
+	uint32_t gss_idx = GET_GSS_IDX(gss_node_idx.rule, gss_node_idx.input_idx, input_info->input_size);
+
+	descriptors* buff = malloc(2 * gss[gss_idx].u_alloc_size * sizeof(descriptors));
+	assert(buff);
+
+	uint16_t i = gss[gss_idx].u_alloc_size >> 1;
+	uint16_t j = gss[gss_idx].u_lower_idx;
+	//the first set needs to be unrolled to avoid triggering the while condition instandly
+	buff[i++] = gss[gss_idx].U_set[j];
+	j = (j + 1) % gss[gss_idx].u_alloc_size;
+	while(j != gss[gss_idx].u_higher_idx) {
+		buff[i++] = gss[gss_idx].U_set[j];
+		j = (j + 1) % gss[gss_idx].u_alloc_size;
+	}
+	free(gss[gss_idx].U_set);
+	gss[gss_idx].U_set = buff;
+	gss[gss_idx].u_lower_idx = gss[gss_idx].u_alloc_size >> 1;
+	gss[gss_idx].u_higher_idx = i;
+	gss[gss_idx].u_alloc_size *= 2;
 
 	return 0;
 }

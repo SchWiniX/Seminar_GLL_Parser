@@ -6,7 +6,7 @@
 
 typedef enum {RSET, USET, PSET} set_type;
 
-int print_set_info(const struct rule rules[], struct set_info* set_info);
+int print_set_info(const struct rule rules[], struct set_info* set_info, struct input_info* input_info, struct gss_info* gss_info);
 
 int in_set(
 		const struct rule_info* rule_info,
@@ -22,30 +22,32 @@ int in_set(
 
 int add_descriptor(
 		const struct rule_info* rule_info,
+		const struct input_info* input_info,
 		struct set_info* set_info,
-		uint32_t input_idx,
-		gss_node_idx gss_node_idx,
+		struct gss_info* gss_info,
 		uint8_t label_type
 		);
 
-int clean_lesser_from_U(struct set_info* set_info);
+int clean_lesser_from_U(struct gss_info* gss_info, const struct input_info* input_info, const uint32_t lesser_input_idx);
 
 int clean_lesser_from_P(struct set_info* set_info);
 
 int add_p_set_entry(struct set_info* set_info, gss_node_idx gss_node_idx, uint32_t input_idx);
 
 int add_descriptor_for_P_set(
-		const struct gss_info* gss_info,
 		const struct input_info* input_info,
 		const gss_node_idx new_node,
 		const uint32_t new_edge,
+		struct gss_info* gss_info,
 		struct set_info* set_info
 		);
 
 descriptors* init_descriptor_set(const uint16_t size);
 int free_desc_set(descriptors* set);
 
-int realloc_set(struct set_info* set_info, const set_type s);
+int realloc_r_set(struct set_info* set_info);
+int realloc_p_set(struct set_info* set_info);
+int realloc_u_set(struct gss_info* gss_info, const struct input_info* input_info, const gss_node_idx gss_node_idx, const uint32_t lesser_input_idx);
 
 p_set_entry* init_p_set_entry_set(const uint32_t size);
 int free_p_set_entry_set(p_set_entry* set);
