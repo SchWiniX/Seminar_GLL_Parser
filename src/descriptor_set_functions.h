@@ -39,8 +39,8 @@ int add_p_set_entry(
 		);
 
 int add_descriptor_for_P_set(
-		const struct rule_info* rule_info,
-		const struct input_info* input_info,
+		struct rule_info* rule_info,
+		struct input_info* input_info,
 		const gss_node_idx new_node,
 		const uint32_t new_edge,
 		struct gss_info* gss_info,

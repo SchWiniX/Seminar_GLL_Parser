@@ -371,8 +371,8 @@ int add_p_set_entry(struct set_info* set_info, struct gss_info* gss_info, const 
 }
 
 int add_descriptor_for_P_set(
-		const struct rule_info* rule_info,
-		const struct input_info* input_info,
+		struct rule_info* rule_info,
+		struct input_info* input_info,
 		const gss_node_idx new_node,
 		const uint32_t new_edge,
 		struct gss_info* gss_info,
@@ -398,18 +398,11 @@ int add_descriptor_for_P_set(
 		}
 		gss_edge curr_edge = gss_info->gss[GET_GSS_IDX(rule_info->rules, new_node.rule, new_node.input_idx, input_info->input_size)].edge_arr[new_edge];
 
-		struct rule_info r = {
-			.rules = rule_info->rules,
-			.rule = curr_edge.rule,
-			.alternative_start_idx = curr_edge.alternative_start_idx,
-			.alternative_end_idx = curr_edge.alternative_end_idx,
-		};
+		rule_info->rule = curr_edge.rule;
+		rule_info->alternative_start_idx = curr_edge.alternative_start_idx;
+		rule_info->alternative_end_idx = curr_edge.alternative_end_idx;
 
-		struct input_info in = {
-			.input = NULL,
-			.input_idx = gss_node->p_entries[i],
-			.input_size = input_info->input_size,
-		};
+		input_info->input_idx = gss_node->p_entries[i],
 
 		assert(
 				gss_node->p_entries[i] == set_info->lesser_input_idx ||
@@ -417,8 +410,8 @@ int add_descriptor_for_P_set(
 				);
 
 		add_descriptor(
-				&r,
-				&in,
+				rule_info,
+				input_info,
 				set_info,
 				gss_info,
 				curr_edge.label_type

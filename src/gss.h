@@ -7,15 +7,15 @@
 int print_gss_info(rule rules[], struct gss_info* gss_info, struct input_info* input_info, const uint8_t rule_count);
 
 gss_node_idx create(
-		const struct rule_info* rule_info,
-		const struct input_info* input_info,
+		struct rule_info* rule_info,
+		struct input_info* input_info,
 		struct gss_info* gss_info,
 		struct set_info* set_info,
 		uint8_t label_type
 		);
 
 uint32_t pop(
-		const struct rule_info* rule_info,
+		struct rule_info* rule_info,
 		const struct input_info* input_info,
 		struct gss_info* gss_info,
 		struct set_info* set_info

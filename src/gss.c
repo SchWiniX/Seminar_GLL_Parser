@@ -47,8 +47,8 @@ int print_gss_info(rule rules[], struct gss_info* gss_info, struct input_info* i
 #endif
  
 gss_node_idx create(
-		const struct rule_info* rule_info,
-		const struct input_info* input_info,
+		struct rule_info* rule_info,
+		struct input_info* input_info,
 		struct gss_info* gss_info,
 		struct set_info* set_info,
 		uint8_t label_type
@@ -137,7 +137,7 @@ gss_node_idx create(
 }
 
 uint32_t pop(
-		const struct rule_info* rule_info,
+		struct rule_info* rule_info,
 		const struct input_info* input_info,
 		struct gss_info* gss_info,
 		struct set_info* set_info
@@ -164,17 +164,14 @@ uint32_t pop(
 
 	for(int i = 0; i < gss_node.edge_size; i++) {
 		gss_edge curr_edge = gss_node.edge_arr[i];
-		struct rule_info r = {
-			.rules = rule_info->rules,
-			.rule = curr_edge.rule,
-			.alternative_start_idx = curr_edge.alternative_start_idx,
-			.alternative_end_idx = curr_edge.alternative_end_idx,
-		};
+		rule_info->rule = curr_edge.rule;
+		rule_info->alternative_start_idx = curr_edge.alternative_start_idx;
+		rule_info->alternative_end_idx = curr_edge.alternative_end_idx;
 
 		gss_info->gss_node_idx = curr_edge.target_node;
 
 		add_descriptor(
-				&r,
+				rule_info,
 				input_info,
 				set_info,
 				gss_info,
