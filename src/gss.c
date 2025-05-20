@@ -13,14 +13,21 @@
 const uint32_t init_gss_edge_arrey_size = 16;
 
 #ifdef DEBUG
-int print_gss_info(rule rules[], struct gss_info* gss_info, struct input_info* input_info) {
-
-	printf("gss:\n");
-	for(int j = 0; j < 28; j++) {
+int print_gss_info(rule rules[], struct gss_info* gss_info, struct input_info* input_info, const uint8_t rule_count) {
+	printf("gss (%c, %d):\n", gss_info->gss_node_idx.rule, gss_info->gss_node_idx.input_idx);
+	for(int j = 0; j < rule_count + 2; j++) {
 		for(int i = 0; i < input_info->input_size + 1; i++) {
 			if(!gss_info->gss[j * (input_info->input_size + 1) + i].edge_arr) continue;
+
+			unsigned char r = (unsigned char) 255;
+			for(int n = 0; n < 28; n++) {
+				if(rules[n].name != n + 'A') continue;
+				if(rules[n].count_idx == j) r = n + 'A';
+			}
+			assert(r != 255);
+
 			gss_node g = gss_info->gss[j * (input_info->input_size + 1) + i];
-			printf("{ '%c', %d, <", j + 'A', i);
+			printf("{ '%c', %d, <", r, i);
 			if(g.edge_size == 0) {
 				printf("> }\n");
 				continue;
@@ -54,13 +61,12 @@ gss_node_idx create(
 	assert(gss_info);
 	assert(set_info);
 	assert(set_info->R_set);
-	assert(set_info->P_set);
 
 	gss_node* gss = gss_info->gss;
 	uint32_t input_size = input_info->input_size;
 	uint32_t input_idx = input_info->input_idx;
 	char rule = rule_info->rule;
-	uint64_t gss_idx = GET_GSS_IDX(rule, input_idx, input_size);
+	uint64_t gss_idx = GET_GSS_IDX(rule_info->rules, rule, input_idx, input_size);
 	gss_node_idx target_node = gss_info->gss_node_idx;
 	gss_node_idx gss_node = { .rule = rule, .input_idx = input_idx };
 	
@@ -78,7 +84,7 @@ gss_node_idx create(
 		const uint32_t init_u_arrey_size = 32;
 
 		if(!gss[gss_idx].U_set) {
-			gss[gss_idx].U_set = init_descriptor_set(init_u_arrey_size);
+			gss[gss_idx].U_set = init_u_descriptor_set(init_u_arrey_size);
 			gss[gss_idx].u_size = 0;
 			gss[gss_idx].u_lower_idx = init_u_arrey_size >> 1;
 			gss[gss_idx].u_higher_idx = init_u_arrey_size >> 1;
@@ -123,7 +129,7 @@ gss_node_idx create(
 			gss[gss_idx].edge_arr[gss[gss_idx].edge_size].label_type = label_type;
 			
 			gss[gss_idx].edge_size += 1;
-			add_descriptor_for_P_set(input_info, gss_node, idx_edge, gss_info, set_info);
+			add_descriptor_for_P_set(rule_info, input_info, gss_node, idx_edge, gss_info, set_info);
 		}
 	}
 
@@ -131,6 +137,7 @@ gss_node_idx create(
 }
 
 uint32_t pop(
+		const struct rule_info* rule_info,
 		const struct input_info* input_info,
 		struct gss_info* gss_info,
 		struct set_info* set_info
@@ -141,7 +148,6 @@ uint32_t pop(
 	assert(gss_info);
 	assert(set_info);
 	assert(set_info->R_set);
-	assert(set_info->P_set);
 
 	if(gss_info->gss_node_idx.rule == 92) return 1;
 
@@ -149,20 +155,17 @@ uint32_t pop(
 	printf("popping GSS node\n");
 #endif
 
-	if(add_p_set_entry(set_info, gss_info->gss_node_idx, input_info->input_idx)) return 1;
+	if(add_p_set_entry(set_info, gss_info, rule_info, input_info, input_info->input_idx)) return 1;
 
 	
-	char rule = gss_info->gss_node_idx.rule;
-	uint32_t input_idx = gss_info->gss_node_idx.input_idx;
-	uint32_t input_size = input_info->input_size;
-	uint64_t gss_idx = GET_GSS_IDX(rule, input_idx, input_size);
+	uint64_t gss_idx = GET_GSS_IDX(rule_info->rules, gss_info->gss_node_idx.rule, gss_info->gss_node_idx.input_idx, input_info->input_size);
 	gss_node gss_node = gss_info->gss[gss_idx];
 	assert(gss_node.edge_arr);
 
 	for(int i = 0; i < gss_node.edge_size; i++) {
 		gss_edge curr_edge = gss_node.edge_arr[i];
 		struct rule_info r = {
-			.rules = NULL,
+			.rules = rule_info->rules,
 			.rule = curr_edge.rule,
 			.alternative_start_idx = curr_edge.alternative_start_idx,
 			.alternative_end_idx = curr_edge.alternative_end_idx,
@@ -209,18 +212,37 @@ uint64_t get_gss_edge_count(const struct gss_info* gss_info, uint32_t rule_count
 uint64_t get_gss_total_alloc_size(const struct gss_info* gss_info, uint32_t rule_count, uint32_t input_size) {
 	uint64_t alloc_size = 0;
 	for(int i = 0; i < GET_GSS_SIZE(rule_count, input_size); i++) {
-		if(!gss_info->gss[i].edge_arr) continue;
-		alloc_size += gss_info->gss[i].edge_alloc_size * sizeof(gss_edge);
+		if(gss_info->gss[i].edge_arr) 
+			alloc_size += gss_info->gss[i].edge_alloc_size * sizeof(gss_edge);
+		if(gss_info->gss[i].U_set) 
+			alloc_size += gss_info->gss[i].u_alloc_size * sizeof(u_descriptors);
 	}
 	return alloc_size + GET_GSS_SIZE(rule_count, input_size) * sizeof(gss_node);
+}
+
+uint64_t get_u_set_total_size(const struct gss_info* gss_info, uint32_t rule_count, uint32_t input_size) {
+	uint64_t size = 0;
+	for(int i = 0; i < GET_GSS_SIZE(rule_count, input_size); i++) {
+		if(!gss_info->gss[i].U_set) continue;
+		size += gss_info->gss[i].u_size;
+	}
+	return size;
+}
+
+uint64_t get_p_set_total_size(const struct gss_info* gss_info, uint32_t rule_count, uint32_t input_size) {
+	uint64_t size = 0;
+	for(int i = 0; i < GET_GSS_SIZE(rule_count, input_size); i++) {
+		size += gss_info->gss[i].p_count;
+	}
+	return size;
+
 }
 
 int free_gss(gss_node* gss, const uint32_t rule_count, const uint32_t input_size) {
 	if(!gss) return 1;
 	for(int i = 0; i < GET_GSS_SIZE(rule_count, input_size); i++) {
-		if(!gss[i].edge_arr) continue;
-		free(gss[i].edge_arr);
-		free(gss[i].U_set);
+		if(gss[i].edge_arr) free(gss[i].edge_arr);
+		if(gss[i].U_set) free(gss[i].U_set);
 		gss[i].edge_arr = NULL;
 	}
 	free(gss);

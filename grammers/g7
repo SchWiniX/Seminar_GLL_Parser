@@ -1,8 +1,8 @@
 S -> A a
 A -> S | a
 #
+a 0
 aaaa 1
 aa 1
 aaaaaaaaaaaa 1
  0
-a 0

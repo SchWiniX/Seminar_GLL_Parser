@@ -49,7 +49,7 @@ int main(int argc, char *argv[]) {
 	assert(grammer_file);
 
 	//parse grammer input
-	rule rules[26];
+	rule rules[28];
 	uint8_t temp_vals[26];
 	for(int i = 0; i < 26; i++) {
 		rules[i].name = '\0';
@@ -59,7 +59,8 @@ int main(int argc, char *argv[]) {
 		rules[i].follow[1] = 0;
 		temp_vals[i] = 0;
 	}
-	create_grammer(rules, grammer_file);
+	uint8_t rule_count = 0; //amount of rules in this calc
+	create_grammer(rules, grammer_file, &rule_count);
 
 	//find first
 	for(int i = 0; i <26; i++) {
@@ -83,17 +84,30 @@ int main(int argc, char *argv[]) {
 	fclose(grammer_file);
 	grammer_file = NULL;
 
+	rule_count += 1;
+	rules[26].name = 91;
+	rules[26].first[0] = 0;
+	rules[26].first[1] = 0;
+	rules[26].follow[0] = 0;
+	rules[26].follow[1] = 0;
+	rules[26].count_idx = rule_count;
+
+	rules[27].name = 92;
+	rules[27].first[0] = 0;
+	rules[27].first[1] = 0;
+	rules[27].follow[0] = 0;
+	rules[27].follow[1] = 0;
+	rules[27].count_idx = rule_count + 1;
+
 #ifdef DEBUG
 	print_rules(rules);
 #endif
 
 	uint16_t r_alloc_size = 128;
-	uint32_t p_alloc_size = 128;
 
 	uint32_t input_size = strlen(argv[2]); //this feels hella unsafe... anyway moving on
-	gss_node* gss = init_gss(26, input_size);
+	gss_node* gss = init_gss(rule_count, input_size);
 	descriptors* R_set = init_descriptor_set(r_alloc_size);
-	p_set_entry* P_set = init_p_set_entry_set(p_alloc_size);
 
 	struct rule_info rule_info = { .rules = rules, .rule = 'S', .alternative_start_idx = 0, .alternative_end_idx = 0 };
 	struct input_info input_info = { .input = argv[2], .input_idx = 0, .input_size = input_size }; 
@@ -102,19 +116,14 @@ int main(int argc, char *argv[]) {
 	};
 	struct set_info set_info = {
 		.R_set = R_set,
-		.P_set = P_set,
 		.lesser_input_idx = 0,
-		.p_size = 0,
-		.p_lower_idx = p_alloc_size >> 1,
-		.p_higher_idx = p_alloc_size >> 1,
-		.p_alloc_size = p_alloc_size,
 		.r_size = 0,
 		.r_lower_idx = r_alloc_size >> 1,
 		.r_higher_idx = r_alloc_size >> 1,
 		.r_alloc_size = r_alloc_size,
 	};
 
-	int res = base_loop(&rule_info, &input_info, &gss_info, &set_info);
+	int res = base_loop(&rule_info, &input_info, &gss_info, &set_info, rule_count);
 	printf("------------------\nParsing result: %d\n------------------\n", res);
 
 	ticks = clock() - ticks;
@@ -124,11 +133,7 @@ int main(int argc, char *argv[]) {
 		printf("failed to free R_set likely a memory leak\n");
 	}
 	set_info.R_set = NULL;
-	if(free_p_set_entry_set(set_info.P_set)) {
-		printf("failed to free P_set likely a memory leak\n");
-	}
-	set_info.P_set = NULL;
-	if(free_gss(gss_info.gss, 26, input_size)) {
+	if(free_gss(gss_info.gss, rule_count, input_size)) {
 		printf("failed to free gss likely a memory leak\n");
 	}
 	gss_info.gss = NULL;

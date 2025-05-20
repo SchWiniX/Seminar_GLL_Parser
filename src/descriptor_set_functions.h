@@ -6,11 +6,11 @@
 
 typedef enum {RSET, USET, PSET} set_type;
 
-int print_set_info(const struct rule rules[], struct set_info* set_info, struct input_info* input_info, struct gss_info* gss_info);
+int print_set_info(const struct rule rules[], struct set_info* set_info, struct input_info* input_info, struct gss_info* gss_info, const uint8_t rule_count);
 
 int in_set(
 		const struct rule_info* rule_info,
-		const descriptors U_set[],
+		const u_descriptors U_set[],
 		const uint16_t u_lower_idx,
 		const uint16_t u_higher_idx,
 		const uint16_t u_alloc_size,
@@ -30,11 +30,16 @@ int add_descriptor(
 
 int clean_lesser_from_U(struct gss_info* gss_info, const struct input_info* input_info, const uint32_t lesser_input_idx);
 
-int clean_lesser_from_P(struct set_info* set_info);
-
-int add_p_set_entry(struct set_info* set_info, gss_node_idx gss_node_idx, uint32_t input_idx);
+int add_p_set_entry(
+		struct set_info* set_info,
+		struct gss_info* gss_info,
+		const struct rule_info* rule_info,
+		const struct input_info* input_info,
+		uint32_t input_idx
+		);
 
 int add_descriptor_for_P_set(
+		const struct rule_info* rule_info,
 		const struct input_info* input_info,
 		const gss_node_idx new_node,
 		const uint32_t new_edge,
@@ -43,12 +48,11 @@ int add_descriptor_for_P_set(
 		);
 
 descriptors* init_descriptor_set(const uint16_t size);
+u_descriptors* init_u_descriptor_set(const uint16_t size);
 int free_desc_set(descriptors* set);
+int free_u_desc_set(descriptors* set);
 
 int realloc_r_set(struct set_info* set_info);
-int realloc_p_set(struct set_info* set_info);
-int realloc_u_set(struct gss_info* gss_info, const struct input_info* input_info, const gss_node_idx gss_node_idx, const uint32_t lesser_input_idx);
+int realloc_u_set(struct gss_info* gss_info, const struct rule_info* rule_info, const struct input_info* input_info, const gss_node_idx gss_node_idx, const uint32_t lesser_input_idx);
 
-p_set_entry* init_p_set_entry_set(const uint32_t size);
-int free_p_set_entry_set(p_set_entry* set);
 #endif

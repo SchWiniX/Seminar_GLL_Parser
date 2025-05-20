@@ -28,7 +28,7 @@ int print_input_info(struct input_info* input_info) {
 }
 #endif
 
-int check_success(descriptors U_set[], uint16_t u_lower_idx, uint16_t u_higher_idx, uint16_t u_alloc_size, uint16_t rule, uint32_t input_idx) {
+int check_success(u_descriptors U_set[], uint16_t u_lower_idx, uint16_t u_higher_idx, uint16_t u_alloc_size, char rule, uint32_t input_idx) {
 	assert(U_set);
 	if(u_higher_idx == 0) {
 		u_higher_idx = u_alloc_size - 1;
@@ -59,7 +59,6 @@ void continue_alternative(
 	assert(gss_info);
 	assert(set_info);
 	assert(set_info->R_set);
-	assert(set_info->P_set);
 
 #ifdef DEBUG
 	printf("entered continue_alternative\n");
@@ -69,7 +68,7 @@ void continue_alternative(
 	uint16_t alternative_start_idx = rule_info->alternative_start_idx;
 	uint16_t alternative_end_idx = rule_info->alternative_end_idx;
 	if(alternative_start_idx == alternative_end_idx) {
-		pop(input_info, gss_info, set_info);
+		pop(rule_info, input_info, gss_info, set_info);
 		longjmp(L0_jump_buf, 1); //goback to base_loop
 	}
 	if(!is_non_terminal(this_rule.alternatives[alternative_start_idx])) {
@@ -112,7 +111,6 @@ void start_new_alternative(
 	assert(gss_info);
 	assert(set_info);
 	assert(set_info->R_set);
-	assert(set_info->P_set);
 
 #ifdef DEBUG
 	printf("entered start_new_alternative\n");
@@ -122,7 +120,7 @@ void start_new_alternative(
 	uint16_t alternative_start_idx = rule_info->alternative_start_idx;
 	uint16_t alternative_end_idx = rule_info->alternative_end_idx;
 	if(alternative_start_idx + 1 == alternative_end_idx && this_rule.alternatives[alternative_start_idx] == '_') {
-		pop(input_info, gss_info, set_info);
+		pop(rule_info, input_info, gss_info, set_info);
 		longjmp(L0_jump_buf, 1); //goback to base_loop
 	} else if(!is_non_terminal(this_rule.alternatives[alternative_start_idx])) {
 		input_info->input_idx += 1;
@@ -162,7 +160,6 @@ void init_rule(
 	assert(gss_info);
 	assert(set_info);
 	assert(set_info->R_set);
-	assert(set_info->P_set);
 
 #ifdef DEBUG
 	printf("entered init_rule for %c\n", rule_info->rule);
@@ -183,7 +180,8 @@ int base_loop(
 		struct rule_info* rule_info,
 		struct input_info* input_info,
 		struct gss_info* gss_info,
-		struct set_info* set_info
+		struct set_info* set_info,
+		const uint8_t rule_count
 		) {
 
 	assert(rule_info);
@@ -193,24 +191,23 @@ int base_loop(
 	assert(gss_info);
 	assert(set_info);
 	assert(set_info->R_set);
-	assert(set_info->P_set);
 
-	uint64_t first_node_idx = GET_GSS_IDX(92, 0, input_info->input_size);
-	uint64_t second_node_idx = GET_GSS_IDX(91, 0, input_info->input_size);
+	uint64_t first_node_idx = GET_GSS_IDX(rule_info->rules, 92, 0, input_info->input_size);
+	uint64_t second_node_idx = GET_GSS_IDX(rule_info->rules, 91, 0, input_info->input_size);
 
-	gss_info->gss[first_node_idx].edge_arr = malloc(1 * sizeof(gss_edge));
+	gss_info->gss[first_node_idx].edge_arr = malloc(sizeof(gss_edge));
 	gss_info->gss[first_node_idx].edge_size = 0;
 	gss_info->gss[first_node_idx].edge_alloc_size = 1;
-	gss_info->gss[second_node_idx].edge_arr = malloc(1 * sizeof(gss_edge));
+	gss_info->gss[second_node_idx].edge_arr = malloc(sizeof(gss_edge));
 	gss_info->gss[second_node_idx].edge_size = 1;
 	gss_info->gss[second_node_idx].edge_alloc_size = 1;
 
-	gss_info->gss[first_node_idx].U_set = init_descriptor_set(32);
+	gss_info->gss[first_node_idx].U_set = init_u_descriptor_set(32);
 	gss_info->gss[first_node_idx].u_size = 0;
 	gss_info->gss[first_node_idx].u_lower_idx = 16;
 	gss_info->gss[first_node_idx].u_higher_idx = 16;
 	gss_info->gss[first_node_idx].u_alloc_size = 32; 
-	gss_info->gss[second_node_idx].U_set = init_descriptor_set(32);
+	gss_info->gss[second_node_idx].U_set = init_u_descriptor_set(32);
 	gss_info->gss[second_node_idx].u_size = 0;
 	gss_info->gss[second_node_idx].u_lower_idx = 16;
 	gss_info->gss[second_node_idx].u_higher_idx = 16;
@@ -231,7 +228,7 @@ int base_loop(
 
 #ifdef DEBUG
 		printf("entered base loop initialy\n");
-		print_gss_info(rule_info->rules, gss_info, input_info);
+		print_gss_info(rule_info->rules, gss_info, input_info, rule_count);
 #endif
 
 		char first_char = input_info->input[0];
@@ -245,13 +242,15 @@ int base_loop(
 
 #ifdef DEBUG
 	printf("\nfell back to base loop\n");
-	print_set_info(rule_info->rules, set_info, input_info, gss_info);
+	print_set_info(rule_info->rules, set_info, input_info, gss_info, rule_count);
 #endif	
 
 	gss_node* gss = gss_info->gss;
-	uint64_t gss_idx = GET_GSS_IDX(gss_info->gss_node_idx.rule, gss_info->gss_node_idx.input_idx, input_info->input_size);
+	uint64_t gss_idx = GET_GSS_IDX(rule_info->rules, 92, 0, input_info->input_size);
 
-	if(check_success(
+	if(
+			gss[gss_idx].u_size > 0 &&
+			check_success(
 				gss[gss_idx].U_set,
 				gss[gss_idx].u_lower_idx,
 				gss[gss_idx].u_higher_idx,
@@ -270,14 +269,13 @@ int base_loop(
 		rule_info->alternative_end_idx = curr_descriptor.alternative_end_idx;
 
 		if(curr_descriptor.input_idx > set_info->lesser_input_idx) {
-			clean_lesser_from_P(set_info);
 			set_info->lesser_input_idx += 1;
 		}
 
 #ifdef DEBUG
 		printf("popping from R_set:\n");
 		print_input_info(input_info);
-		print_gss_info(rule_info->rules, gss_info, input_info);
+		print_gss_info(rule_info->rules, gss_info, input_info, rule_count);
 #endif
 
 

@@ -6,6 +6,7 @@ D -> d | dD | ddD | dddD | ddddD | dddddD | ddddddD | dddddddD | ddddddddD
 E -> e | Ee | Eeee | Eeeeeeee | Eeeeeeeeeeeeeeee
 #
 ab'c 1
+abdd 1
 abdddddddddddddddd 1
 dddbc 1
 ab'''ddd 0

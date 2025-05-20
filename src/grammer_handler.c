@@ -16,7 +16,7 @@ const uint16_t init_number_of_alternatives_arr_size = 8;
 int print_rules(rule rules[]){
 	for(int i = 0; i < 26; i++) {
 		if(rules[i].name != (char) (i + 'A')) continue;
-		printf("-----------------------------\nrule: %c\n", rules[i].name);
+		printf("-----------------------------\nrule: %c (%d)\n", rules[i].name, rules[i].count_idx);
 		printf("number of alternatives: %d:\n", rules[i].number_of_alternatives);
 		printf("alternatives_sizes: ");
 		printf("%d", rules[i].alternative_sizes[0]);
@@ -47,6 +47,10 @@ int print_rules(rule rules[]){
 		}
 		printf(" }\n");
 	}
+
+
+	printf("-----------------------------\nrule: %c (%d)\n", rules[26].name, rules[26].count_idx);
+	printf("-----------------------------\nrule: %c (%d)\n", rules[27].name, rules[27].count_idx);
 	return 0;
 }
 
@@ -76,7 +80,8 @@ int combine_rule(
 		char* alternatives,
 		uint16_t number_of_alternatives,
 		uint16_t number_of_alternatives_arr_size,
-		uint16_t block_alloc_size
+		uint16_t block_alloc_size,
+		uint8_t* count_idx
 		) {
 
 	assert(rule);
@@ -89,6 +94,7 @@ int combine_rule(
 		rules[idx].alternatives = alternatives;
 		rules[idx].alternative_sizes = alternative_sizes;
 		rules[idx].number_of_alternatives = number_of_alternatives;
+		rules[idx].count_idx = (*count_idx)++;
 		return 0;
 	}
 	//pain
@@ -124,7 +130,7 @@ int combine_rule(
 
 // Assumes grammer file contains only well-formated grammers of type
 // X -> a1 | a2 | ... | an for X a nonterminal and ai strings of terminals and nonterminals
-int create_grammer(rule rules[], FILE* grammer_file) {
+int create_grammer(rule rules[], FILE* grammer_file, uint8_t* count_idx) {
 	assert(rules);
 	assert(grammer_file);
 
@@ -181,7 +187,7 @@ int create_grammer(rule rules[], FILE* grammer_file) {
 						assert(block_size_buff);
 					}
 					block_size_buff[number_of_alternatives] = block_size;
-					combine_rule(rules, name, block_size_buff, block_buff, number_of_alternatives, number_of_alternatives_arr_size, block_alloc_size);
+					combine_rule(rules, name, block_size_buff, block_buff, number_of_alternatives, number_of_alternatives_arr_size, block_alloc_size, count_idx);
 					is_processing_rule = 0;
 					break;
 				case EOF:
@@ -191,7 +197,7 @@ int create_grammer(rule rules[], FILE* grammer_file) {
 						assert(block_size_buff);
 					}
 					block_size_buff[number_of_alternatives] = block_size;
-					combine_rule(rules, name, block_size_buff, block_buff, number_of_alternatives, number_of_alternatives_arr_size, block_alloc_size);
+					combine_rule(rules, name, block_size_buff, block_buff, number_of_alternatives, number_of_alternatives_arr_size, block_alloc_size, count_idx);
 					return 0;
 				default:
 					if(block_size >= block_alloc_size) {
