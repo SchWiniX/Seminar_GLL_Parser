@@ -198,12 +198,14 @@ int base_loop(
 	gss_info->gss[first_node_idx] = init_gss_node(4, 4);
 	gss_info->gss[second_node_idx] = init_gss_node(4, 8);
 
-	gss_info->gss[second_node_idx]->edge_arr[0].target_node.rule = 92;
-	gss_info->gss[second_node_idx]->edge_arr[0].target_node.input_idx = 0;
-	gss_info->gss[second_node_idx]->edge_arr[0].rule = 91;
-	gss_info->gss[second_node_idx]->edge_arr[0].alternative_start_idx = 0;
-	gss_info->gss[second_node_idx]->edge_arr[0].alternative_end_idx = 0;
-	gss_info->gss[second_node_idx]->edge_arr[0].label_type = BASELOOP;
+	gss_edge* sec_edge_arr = GET_GSS_EDGE_ARR(gss_info->gss[second_node_idx]);
+
+	sec_edge_arr[0].target_node.rule = 92;
+	sec_edge_arr[0].target_node.input_idx = 0;
+	sec_edge_arr[0].rule = 91;
+	sec_edge_arr[0].alternative_start_idx = 0;
+	sec_edge_arr[0].alternative_end_idx = 0;
+	sec_edge_arr[0].label_type = BASELOOP;
 	gss_info->gss[second_node_idx]->edge_size = 1;
 
 	gss_info->gss_node_idx.rule = 91;
@@ -238,7 +240,7 @@ int base_loop(
 	if(
 			gss[gss_idx]->u_size > 0 &&
 			check_success(
-				gss[gss_idx]->U_set,
+				GET_GSS_USET(gss[gss_idx]),
 				gss[gss_idx]->u_lower_idx,
 				gss[gss_idx]->u_higher_idx,
 				gss[gss_idx]->u_alloc_size,
