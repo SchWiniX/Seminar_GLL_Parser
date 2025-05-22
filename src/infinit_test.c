@@ -174,12 +174,12 @@ int main(int argc, char* argv[]) {
 		
 		//repetition
 
-		uint32_t gss_final_alloc_size = -1;
-		uint32_t gss_node_count = -1;
-		uint32_t gss_edge_count = -1;
-		uint16_t u_set_size = -1; 
-		uint16_t p_set_size = -1;
-		uint16_t r_final_alloc_size;
+		uint64_t gss_final_alloc_size = -1;
+		uint64_t gss_node_count = -1;
+		uint64_t gss_edge_count = -1;
+		uint64_t u_set_size = -1; 
+		uint64_t p_set_size = -1;
+		uint64_t r_final_alloc_size;
 		uint8_t final_res;
 		uint64_t tick_sum = 0;
 		for(int i = 0; i < repetitions; i++) {
@@ -231,7 +231,7 @@ int main(int argc, char* argv[]) {
 
 		double time = (double) tick_sum / repetitions * 1000 / CLOCKS_PER_SEC;
 		printf(
-				"%s:%d:%d:%d:%.3lf ms:%.3lf c/ms:%.2lf kB:%d:%d:%d:%d:%.2lf kB:%.2lf:%.2lf:%.1lf:%.2lf:%s\n",
+				"%s:%d:%d:%d:%.3lf ms:%.3lf c/ms:%.2lf kB:%ld:%ld:%ld:%ld:%.2lf kB:%.2lf:%.2lf:%.1lf:%.2lf:%s\n",
 				argv[1],
 				input_size,
 				final_res,
