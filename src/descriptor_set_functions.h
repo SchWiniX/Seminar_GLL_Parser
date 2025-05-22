@@ -48,11 +48,9 @@ int add_descriptor_for_P_set(
 		);
 
 descriptors* init_descriptor_set(const uint16_t size);
-u_descriptors* init_u_descriptor_set(const uint16_t size);
+
 int free_desc_set(descriptors* set);
-int free_u_desc_set(descriptors* set);
 
 int realloc_r_set(struct set_info* set_info);
-int realloc_u_set(struct gss_info* gss_info, const struct rule_info* rule_info, const struct input_info* input_info, const gss_node_idx gss_node_idx, const uint32_t lesser_input_idx);
 
 #endif

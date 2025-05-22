@@ -195,30 +195,16 @@ int base_loop(
 	uint64_t first_node_idx = GET_GSS_IDX(rule_info->rules, 92, 0, input_info->input_size);
 	uint64_t second_node_idx = GET_GSS_IDX(rule_info->rules, 91, 0, input_info->input_size);
 
-	gss_info->gss[first_node_idx].edge_arr = malloc(sizeof(gss_edge));
-	gss_info->gss[first_node_idx].edge_size = 0;
-	gss_info->gss[first_node_idx].edge_alloc_size = 1;
-	gss_info->gss[second_node_idx].edge_arr = malloc(sizeof(gss_edge));
-	gss_info->gss[second_node_idx].edge_size = 1;
-	gss_info->gss[second_node_idx].edge_alloc_size = 1;
+	gss_info->gss[first_node_idx] = init_gss_node(4, 4);
+	gss_info->gss[second_node_idx] = init_gss_node(4, 8);
 
-	gss_info->gss[first_node_idx].U_set = init_u_descriptor_set(32);
-	gss_info->gss[first_node_idx].u_size = 0;
-	gss_info->gss[first_node_idx].u_lower_idx = 16;
-	gss_info->gss[first_node_idx].u_higher_idx = 16;
-	gss_info->gss[first_node_idx].u_alloc_size = 32; 
-	gss_info->gss[second_node_idx].U_set = init_u_descriptor_set(32);
-	gss_info->gss[second_node_idx].u_size = 0;
-	gss_info->gss[second_node_idx].u_lower_idx = 16;
-	gss_info->gss[second_node_idx].u_higher_idx = 16;
-	gss_info->gss[second_node_idx].u_alloc_size = 32; 
-
-	gss_info->gss[second_node_idx].edge_arr[0].target_node.rule = 92;
-	gss_info->gss[second_node_idx].edge_arr[0].target_node.input_idx = 0;
-	gss_info->gss[second_node_idx].edge_arr[0].rule = 91;
-	gss_info->gss[second_node_idx].edge_arr[0].alternative_start_idx = 0;
-	gss_info->gss[second_node_idx].edge_arr[0].alternative_end_idx = 0;
-	gss_info->gss[second_node_idx].edge_arr[0].label_type = BASELOOP;
+	gss_info->gss[second_node_idx]->edge_arr[0].target_node.rule = 92;
+	gss_info->gss[second_node_idx]->edge_arr[0].target_node.input_idx = 0;
+	gss_info->gss[second_node_idx]->edge_arr[0].rule = 91;
+	gss_info->gss[second_node_idx]->edge_arr[0].alternative_start_idx = 0;
+	gss_info->gss[second_node_idx]->edge_arr[0].alternative_end_idx = 0;
+	gss_info->gss[second_node_idx]->edge_arr[0].label_type = BASELOOP;
+	gss_info->gss[second_node_idx]->edge_size = 1;
 
 	gss_info->gss_node_idx.rule = 91;
 	gss_info->gss_node_idx.input_idx = 0;
@@ -229,6 +215,7 @@ int base_loop(
 #ifdef DEBUG
 		printf("entered base loop initialy\n");
 		print_gss_info(rule_info->rules, gss_info, input_info, rule_count);
+		print_set_info(rule_info->rules, set_info, input_info, gss_info, rule_count);
 #endif
 
 		char first_char = input_info->input[0];
@@ -245,16 +232,16 @@ int base_loop(
 	print_set_info(rule_info->rules, set_info, input_info, gss_info, rule_count);
 #endif	
 
-	gss_node* gss = gss_info->gss;
+	gss_node** gss = gss_info->gss;
 	uint64_t gss_idx = GET_GSS_IDX(rule_info->rules, 92, 0, input_info->input_size);
 
 	if(
-			gss[gss_idx].u_size > 0 &&
+			gss[gss_idx]->u_size > 0 &&
 			check_success(
-				gss[gss_idx].U_set,
-				gss[gss_idx].u_lower_idx,
-				gss[gss_idx].u_higher_idx,
-				gss[gss_idx].u_alloc_size,
+				gss[gss_idx]->U_set,
+				gss[gss_idx]->u_lower_idx,
+				gss[gss_idx]->u_higher_idx,
+				gss[gss_idx]->u_alloc_size,
 				91,
 				input_info->input_size
 				)) return 1;

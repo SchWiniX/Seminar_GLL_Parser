@@ -1,7 +1,7 @@
 build:
 	mkdir -p builds/
 	echo "#undef DEBUG" > src/debug.h
-	gcc -Wall -O2 -o builds/gll_parser src/main.c src/gll_parser.c src/descriptor_set_functions.c src/gss.c src/grammer_handler.c -pg -g
+	gcc -Wall -O2 -o builds/gll_parser src/main.c src/gll_parser.c src/descriptor_set_functions.c src/gss.c src/grammer_handler.c -g
 
 debug:
 	mkdir -p builds/

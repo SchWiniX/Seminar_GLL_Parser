@@ -56,7 +56,7 @@ typedef struct gss_node {
 } gss_node;
 
 struct gss_info {
-	gss_node* gss;
+	gss_node** gss;
 	gss_node_idx gss_node_idx;
 };
 

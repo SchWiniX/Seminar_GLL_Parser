@@ -185,19 +185,16 @@ int main(int argc, char* argv[]) {
 		for(int i = 0; i < repetitions; i++) {
 			clock_t ticks = clock();
 
-			uint16_t r_alloc_size = 128;
-		
-			gss_node* gss = init_gss(26, input_size);
-			descriptors* R_set = init_descriptor_set(r_alloc_size);
+			uint16_t r_alloc_size = 256;
 		
 			struct rule_info rule_info = { .rules = rules, .rule = 'S', .alternative_start_idx = 0, .alternative_end_idx = 0 };
 			struct input_info input_info = { .input = input, .input_idx = 0, .input_size = input_size }; 
 			struct gss_info gss_info = {
-				.gss = gss,
+				.gss = init_gss(rule_count, input_size),
 			};
 
 			struct set_info set_info = {
-				.R_set = R_set,
+				.R_set = init_descriptor_set(r_alloc_size),
 				.lesser_input_idx = 0,
 				.r_size = 0,
 				.r_lower_idx = r_alloc_size >> 1,
@@ -209,9 +206,9 @@ int main(int argc, char* argv[]) {
 			ticks = clock() - ticks + rule_init_ticks;
 
 			tick_sum += ticks;
-			gss_final_alloc_size = get_gss_total_alloc_size(&gss_info, 26, input_size);
-			gss_node_count = get_gss_node_count(&gss_info, 26, input_size);
-			gss_edge_count = get_gss_edge_count(&gss_info, 26, input_size);
+			gss_final_alloc_size = get_gss_total_alloc_size(&gss_info, rule_count, input_size);
+			gss_node_count = get_gss_node_count(&gss_info, rule_count, input_size);
+			gss_edge_count = get_gss_edge_count(&gss_info, rule_count, input_size);
 			u_set_size = get_u_set_total_size(&gss_info, rule_count, input_size);
 			p_set_size = get_p_set_total_size(&gss_info, rule_count, input_size);
 			r_final_alloc_size = set_info.r_alloc_size;
@@ -221,7 +218,7 @@ int main(int argc, char* argv[]) {
 				printf("failed to free R_set likely a memory leak\n");
 			}
 			set_info.R_set = NULL;
-			if(free_gss(gss_info.gss, 26, input_size)) {
+			if(free_gss(gss_info.gss, rule_count, input_size)) {
 				printf("failed to free gss likely a memory leak\n");
 			}
 			gss_info.gss = NULL;

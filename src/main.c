@@ -103,19 +103,18 @@ int main(int argc, char *argv[]) {
 	print_rules(rules);
 #endif
 
-	uint16_t r_alloc_size = 128;
+	uint16_t r_alloc_size = 256;
 
 	uint32_t input_size = strlen(argv[2]); //this feels hella unsafe... anyway moving on
-	gss_node* gss = init_gss(rule_count, input_size);
-	descriptors* R_set = init_descriptor_set(r_alloc_size);
 
 	struct rule_info rule_info = { .rules = rules, .rule = 'S', .alternative_start_idx = 0, .alternative_end_idx = 0 };
 	struct input_info input_info = { .input = argv[2], .input_idx = 0, .input_size = input_size }; 
 	struct gss_info gss_info = {
-		.gss = gss,
+		.gss = init_gss(rule_count, input_size),
 	};
+
 	struct set_info set_info = {
-		.R_set = R_set,
+		.R_set = init_descriptor_set(r_alloc_size),
 		.lesser_input_idx = 0,
 		.r_size = 0,
 		.r_lower_idx = r_alloc_size >> 1,
