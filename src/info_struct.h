@@ -3,20 +3,42 @@
 
 #include <stdint.h>
 
+#define NONTERMCHAR '\''
+#define NONTERMCHAR_NUM -1
+#define ALTERNATIVECHAR '|'
+#define EMPTYCHAR '_'
+#define EMPTYCHAR_NUM -2
+#define EOG '#'
+#define ESCAPE '\\'
+#define STARTID '%'
+
 #define GET_GSS_IDX(rules, rule, input_idx, input_size) rules[rule - 'A'].count_idx * (input_size + 1) + input_idx
 #define GET_GSS_SIZE(rule_count, input_size) (rule_count + 2) * (input_size + 1)
 #define GET_GSS_USET(gss_node) (u_descriptors*) (gss_node + 1)
 #define GET_GSS_EDGE_ARR(gss_node) (gss_edge*) (GET_GSS_USET(gss_node) + gss_node->u_alloc_size)
 
+struct dym_str {
+	char* str;
+	uint16_t str_size;
+	uint16_t str_alloc_size;
+};
+
 typedef struct rule {
+	char* name;
 	uint16_t* alternative_sizes;
 	char* alternatives;
 	uint64_t first[2];
 	uint64_t follow[2];
+	uint8_t nullable;
 	uint16_t number_of_alternatives;
 	uint8_t count_idx;
-	char name;
 } rule;
+
+struct rule_arr {
+	rule* rules;
+	uint16_t rules_alloc_size;
+	uint16_t rule_size;
+};
 
 struct rule_info {
 	rule* rules;

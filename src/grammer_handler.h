@@ -5,30 +5,29 @@
 #include <stdio.h>
 #include "info_struct.h"
 
-int print_rules(rule rules[]);
+enum grammer_read_states { GRS_NEWLINE, GRS_READ_RULE, GRS_READ_ALTERNATIVES, GRS_READ_RULE_IN_ALTERNATIVE };
+
+int print_rules(const struct rule_arr* rule_arr);
 
 int print_rule_info(const struct rule_info* rule_info, uint8_t full);
 
-int create_grammer(rule rules[], FILE* grammer_file, uint8_t* count_idx);
+uint16_t add_rule(struct rule_arr* rule_arr, struct dym_str rule_name);
 
-int combine_rule(
-		rule rules[],
-		char rule,
-		uint16_t* block_sizes,
-		char* blocks,
-		uint16_t number_of_blocks,
-		uint16_t number_of_blocks_arr_size,
-		uint16_t block_alloc_size,
-		uint8_t* count_idx
-		);
+int add_alternative_to_rule(struct rule_arr* rule_arr, struct dym_str alternative_buff, uint16_t rule_idx);
 
-int is_non_terminal(char character);
+uint16_t token_to_idx(char* buff);
 
-int is_in_first_follow(const uint64_t first_follow[2], const signed char c);
+void idx_to_token(struct dym_str* buff, uint16_t idx);
 
-int create_first(rule rules[], char rule, uint64_t first[2], uint8_t temp_val[]);
+int handle_special_chars(FILE* grammer_file, char* curr_char_p);
 
-int create_follow(const rule rules[], char rule, uint64_t follow[2], uint8_t temp_info[]);
+int create_grammer(struct rule_arr* rules, FILE* grammer_file, uint8_t* count_idx);
+
+uint8_t is_in_first_follow(const uint64_t first_follow[2], const uint8_t* nullable, const signed char c, const uint8_t is_follow);
+
+int create_first(struct rule_arr rules);
+
+int create_follow(struct rule_arr rule_arr);
 
 //assumes rules itself is stack allocated only its components are freed
 int free_rules(rule rules[]);
