@@ -1,0 +1,4 @@
+while x != 0 do
+(a := (a + n); b := (b * n));
+n := (n - 1)
+end

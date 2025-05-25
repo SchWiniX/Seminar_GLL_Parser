@@ -15,7 +15,7 @@ const uint16_t init_number_of_alternatives_size = 8;
 #ifdef DEBUG
 int print_rules(const struct rule_arr* rule_arr){
 	for(int i = 0; i < rule_arr->rule_size; i++) {
-		printf("-----------------------------\nrule: %s (%d)\n", rule_arr->rules[i].name, rule_arr->rules[i].count_idx);
+		printf("-----------------------------\nrule: %s (%d)\n", rule_arr->rules[i].name, i);
 		printf("number of alternatives: %d:\n", rule_arr->rules[i].number_of_alternatives);
 		printf("alternatives_sizes: ");
 		printf("%d", rule_arr->rules[i].alternative_sizes[0]);
@@ -24,16 +24,14 @@ int print_rules(const struct rule_arr* rule_arr){
 		}
 		printf("\nalternatives: ");
 		for(int j = 0; j < rule_arr->rules[i].number_of_alternatives; j++) {
-			for(int k = rule_arr->rules[i].alternative_sizes[j]; k < rule_arr->rules[i].alternative_sizes[j + 1]; k++) {
+			for(uint16_t k = rule_arr->rules[i].alternative_sizes[j]; k < rule_arr->rules[i].alternative_sizes[j + 1]; k++) {
 				char c;
 				char c2 = -1;
 				switch (rule_arr->rules[i].alternatives[k]) {
 					case(NONTERMCHAR_NUM):
 						c = NONTERMCHAR;
-						printf("%c-", c);
-						while(rule_arr->rules[i].alternatives[++k] != NONTERMCHAR_NUM)
-							printf("%d-", rule_arr->rules[i].alternatives[k]);
-						printf("%c", c);
+						uint16_t rule_idx = token_to_idx(rule_arr->rules[i].alternatives + k, &k);
+						printf("%c%s%c", c, rule_arr->rules[rule_idx].name, c);
 						continue;
 					case(EMPTYCHAR_NUM):
 						c = EMPTYCHAR;
@@ -89,63 +87,117 @@ int print_rules(const struct rule_arr* rule_arr){
 
 		printf("first(%s): { ", rule_arr->rules[i].name);
 		for(unsigned char j = 0; j < 128; j++) {
-			if(!is_in_first_follow(rule_arr->rules[i].first, (signed char) j)) continue;
+			if(!is_in_first_follow(rule_arr->rules[i].first, (signed char) j, 0)) continue;
+			char j1 = -1;
 			char j2 = -1;
-			switch (j) {
-				case(EMPTYCHAR_NUM):
-						j = EMPTYCHAR;
+			switch ((signed char) j) {
+				case(0):
+						j1 = EMPTYCHAR;
 						break;
 					case(NONTERMCHAR):
-						j = ESCAPE;
+						j1 = ESCAPE;
 						j2 = NONTERMCHAR;
 						break;
 					case(EMPTYCHAR):
-						j = ESCAPE;
+						j1 = ESCAPE;
 						j2 = EMPTYCHAR;
 						break;
 					case '\a':
-						j = ESCAPE;
+						j1 = ESCAPE;
 						j2 = 'a';
 						break;
 					case '\b':
-						j = ESCAPE;
+						j1 = ESCAPE;
 						j2 = 'b';
 						break;
 					case '\f':
-						j = ESCAPE;
+						j1 = ESCAPE;
 						j2 = 'f';
 						break;
 					case '\n':
-						j = ESCAPE;
+						j1 = ESCAPE;
 						j2 = 'n';
 						break;
 					case '\r':
-						j = ESCAPE;
+						j1 = ESCAPE;
 						j2 = 'r';
 						break;
 					case '\t':
-						j = ESCAPE;
+						j1 = ESCAPE;
 						j2 = 't';
 						break;
 					case '\v':
-						j = ESCAPE;
+						j1 = ESCAPE;
 						j2 = 'v';
 						break;
 					default:
+						j1 = j;
 						break;
 			}
-			printf("%c ", (signed char) j);
+			printf("'%c", (signed char) j1);
 			if(j2 != -1) {
-				printf("%c", j2);
+				j += 1;
+				printf("%c', ", j2);
 				j2 = -1;
-			}
+			} else printf("', ");
 		}
 		printf(" }\n");
 
 		printf("follow(%s): { ", rule_arr->rules[i].name);
 		for(unsigned char j = 0; j < 128; j++) {
-			if(!is_in_first_follow(rule_arr->rules[i].follow, (signed char) j)) continue;
-			printf("%c ", (signed char) j);
+			if(!is_in_first_follow(rule_arr->rules[i].follow, (signed char) j, 1)) continue;
+			char j1 = -1;
+			char j2 = -1;
+			switch ((signed char) j) {
+				case(0):
+						j1 = EMPTYCHAR;
+						break;
+					case(NONTERMCHAR):
+						j1 = ESCAPE;
+						j2 = NONTERMCHAR;
+						break;
+					case(EMPTYCHAR):
+						j1 = ESCAPE;
+						j2 = EMPTYCHAR;
+						break;
+					case '\a':
+						j1 = ESCAPE;
+						j2 = 'a';
+						break;
+					case '\b':
+						j1 = ESCAPE;
+						j2 = 'b';
+						break;
+					case '\f':
+						j1 = ESCAPE;
+						j2 = 'f';
+						break;
+					case '\n':
+						j1 = ESCAPE;
+						j2 = 'n';
+						break;
+					case '\r':
+						j1 = ESCAPE;
+						j2 = 'r';
+						break;
+					case '\t':
+						j1 = ESCAPE;
+						j2 = 't';
+						break;
+					case '\v':
+						j1 = ESCAPE;
+						j2 = 'v';
+						break;
+					default:
+						j1 = j;
+						break;
+			}
+			printf("'%c", (signed char) j1);
+			if(j2 != -1) {
+				j += 1;
+				printf("%c', ", j2);
+				j2 = -1;
+			} else printf("', ");
 		}
 		printf(" }\n");
 	}
@@ -161,7 +213,7 @@ int print_rule_info(const struct rule_info* rule_info, uint8_t full) {
 	}
 	printf(" -> ");
 	for(int i = rule_info->alternative_start_idx; i < rule_info->alternative_end_idx; i++) {
-		printf("%c", rule_info->rules[rule_info->rule - 'A'].alternatives[i]);
+		printf("%c", rule_info->rule_arr.rules[rule_info->rule].alternatives[i]);
 	}
 	printf("\n");
 	return 0;
@@ -169,8 +221,16 @@ int print_rule_info(const struct rule_info* rule_info, uint8_t full) {
 #endif
 
 uint16_t add_rule(struct rule_arr* rule_arr, struct dym_str rule_name) {
+	assert(rule_arr->rule_size > 0);
 	for(int i = 0; i < rule_arr->rule_size; i++) {
-		if(!strncmp(rule_arr->rules[i].name, rule_name.str, rule_name.str_size)) {// this may cause problems if name contains negative values
+		int j;
+		for(j = 0; j < rule_name.str_size; j++) {
+			if(rule_arr->rules[i].name[j] != rule_name.str[j]) {
+				j = -1;
+				break;
+			}
+		}
+		if(j != -1) {// this may cause problems if name contains negative values
 			return i;
 		}
 	}
@@ -181,11 +241,16 @@ uint16_t add_rule(struct rule_arr* rule_arr, struct dym_str rule_name) {
 	}
 	rule_arr->rules[rule_arr->rule_size].name = malloc(rule_name.str_size + 1);
 	assert(rule_arr->rules[rule_arr->rule_size].name);
-	strncpy(rule_arr->rules[rule_arr->rule_size].name, rule_name.str, rule_name.str_size + 1);// this may cause problems if name contains negative values
+	for(int i = 0; i < rule_name.str_size + 1; i++) {
+		rule_arr->rules[rule_arr->rule_size].name[i] = rule_name.str[i];
+	}
 	rule_arr->rules[rule_arr->rule_size].name[rule_name.str_size] = '\0';
-	rule_arr->rules[rule_arr->rule_size].count_idx = rule_arr->rule_size;
 	rule_arr->rules[rule_arr->rule_size].alternative_sizes = NULL;
 	rule_arr->rules[rule_arr->rule_size].alternatives = NULL;
+	rule_arr->rules[rule_arr->rule_size].first[0] = 0;
+	rule_arr->rules[rule_arr->rule_size].first[1] = 0;
+	rule_arr->rules[rule_arr->rule_size].follow[0] = 0;
+	rule_arr->rules[rule_arr->rule_size].follow[1] = 0;
 	rule_arr->rule_size += 1;
 	return rule_arr->rule_size - 1;
 
@@ -224,7 +289,7 @@ int add_alternative_to_rule(struct rule_arr* rule_arr, struct dym_str alternativ
 	assert(rules[rule_idx].alternatives);
 
 	rules[rule_idx].alternative_sizes =
-		realloc(rules[rule_idx].alternative_sizes, (rules[rule_idx].number_of_alternatives + 1) * sizeof(uint16_t));
+		realloc(rules[rule_idx].alternative_sizes, (rules[rule_idx].number_of_alternatives + 2) * sizeof(uint16_t));
 
 	assert(rules[rule_idx].alternative_sizes);
 	for(int i = 0; i < alternative_buff.str_size; i++) {
@@ -233,7 +298,7 @@ int add_alternative_to_rule(struct rule_arr* rule_arr, struct dym_str alternativ
 
 	rule_arr->rules[rule_idx].alternative_sizes[rules[rule_idx].number_of_alternatives + 1] =
 		rule_arr->rules[rule_idx].alternative_sizes[rules[rule_idx].number_of_alternatives] + alternative_buff.str_size;
-	rule_arr->rules[rule_idx].number_of_alternatives = rule_arr->rules[rule_idx].number_of_alternatives += 1;
+	rule_arr->rules[rule_idx].number_of_alternatives += 1;
 	return 0;
 }
 
@@ -241,15 +306,19 @@ uint16_t is_non_terminal(char* buff) {
 	return (buff[0] == NONTERMCHAR_NUM);
 }
 
-uint16_t token_to_idx(char* buff) {
+uint16_t token_to_idx(char* buff, uint16_t* counter) {
+	assert(buff[0] == NONTERMCHAR_NUM);
+	assert(buff[1] != NONTERMCHAR_NUM);
 	uint16_t offset = 1;
-	uint16_t result;
+	uint16_t result = 0;
 	uint16_t i = 1;
 	while(buff[i] != NONTERMCHAR_NUM) {
 		result = buff[i] * offset;
 		offset *= 128;
 		i++;
+		*counter += 1;
 	}
+	*counter += 1;
 	return result;
 }
 
@@ -313,7 +382,7 @@ int handle_special_chars(FILE* grammer_file, char* curr_char_p) {
 
 	
 	// X -> a1 | a2 | ... | an for X a nonterminal and ai strings of terminals and nonterminals
-	int create_grammer(struct rule_arr* rules, FILE* grammer_file, uint8_t* count_idx) {
+	int create_grammer(struct rule_arr* rules, FILE* grammer_file) {
 		assert(rules);
 		assert(grammer_file);
 	
@@ -356,11 +425,16 @@ int handle_special_chars(FILE* grammer_file, char* curr_char_p) {
 	//add the starting rule as rule 0;
 	rules->rules[0].name = malloc(read_buff.str_size + 1);
 	assert(rules->rules[0].name);
-	strncpy(rules->rules[0].name, read_buff.str, read_buff.str_size);
+	for(int i = 0; i < read_buff.str_size; i++) {
+		rules->rules[0].name[i] = read_buff.str[i];
+	}
 	rules->rules[0].name[read_buff.str_size] = '\0';
-	rules->rules[0].count_idx = 0;
 	rules->rules[0].alternative_sizes = NULL;
 	rules->rules[0].alternatives = NULL;
+	rules->rules[0].first[0] = 0;
+	rules->rules[0].first[1] = 0;
+	rules->rules[0].follow[0] = 0;
+	rules->rules[0].follow[1] = 0;
 	rules->rule_size += 1;
 
 	//start reading grammars
@@ -372,113 +446,112 @@ int handle_special_chars(FILE* grammer_file, char* curr_char_p) {
 		.str_alloc_size = init_alternative_size,
 	};
 	assert(alternative_buff.str);
+	uint16_t curr_rule_idx;
 	while(curr_char != EOG && curr_char != EOF) {
-		uint16_t curr_rule_idx;
-		while(curr_char != EOG) {
-			switch (state) {
-				case(GRS_NEWLINE):
-					if(curr_char != NONTERMCHAR) {
-						printf("Tokens must be enclosed in single quotes was %c\n", curr_char);
-						exit(1);
-					}
-					state = GRS_READ_RULE;
-					break;
-				case(GRS_READ_RULE):
-					//read until we read hit the matching 
-					read_buff.str_size = 0;
-					while(curr_char != NONTERMCHAR) {
-						handle_special_chars(grammer_file, &curr_char);
-						if(read_buff.str_size == read_buff.str_alloc_size) {
-							read_buff.str_alloc_size *= 2;
-							read_buff.str = realloc(read_buff.str, read_buff.str_alloc_size);
-							assert(read_buff.str);
-						}
-						read_buff.str[read_buff.str_size] = curr_char;
-						read_buff.str_size += 1;
-						curr_char = fgetc(grammer_file);
-					}
-					//consume the NONTERMCHAR
-					curr_char = fgetc(grammer_file);
-
-					//eat whitespace
-					while(curr_char == ' ' || curr_char == '\t') curr_char = fgetc(grammer_file);
-
-					//check transition symbol
-					if(curr_char != '-' || fgetc(grammer_file) != '>') {
-						printf("Rule is missing the production symbol '->'\n");
-						exit(1);
-					}
-
-					//store rule in rules
-					curr_rule_idx = add_rule(rules, read_buff);
-
-					state = GRS_READ_ALTERNATIVES;
-					break;
-				case(GRS_READ_ALTERNATIVES):
-					//eat whitespace
-					while(curr_char == ' ' || curr_char == '\t') curr_char = fgetc(grammer_file);
-					if(curr_char == NONTERMCHAR) {
-						state = GRS_READ_RULE_IN_ALTERNATIVE;
-						break;
-					}
-					if(curr_char == ALTERNATIVECHAR) {
-						add_alternative_to_rule(rules, alternative_buff, curr_rule_idx);
-						alternative_buff.str_size = 0;
-						break;
-					}
-					if(curr_char == '\n') {
-						add_alternative_to_rule(rules, alternative_buff, curr_rule_idx);
-						alternative_buff.str_size = 0;
-						state = GRS_NEWLINE;
-						break;
-					}
+		switch (state) {
+			case(GRS_NEWLINE):
+				if(curr_char != NONTERMCHAR) {
+					printf("Tokens must be enclosed in single quotes was %c, %d\n", curr_char, curr_char);
+					exit(1);
+				}
+				state = GRS_READ_RULE;
+				break;
+			case(GRS_READ_RULE):
+				//read until we read hit the matching 
+				read_buff.str_size = 0;
+				while(curr_char != NONTERMCHAR) {
 					handle_special_chars(grammer_file, &curr_char);
-					if(alternative_buff.str_size == alternative_buff.str_alloc_size) {
-						alternative_buff.str_alloc_size *= 2;
-						alternative_buff.str = realloc(alternative_buff.str, alternative_buff.str_alloc_size);
-						assert(alternative_buff.str);
+					if(read_buff.str_size == read_buff.str_alloc_size) {
+						read_buff.str_alloc_size *= 2;
+						read_buff.str = realloc(read_buff.str, read_buff.str_alloc_size);
+						assert(read_buff.str);
 					}
-					alternative_buff.str[alternative_buff.str_size] = curr_char;
-					alternative_buff.str_size += 1;
+					read_buff.str[read_buff.str_size] = curr_char;
+					read_buff.str_size += 1;
+					curr_char = fgetc(grammer_file);
+				}
+				//consume the NONTERMCHAR
+				curr_char = fgetc(grammer_file);
+
+				//eat whitespace
+				while(curr_char == ' ' || curr_char == '\t') curr_char = fgetc(grammer_file);
+
+				//check transition symbol
+				if(curr_char != '-' || fgetc(grammer_file) != '>') {
+					printf("Rule is missing the production symbol '->'\n");
+					exit(1);
+				}
+
+				//store rule in rules
+				curr_rule_idx = add_rule(rules, read_buff);
+
+				state = GRS_READ_ALTERNATIVES;
+				break;
+			case(GRS_READ_ALTERNATIVES):
+				//eat whitespace
+				while(curr_char == ' ' || curr_char == '\t') curr_char = fgetc(grammer_file);
+				if(curr_char == NONTERMCHAR) {
+					state = GRS_READ_RULE_IN_ALTERNATIVE;
 					break;
-				case(GRS_READ_RULE_IN_ALTERNATIVE):
-					//read until we read hit the matching 
-					read_buff.str_size = 0;
-					while(curr_char != NONTERMCHAR) {
-						handle_special_chars(grammer_file, &curr_char);
-						if(read_buff.str_size == read_buff.str_alloc_size) {
-							read_buff.str_alloc_size *= 2;
-							read_buff.str = realloc(read_buff.str, read_buff.str_alloc_size);
-							assert(read_buff.str);
-						}
-						read_buff.str[read_buff.str_size] = curr_char;
-						read_buff.str_size += 1;
-						curr_char = fgetc(grammer_file);
-					}
-					uint16_t new_rule_idx = add_rule(rules, read_buff);
-
-					//add the rule to the alternative
-					if(alternative_buff.str_size == alternative_buff.str_alloc_size) {
-						alternative_buff.str_alloc_size *= 2;
-						alternative_buff.str = realloc(alternative_buff.str, alternative_buff.str_alloc_size);
-						assert(alternative_buff.str);
-					}
-					alternative_buff.str[alternative_buff.str_size++] = NONTERMCHAR_NUM;
-
-					idx_to_token(&alternative_buff, new_rule_idx);
-
-					if(alternative_buff.str_size == alternative_buff.str_alloc_size) {
-						alternative_buff.str_alloc_size *= 2;
-						alternative_buff.str = realloc(alternative_buff.str, alternative_buff.str_alloc_size);
-						assert(alternative_buff.str);
-					}
-					alternative_buff.str[alternative_buff.str_size++] = NONTERMCHAR_NUM;
-
-					state = GRS_READ_ALTERNATIVES;
+				}
+				if(curr_char == ALTERNATIVECHAR) {
+					add_alternative_to_rule(rules, alternative_buff, curr_rule_idx);
+					alternative_buff.str_size = 0;
 					break;
-			}
-			curr_char = fgetc(grammer_file);
+				}
+				if(curr_char == '\n') {
+					add_alternative_to_rule(rules, alternative_buff, curr_rule_idx);
+					alternative_buff.str_size = 0;
+					state = GRS_NEWLINE;
+					break;
+				}
+				handle_special_chars(grammer_file, &curr_char);
+				if(alternative_buff.str_size == alternative_buff.str_alloc_size) {
+					alternative_buff.str_alloc_size *= 2;
+					alternative_buff.str = realloc(alternative_buff.str, alternative_buff.str_alloc_size);
+					assert(alternative_buff.str);
+				}
+				alternative_buff.str[alternative_buff.str_size] = curr_char;
+				alternative_buff.str_size += 1;
+				break;
+			case(GRS_READ_RULE_IN_ALTERNATIVE):
+				//read until we read hit the matching 
+				read_buff.str_size = 0;
+				while(curr_char != NONTERMCHAR) {
+					handle_special_chars(grammer_file, &curr_char);
+					if(read_buff.str_size == read_buff.str_alloc_size) {
+						read_buff.str_alloc_size *= 2;
+						read_buff.str = realloc(read_buff.str, read_buff.str_alloc_size);
+						assert(read_buff.str);
+					}
+					read_buff.str[read_buff.str_size] = curr_char;
+					read_buff.str_size += 1;
+					curr_char = fgetc(grammer_file);
+				}
+				uint16_t new_rule_idx = add_rule(rules, read_buff);
+
+				//add the rule to the alternative
+				if(alternative_buff.str_size == alternative_buff.str_alloc_size) {
+					alternative_buff.str_alloc_size *= 2;
+					alternative_buff.str = realloc(alternative_buff.str, alternative_buff.str_alloc_size);
+					assert(alternative_buff.str);
+				}
+				alternative_buff.str[alternative_buff.str_size++] = NONTERMCHAR_NUM;
+
+				idx_to_token(&alternative_buff, new_rule_idx);
+
+				if(alternative_buff.str_size == alternative_buff.str_alloc_size) {
+					alternative_buff.str_alloc_size *= 2;
+					alternative_buff.str = realloc(alternative_buff.str, alternative_buff.str_alloc_size);
+					assert(alternative_buff.str);
+				}
+				alternative_buff.str[alternative_buff.str_size++] = NONTERMCHAR_NUM;
+
+				state = GRS_READ_ALTERNATIVES;
+				break;
+			
 		}
+		curr_char = fgetc(grammer_file);
 	}
 	
 	free(alternative_buff.str);
@@ -486,12 +559,12 @@ int handle_special_chars(FILE* grammer_file, char* curr_char_p) {
 	return 0;
 }
 
-uint8_t is_in_first_follow(const uint64_t first_follow[2], const uint8_t* nullable, const signed char c, const uint8_t is_follow) {
+uint8_t is_in_first_follow(const uint64_t first_follow[2], const signed char c, const uint8_t is_follow) {
 	assert(first_follow);
 
 	signed char c_temp = c;
 	if(c == EMPTYCHAR_NUM && !is_follow)
-		return *nullable;
+		c_temp = 0;
 	else if (c == EMPTYCHAR_NUM)
 		return 0;
 
@@ -504,12 +577,14 @@ uint8_t is_in_first_follow(const uint64_t first_follow[2], const uint8_t* nullab
 	return res;
 }
 
-int add_to_first_follow(uint64_t first_follow[2], uint8_t* nullable, const signed char c, const uint8_t is_follow) {
+int add_to_first_follow(uint64_t first_follow[2], const signed char c, const uint8_t is_follow) {
 	assert(first_follow);
 	signed char c_temp = c;
 	if(c == EMPTYCHAR_NUM && !is_follow) {
-		*nullable = 1;
-		return 0;
+		c_temp = 0;
+	} else if (c == EMPTYCHAR_NUM) {
+		printf("attempted to add the EMPTY string to follow\n");
+		exit(1);
 	}
 
 	if(c_temp < 64) {
@@ -530,26 +605,24 @@ int create_first(struct rule_arr rule_arr) {
 			old_first[1] = rule_arr.rules[i].first[1];
 			for(int j = 0; j < rule_arr.rules[i].number_of_alternatives; j++) {
 				uint8_t finished_nullable = 1;
-				for(int k = rule_arr.rules[i].alternative_sizes[j]; k < rule_arr.rules[i].alternative_sizes[j + 1]; k++) {
+				for(uint16_t k = rule_arr.rules[i].alternative_sizes[j]; k < rule_arr.rules[i].alternative_sizes[j + 1]; k++) {
 					if(rule_arr.rules[i].alternatives[k] == EMPTYCHAR_NUM && k == rule_arr.rules[i].alternative_sizes[j]) {
-						add_to_first_follow(rule_arr.rules[i].first, EMPTYCHAR_NUM);
+						add_to_first_follow(rule_arr.rules[i].first, EMPTYCHAR_NUM, 0);
 					} else if (rule_arr.rules[i].alternatives[k] == EMPTYCHAR_NUM) {
 						continue;
 					}
 					if(!is_non_terminal(rule_arr.rules[i].alternatives + k)) {
-						printf("%d adding %c\n", i, rule_arr.rules[i].alternatives[k]);
-						add_to_first_follow(rule_arr.rules[i].first, rule_arr.rules[i].alternatives[k]);
+						add_to_first_follow(rule_arr.rules[i].first, rule_arr.rules[i].alternatives[k], 0);
 						finished_nullable = 0;
 						break;
 					}
 					//add first set of this nonterminal
-					uint16_t rule_idx = token_to_idx(rule_arr.rules[i].alternatives + k);
+					uint16_t rule_idx = token_to_idx(rule_arr.rules[i].alternatives + k, &k);
 					if(i == rule_idx) break;
-					printf("%d adding first of %d\n", i, rule_idx);
 					rule_arr.rules[i].first[0] |= (rule_arr.rules[rule_idx].first[0] & (UINT64_MAX - 1)); //exclude null
 					rule_arr.rules[i].first[1] |= (rule_arr.rules[rule_idx].first[1]);
 					//if nullable continue else return
-					if(!is_in_first_follow(rule_arr.rules[i].first, EMPTYCHAR_NUM)) {
+					if(!is_in_first_follow(rule_arr.rules[rule_idx].first, EMPTYCHAR_NUM, 0)) {
 						finished_nullable = 0;
 						break;
 					}
@@ -561,66 +634,116 @@ int create_first(struct rule_arr rule_arr) {
 			}
 			has_changed = has_changed || ((old_first[0] ^ rule_arr.rules[i].first[0]) > 0);
 			has_changed = has_changed || ((old_first[1] ^ rule_arr.rules[i].first[1]) > 0);
-			printf("%d: %d\n", i, has_changed);
 		}
 	}
 	return 0;
 }
 
 int create_follow(struct rule_arr rule_arr) {
+	add_to_first_follow(rule_arr.rules[0].follow, '\0', 1);
+
 	uint8_t has_changed = 1;
 	while(has_changed) {
-	
+		has_changed = 0;
+		uint64_t old_follow[rule_arr.rule_size][2];
+		for(int i = 0; i < rule_arr.rule_size; i++) {
+			old_follow[i][0] = rule_arr.rules[i].follow[0];
+			old_follow[i][1] = rule_arr.rules[i].follow[1];
+			for(int j = 0; j < rule_arr.rules[i].number_of_alternatives; j++) {
+				for(uint16_t k = rule_arr.rules[i].alternative_sizes[j]; k < rule_arr.rules[i].alternative_sizes[j + 1]; k++) {
+					if(!is_non_terminal(rule_arr.rules[i].alternatives + k)) continue;
+
+					//find non terminal inside of rule i
+					uint16_t rule_idx = token_to_idx(rule_arr.rules[i].alternatives + k, &k);
+					if(k + 1 == rule_arr.rules[i].alternative_sizes[j + 1]) {
+						rule_arr.rules[rule_idx].follow[0] |= rule_arr.rules[i].follow[0];
+						rule_arr.rules[rule_idx].follow[1] |= rule_arr.rules[i].follow[1];
+						break;
+					}
+					
+					uint16_t k2 = k + 1;
+					//add first of whatever is after the non terminal to its follow
+					if(!is_non_terminal(rule_arr.rules[i].alternatives + k2) && rule_arr.rules[i].alternatives[k2] != EMPTYCHAR_NUM) {
+						add_to_first_follow(rule_arr.rules[rule_idx].follow, rule_arr.rules[i].alternatives[k2], 1);
+						continue;
+					}
+					while(k2 < rule_arr.rules[i].alternative_sizes[j + 1]) {
+						if(!is_non_terminal(rule_arr.rules[i].alternatives + k2)) break;
+						uint16_t rule_idx_2 = token_to_idx(rule_arr.rules[i].alternatives + k2, &k2);
+						k2 += 1;
+						rule_arr.rules[rule_idx].follow[0] |= (rule_arr.rules[rule_idx_2].first[0] & (UINT64_MAX - 1));
+						rule_arr.rules[rule_idx].follow[1] |= rule_arr.rules[rule_idx_2].first[1];
+						if(!is_in_first_follow(rule_arr.rules[i].first, EMPTYCHAR_NUM, 0)) {
+							break;
+						}
+					}
+					//if everything after was nullable
+					if(k2 == rule_arr.rules[i].alternative_sizes[j + 1]) {
+						rule_arr.rules[rule_idx].follow[0] |= rule_arr.rules[i].follow[0];
+						rule_arr.rules[rule_idx].follow[1] |= rule_arr.rules[i].follow[1];
+					}
+				}
+			}
+		}
+		for(int i = 0; i < rule_arr.rule_size; i++) {
+			has_changed = has_changed || ((old_follow[i][0] ^ rule_arr.rules[i].follow[0]) > 0);
+			has_changed = has_changed || ((old_follow[i][1] ^ rule_arr.rules[i].follow[1]) > 0);
+			if(has_changed) break;
+		}
 	}
 	return 0;
 }
-//
-//int free_rules(rule rules[]) {
-//	int res = 0;
-//	for(int i = 0; i < 26; i++) {
-//		if(rules[i].name != i + 'A') continue;
-//		if(rules[i].alternative_sizes) {
-//			free(rules[i].alternative_sizes);
-//			rules[i].alternative_sizes = NULL;
-//		} else res += 1;
-//		if(rules[i].alternatives) {
-//			free(rules[i].alternatives);
-//			rules[i].alternatives= NULL;
-//		} else res += 2;
-//	}
-//	return res;
-//}
-//
-//int first_follow_test(const struct rule_info* rule_info, const char c) {
-//
-//	assert(rule_info);
-//	assert(rule_info->rules);
-//	assert(is_non_terminal(rule_info->rule));
-//	assert(rule_info->alternative_start_idx < rule_info->alternative_end_idx);
-//
-//	struct rule this_rule = rule_info->rules[rule_info->rule - 'A'];
-//	int eps_found = 0;
-//	int do_continue = 0;
-//	for(int alternative_start_idx = rule_info->alternative_start_idx; alternative_start_idx < rule_info->alternative_end_idx; alternative_start_idx++) {
-//		if(!is_non_terminal(this_rule.alternatives[alternative_start_idx])) {
-//			if(this_rule.alternatives[alternative_start_idx] == '_') {
-//				eps_found = 1;
-//				do_continue = 1;
-//			} else if(this_rule.alternatives[alternative_start_idx] == c) {
-//				return 1;
-//			}
-//		} else {
-//			struct rule sub_rule = rule_info->rules[this_rule.alternatives[alternative_start_idx] - 'A'];
-//			if(is_in_first_follow(sub_rule.first, c)) {
-//				return 1;
-//			} else if(is_in_first_follow(sub_rule.first, '_')) {
-//				eps_found = 1;
-//				do_continue = 1;
-//			}
-//		}
-//		if(!do_continue) break;
-//		do_continue = 0;
-//	}
-//	if(!eps_found) return 0;
-//	return is_in_first_follow(this_rule.follow, c);
-//}
+
+int free_rules(struct rule_arr rule_arr) {
+	int res = 0;
+	for(int i = 0; i < rule_arr.rule_size; i++) {
+		if(rule_arr.rules[i].name) {
+			free(rule_arr.rules[i].name);
+			rule_arr.rules[i].name= NULL;
+		} else res += 1;
+		if(rule_arr.rules[i].alternative_sizes) {
+			free(rule_arr.rules[i].alternative_sizes);
+			rule_arr.rules[i].alternative_sizes = NULL;
+		} else res += 1;
+		if(rule_arr.rules[i].alternatives) {
+			free(rule_arr.rules[i].alternatives);
+			rule_arr.rules[i].alternatives= NULL;
+		} else res += 2;
+	}
+	free(rule_arr.rules);
+	return res;
+}
+
+int first_follow_test(const struct rule_info* rule_info, const char c) {
+
+	assert(rule_info);
+	assert(rule_info->rule_arr.rules);
+	assert(rule_info->alternative_start_idx < rule_info->alternative_end_idx);
+
+	struct rule this_rule = rule_info->rule_arr.rules[rule_info->rule];
+	uint8_t eps_found = 0;
+	uint8_t do_continue = 0;
+	for(uint16_t alternative_start_idx = rule_info->alternative_start_idx; alternative_start_idx < rule_info->alternative_end_idx; alternative_start_idx++) {
+		if(!is_non_terminal(this_rule.alternatives + alternative_start_idx)) {
+			if(this_rule.alternatives[alternative_start_idx] == EMPTYCHAR_NUM) {
+				eps_found = 1;
+				do_continue = 1;
+			} else if(this_rule.alternatives[alternative_start_idx] == c) {
+				return 1;
+			}
+		} else {
+			uint16_t sub_rule_idx = token_to_idx(this_rule.alternatives + alternative_start_idx, &alternative_start_idx);
+			struct rule sub_rule = rule_info->rule_arr.rules[sub_rule_idx];
+			if(is_in_first_follow(sub_rule.first, c, 0)) {
+				return 1;
+			} else if(is_in_first_follow(sub_rule.first, EMPTYCHAR_NUM, 0)) {
+				eps_found = 1;
+				do_continue = 1;
+			}
+		}
+		if(!do_continue) break;
+		do_continue = 0;
+	}
+	if(!eps_found) return 0;
+	return is_in_first_follow(this_rule.follow, c, 1);
+}

@@ -1,16 +1,17 @@
-S -> a B c | a b C | A b c
-A -> a ' | a ' ' | D
-B -> b ' | b ' ' | E
-C -> c ' | c ' ' | D
-D -> d | dD | ddD | dddD | ddddD | dddddD | ddddddD | dddddddD | ddddddddD
-E -> e | Ee | Eeee | Eeeeeeee | Eeeeeeeeeeeeeeee
+% S
+'S' -> a 'B' c | a b 'C' | 'A' b c
+'A' -> a \' | a \' \' | 'D'
+'B' -> b \' | b \' \' | 'E'
+'C' -> c \' | c \' \' | 'D'
+'D' -> d | d'D' | dd'D' | ddd'D' | dddd'D' | ddddd'D' | dddddd'D' | ddddddd'D' | dddddddd'D'
+'E' -> e | 'E'e | 'E'eee | 'E'eeeeeee | 'E'eeeeeeeeeeeeeee
 #
-ab'c 1
-abdd 1
-abdddddddddddddddd 1
-dddbc 1
-ab'''ddd 0
-aeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeecc 0
-b' 0
-ddddd 0
-a 0
+ab'c#1
+abdd#1
+abdddddddddddddddd#1
+dddbc#1
+ab'''ddd#0
+aeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeecc#0
+b'#0
+ddddd#0
+a#0

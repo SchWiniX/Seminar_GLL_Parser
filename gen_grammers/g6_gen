@@ -1,9 +1,10 @@
-A -> a' | a'' | D
-B -> b' | b'' | E
-C -> c' | c'' | D
-D -> d | dD | ddD | dddD | ddddD | dddddD | ddddddD | dddddddD | ddddddddD
-E -> e | Ee | Eeee | Eeeeeeee | Eeeeeeeeeeeeeeee
-S -> aBc | abC | Abc
+% S
+'S' -> a'B'c | ab'C' | 'A'bc 
+'B' -> b\' | b\'\' | 'E' 
+'C' -> c\' | c\'\' | 'D' 
+'A' -> a\' | a\'\' | 'D' 
+'D' -> d | d'D' | dd'D' | ddd'D' | dddd'D' | ddddd'D' | dddddd'D' | ddddddd'D' | dddddddd'D' 
+'E' -> e | 'E'e | 'E'eee | 'E'eeeeeee | 'E'eeeeeeeeeeeeeee 
 #
 ab'c 1
 ab''c 1

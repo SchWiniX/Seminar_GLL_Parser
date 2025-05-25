@@ -6,7 +6,7 @@
 
 typedef enum {RSET, USET, PSET} set_type;
 
-int print_set_info(const struct rule rules[], struct set_info* set_info, struct input_info* input_info, struct gss_info* gss_info, const uint8_t rule_count);
+int print_set_info(const struct rule_arr rule_arr, struct set_info* set_info, struct input_info* input_info, struct gss_info* gss_info);
 
 int in_set(
 		const struct rule_info* rule_info,

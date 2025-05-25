@@ -1,7 +1,8 @@
-S -> aSb | aSc | a
+% S
+'S' -> a'S'b | a'S'c | a
 #
-aac 1
-abc 0
-aab 1
-abb 0
-acc 0
+aac#1
+abc#0
+aab#1
+abb#0
+acc#0

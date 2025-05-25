@@ -6,6 +6,7 @@
 #include <assert.h>
 
 #include "gss.h"
+#include "grammer_handler.h"
 #include "descriptor_set_functions.h"
 #include "info_struct.h"
 #include "debug.h"
@@ -14,31 +15,29 @@ const uint32_t init_gss_edge_arrey_size = 8;
 const uint32_t init_u_arrey_size = 8;
 
 #ifdef DEBUG
-int print_gss_info(rule rules[], struct gss_info* gss_info, struct input_info* input_info, const uint8_t rule_count) {
-	printf("gss (%c, %d):\n", gss_info->gss_node_idx.rule, gss_info->gss_node_idx.input_idx);
-	for(int j = 0; j < rule_count + 2; j++) {
+int print_gss_info(struct rule_arr rule_arr, struct gss_info* gss_info, struct input_info* input_info) {
+	printf("gss (%s, %d):\n", rule_arr.rules[gss_info->gss_node_idx.rule].name, gss_info->gss_node_idx.input_idx);
+	for(int j = 0; j < rule_arr.rule_size + 2; j++) {
 		for(int i = 0; i < input_info->input_size + 1; i++) {
-			if(!gss_info->gss[j * (input_info->input_size + 1) + i]) continue;
+			if(!gss_info->gss[GET_GSS_IDX(j, i, input_info->input_size)]) continue;
 
-			unsigned char r = (unsigned char) 255;
-			for(int n = 0; n < 28; n++) {
-				if(rules[n].name != n + 'A') continue;
-				if(rules[n].count_idx == j) r = n + 'A';
-			}
-			assert(r != 255);
-
-			gss_node* g = (gss_info->gss[j * (input_info->input_size + 1) + i]);
+			gss_node* g = gss_info->gss[GET_GSS_IDX(j, i, input_info->input_size)];
 			gss_edge* edge_arr = GET_GSS_EDGE_ARR(g);
 
-			printf("{ '%c', %d, <", r, i);
+			printf("{ '%s', %d, <", rule_arr.rules[j].name, i);
 			if(g->edge_size == 0) {
 				printf("> }\n");
 				continue;
 			}
 			for(int n = 0; n < g->edge_size; n++) {
-				printf("(-> (%c, %d), %c, [%d[", edge_arr[n].target_node.rule, edge_arr[n].target_node.input_idx, edge_arr[n].rule, edge_arr[n].alternative_start_idx);
-				for(int m = edge_arr[n].alternative_start_idx; m < edge_arr[n].alternative_end_idx; m++) {
-					printf("%c", rules[edge_arr[n].rule - 'A'].alternatives[m]);
+				printf("(-> (%s, %d), %s, [%d[", rule_arr.rules[edge_arr[n].target_node.rule].name, edge_arr[n].target_node.input_idx, rule_arr.rules[edge_arr[n].rule].name, edge_arr[n].alternative_start_idx);
+				for(uint16_t m = edge_arr[n].alternative_start_idx; m < edge_arr[n].alternative_end_idx; m++) {
+					if(!is_non_terminal(rule_arr.rules[edge_arr[n].rule].alternatives + m))
+						printf("%c", rule_arr.rules[edge_arr[n].rule].alternatives[m]);
+					else {
+						uint16_t rule_idx = token_to_idx(rule_arr.rules[edge_arr[n].rule].alternatives + m, &m);
+						printf("'%s'", rule_arr.rules[rule_idx].name);
+					}
 				}
 				printf("]%d], %d)", edge_arr[n].alternative_end_idx, edge_arr[n].label_type);
 			}
@@ -58,7 +57,7 @@ gss_node_idx create(
 		) {
 
 	assert(rule_info);
-	assert(rule_info->rules);
+	assert(rule_info->rule_arr.rules);
 	assert(input_info);
 	assert(input_info->input);
 	assert(gss_info);
@@ -68,18 +67,18 @@ gss_node_idx create(
 	gss_node** gss = gss_info->gss;
 	uint32_t input_size = input_info->input_size;
 	uint32_t input_idx = input_info->input_idx;
-	char rule = rule_info->rule;
-	uint64_t gss_idx = GET_GSS_IDX(rule_info->rules, rule, input_idx, input_size);
+	uint16_t rule = rule_info->rule;
+	uint64_t gss_idx = GET_GSS_IDX(rule, input_idx, input_size);
 	gss_node_idx target_node = gss_info->gss_node_idx;
 	gss_node_idx gss_node = { .rule = rule, .input_idx = input_idx };
 	
-#ifdef DEBUG
-	printf("creating GSS node: (%c, %d)\n", rule, input_idx);
-#endif
 
 	//add a new gss_node if empty
 	if(!gss[gss_idx]) {
 
+#ifdef DEBUG
+		printf("creating GSS node: (%s, %d)\n", rule_info->rule_arr.rules[rule].name, input_idx);
+#endif
 		//malloc the memory for the edge array
 		gss[gss_idx] = init_gss_node(init_gss_edge_arrey_size, init_u_arrey_size);
 		gss_edge* edge_arr = GET_GSS_EDGE_ARR(gss[gss_idx]);
@@ -95,6 +94,9 @@ gss_node_idx create(
 		gss[gss_idx]->edge_size = 1;
 
 	} else { // Hence this node already exists
+#ifdef DEBUG
+		printf("found existing GSS node: (%s, %d)\n", rule_info->rule_arr.rules[rule].name, input_idx);
+#endif
 		//check if there exists an edge from gss_nodes[idx_node] to gss_node_idx
 		uint32_t idx_edge;
 		gss_edge* edge_arr = GET_GSS_EDGE_ARR(gss[gss_idx]);
@@ -155,7 +157,7 @@ uint32_t pop(
 	if(add_p_set_entry(set_info, gss_info, rule_info, input_info, input_info->input_idx)) return 1;
 
 	
-	uint64_t gss_idx = GET_GSS_IDX(rule_info->rules, gss_info->gss_node_idx.rule, gss_info->gss_node_idx.input_idx, input_info->input_size);
+	uint64_t gss_idx = GET_GSS_IDX(gss_info->gss_node_idx.rule, gss_info->gss_node_idx.input_idx, input_info->input_size);
 	uint32_t edge_size = gss_info->gss[gss_idx]->edge_size;
 	gss_edge* edge_arr = GET_GSS_EDGE_ARR(gss_info->gss[gss_idx]);
 	assert(edge_arr);
@@ -180,7 +182,7 @@ uint32_t pop(
 	return 0;
 }
 
-gss_node** init_gss(uint32_t rule_count, uint32_t input_size) {
+gss_node** init_gss(uint16_t rule_count, uint32_t input_size) {
 	gss_node** arr = calloc(GET_GSS_SIZE(rule_count, input_size), sizeof(gss_node*));
 	assert(arr);
 	return arr;
@@ -310,7 +312,6 @@ uint64_t get_p_set_total_size(const struct gss_info* gss_info, uint32_t rule_cou
 		size += gss_info->gss[i]->p_count;
 	}
 	return size;
-
 }
 
 int free_gss(gss_node** gss, const uint32_t rule_count, const uint32_t input_size) {

@@ -1,0 +1,17 @@
+% stm
+'letter' -> A | B | C | D | E | F | G | H | I | J | K | L | M | N | O | P | Q | R | S | U | V | W | X | Y | Z
+'letter' -> a | b | c | d | e | f | g | h | i | j | k | l | m | n | o | p | q | r | s | u | v | w | x | y | z
+'digit' -> 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
+'sub\_ident' -> 'sub\_ident' 'sub\_ident' | 'letter' | 'digit' | _
+'ident' -> 'letter' 'sub\_ident'
+'numeral' -> 'digit' | 'numeral' 'digit'
+'var' -> 'ident'
+'Aexp' -> ( 'Aexp'\ 'op'\ 'Aexp' ) | 'var' | 'numeral'
+'op' -> + | - | *
+'Bexp' -> ( 'Bexp'\ or\ 'Bexp' ) | ( 'Bexp'\ and\ 'Bexp' )
+'Bexp' -> not\ 'Bexp' | 'Aexp'\ 'Rop'\ 'Aexp'
+'Rop' -> == | != | < | <= | > | >=
+'stm' -> skip | 'var'\ :=\ 'Aexp' | ( 'stm' ;\ 'stm' ) | 'if' | 'while'
+'stm' -> 'stm';\n 'stm'
+'if' -> if\ 'Bexp'\ then\ 'stm'\ else\ 'stm'\ end |if\ 'Bexp'\ then\n 'stm'\n else\n 'stm'\n end
+'while' -> while\ 'Bexp'\ do\ 'stm'\ end | while\ 'Bexp'\ do\n 'stm'\n end

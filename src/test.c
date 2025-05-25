@@ -34,55 +34,26 @@ int do_inputs(char* file, uint32_t repetitions) {
 	assert(grammer_file);
 
 	//parse grammer input
-	rule rules[28];
-	uint8_t temp_vals[26];
-	for(int i = 0; i < 26; i++) {
-		rules[i].name = '\0';
-		rules[i].first[0] = 0;
-		rules[i].first[1] = 0;
-		rules[i].follow[0] = 0;
-		rules[i].follow[1] = 0;
-	}
-	uint8_t rule_count = 0; //amount of rules in this calc
-	create_grammer(rules, grammer_file, &rule_count);
+	struct rule_arr rule_arr = {
+		.rules = malloc(32 * sizeof(rule)),
+		.rule_size = 0,
+		.rules_alloc_size = 32,
+	};
+	create_grammer(&rule_arr, grammer_file);
 
 	//find first
-	for(int i = 0; i < 26; i++) {
-		if(rules[i].name == i + 'A') {
-			for(int i = 0; i < 26; i++) {
-				temp_vals[i] = 0;
-			}
-			create_first(rules, i + 'A', rules[i].first, temp_vals);
-		}
-	}
+	create_first(rule_arr);
 	
 	//find follow
-	for(int i = 0; i < 26; i++) {
-		if(rules[i].name == i + 'A') {
-			for(int i = 0; i < 26; i++) {
-				temp_vals[i] = 0;
-			}		
-	
-			create_follow(rules, i + 'A', rules[i].follow, temp_vals);
-		}
+	create_follow(rule_arr);
+
+	if(rule_arr.rules_alloc_size == rule_arr.rule_size + 1) {
+		rule_arr.rules_alloc_size *= 2;
+		rule_arr.rules = realloc(rule_arr.rules, rule_arr.rules_alloc_size);
+		assert(rule_arr.rules);
 	}
-
-
-	rule_count += 1;
-	rules[26].name = 91;
-	rules[26].first[0] = 0;
-	rules[26].first[1] = 0;
-	rules[26].follow[0] = 0;
-	rules[26].follow[1] = 0;
-	rules[26].count_idx = rule_count;
-
-	rules[27].name = 92;
-	rules[27].first[0] = 0;
-	rules[27].first[1] = 0;
-	rules[27].follow[0] = 0;
-	rules[27].follow[1] = 0;
-	rules[27].count_idx = rule_count + 1;
-
+	rule_arr.rules[rule_arr.rule_size].name = "special_rule1";
+	rule_arr.rules[rule_arr.rule_size + 1].name = "special_rule2";
 
 	rule_init_ticks = clock() - rule_init_ticks;
 
@@ -95,7 +66,7 @@ int do_inputs(char* file, uint32_t repetitions) {
 		uint8_t should;
 		if(next_char != '\n')
 			input[input_size++] = next_char;
-		while((next_char = fgetc(grammer_file)) != ' ') {
+		while((next_char = fgetc(grammer_file)) != EOG) {
 			if(next_char == EOF) {
 				free(input);
 				break;
@@ -104,6 +75,13 @@ int do_inputs(char* file, uint32_t repetitions) {
 				input_alloc_size *= 2;
 				input = realloc(input, input_alloc_size);
 				assert(input);
+			}
+			if(next_char == ESCAPE) {
+				next_char = fgetc(grammer_file);
+				if(next_char == EOF) {
+					printf("unexpected EOF found\n");
+					exit(1);
+				}
 			}
 			input[input_size++] = next_char;
 		}
@@ -139,10 +117,10 @@ int do_inputs(char* file, uint32_t repetitions) {
 
 			uint16_t r_alloc_size = 256;
 	
-			struct rule_info rule_info = { .rules = rules, .rule = 'S', .alternative_start_idx = 0, .alternative_end_idx = 0 };
+			struct rule_info rule_info = { .rule_arr = rule_arr, .rule = 0, .alternative_start_idx = 0, .alternative_end_idx = 0 };
 			struct input_info input_info = { .input = input, .input_idx = 0, .input_size = input_size }; 
 			struct gss_info gss_info = {
-				.gss = init_gss(rule_count, input_size),
+				.gss = init_gss(rule_arr.rule_size, input_size),
 			};
 			struct set_info set_info = {
 				.R_set = init_descriptor_set(r_alloc_size),
@@ -153,15 +131,15 @@ int do_inputs(char* file, uint32_t repetitions) {
 				.r_alloc_size = r_alloc_size,
 			};
 
-			uint8_t res = base_loop(&rule_info, &input_info, &gss_info, &set_info, rule_count);
+			uint8_t res = base_loop(&rule_info, &input_info, &gss_info, &set_info);
 			ticks = clock() - ticks + rule_init_ticks;
 			tick_sum += ticks;
 
-			gss_final_alloc_size = get_gss_total_alloc_size(&gss_info, rule_count, input_size);
-			gss_node_count = get_gss_node_count(&gss_info, rule_count, input_size);
-			gss_edge_count = get_gss_edge_count(&gss_info, rule_count, input_size);
-			u_set_size = get_u_set_total_size(&gss_info, rule_count, input_size);
-			p_set_size = get_p_set_total_size(&gss_info, rule_count, input_size);
+			gss_final_alloc_size = get_gss_total_alloc_size(&gss_info, rule_arr.rule_size, input_size);
+			gss_node_count = get_gss_node_count(&gss_info, rule_arr.rule_size, input_size);
+			gss_edge_count = get_gss_edge_count(&gss_info, rule_arr.rule_size, input_size);
+			u_set_size = get_u_set_total_size(&gss_info, rule_arr.rule_size, input_size);
+			p_set_size = get_p_set_total_size(&gss_info, rule_arr.rule_size, input_size);
 			r_final_alloc_size = set_info.r_alloc_size;
 			final_res = res;
 
@@ -169,7 +147,7 @@ int do_inputs(char* file, uint32_t repetitions) {
 				printf("failed to free R_set likely a memory leak\n");
 			}
 			set_info.R_set = NULL;
-			if(free_gss(gss_info.gss, rule_count, input_size)) {
+			if(free_gss(gss_info.gss, rule_arr.rule_size, input_size)) {
 				printf("failed to free gss likely a memory leak\n");
 			}
 			gss_info.gss = NULL;
@@ -198,14 +176,14 @@ int do_inputs(char* file, uint32_t repetitions) {
 				(double) gss_edge_count / gss_node_count,
 				(double) u_set_size / gss_node_count,
 				(double) p_set_size / gss_node_count,
-				(double) gss_node_count / (GET_GSS_SIZE(rule_count, input_size)),
+				(double) gss_node_count / (GET_GSS_SIZE(rule_arr.rule_size, input_size)),
 				success
 		);
 	}
 	fclose(grammer_file);
 	grammer_file = NULL;
-	if(free_rules(rules)) {
-		free_rules(rules);
+	if(free_rules(rule_arr)) {
+		printf("rule_arr likely faulty\n");
 	}
 	return 1;
 }

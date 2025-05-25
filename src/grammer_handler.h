@@ -15,22 +15,23 @@ uint16_t add_rule(struct rule_arr* rule_arr, struct dym_str rule_name);
 
 int add_alternative_to_rule(struct rule_arr* rule_arr, struct dym_str alternative_buff, uint16_t rule_idx);
 
-uint16_t token_to_idx(char* buff);
+uint16_t is_non_terminal(char* buff);
+
+uint16_t token_to_idx(char* buff, uint16_t* counter);
 
 void idx_to_token(struct dym_str* buff, uint16_t idx);
 
 int handle_special_chars(FILE* grammer_file, char* curr_char_p);
 
-int create_grammer(struct rule_arr* rules, FILE* grammer_file, uint8_t* count_idx);
+int create_grammer(struct rule_arr* rules, FILE* grammer_file);
 
-uint8_t is_in_first_follow(const uint64_t first_follow[2], const uint8_t* nullable, const signed char c, const uint8_t is_follow);
+uint8_t is_in_first_follow(const uint64_t first_follow[2], const signed char c, const uint8_t is_follow);
 
 int create_first(struct rule_arr rules);
 
 int create_follow(struct rule_arr rule_arr);
 
-//assumes rules itself is stack allocated only its components are freed
-int free_rules(rule rules[]);
+int free_rules(struct rule_arr rule_arr);
 
 int first_follow_test(const struct rule_info* rule_info, const char c);
 #endif

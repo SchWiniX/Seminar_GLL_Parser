@@ -36,8 +36,7 @@ int base_loop(
 		struct rule_info* rule_info, //rule, start_idx and end_idx will be ignored
 		struct input_info* input_info,
 		struct gss_info* gss_info,
-		struct set_info* set_info,
-		const uint8_t rule_count
+		struct set_info* set_info
 		);
 
 #endif

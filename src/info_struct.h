@@ -4,18 +4,18 @@
 #include <stdint.h>
 
 #define NONTERMCHAR '\''
-#define NONTERMCHAR_NUM -1
+#define NONTERMCHAR_NUM -2
 #define ALTERNATIVECHAR '|'
 #define EMPTYCHAR '_'
-#define EMPTYCHAR_NUM -2
+#define EMPTYCHAR_NUM -3
 #define EOG '#'
 #define ESCAPE '\\'
 #define STARTID '%'
 
-#define GET_GSS_IDX(rules, rule, input_idx, input_size) rules[rule - 'A'].count_idx * (input_size + 1) + input_idx
-#define GET_GSS_SIZE(rule_count, input_size) (rule_count + 2) * (input_size + 1)
+#define GET_GSS_IDX(rule, input_idx, input_size) ((rule) * (input_size + 1) + (input_idx))
+#define GET_GSS_SIZE(rule_count, input_size) ((rule_count + 2) * (input_size + 1))
 #define GET_GSS_USET(gss_node) (u_descriptors*) (gss_node + 1)
-#define GET_GSS_EDGE_ARR(gss_node) (gss_edge*) (GET_GSS_USET(gss_node) + gss_node->u_alloc_size)
+#define GET_GSS_EDGE_ARR(gss_node) (gss_edge*) (GET_GSS_USET(gss_node) + (gss_node->u_alloc_size))
 
 struct dym_str {
 	char* str;
@@ -29,9 +29,7 @@ typedef struct rule {
 	char* alternatives;
 	uint64_t first[2];
 	uint64_t follow[2];
-	uint8_t nullable;
 	uint16_t number_of_alternatives;
-	uint8_t count_idx;
 } rule;
 
 struct rule_arr {
@@ -41,10 +39,10 @@ struct rule_arr {
 };
 
 struct rule_info {
-	rule* rules;
+	struct rule_arr rule_arr;
 	uint16_t alternative_start_idx;
 	uint16_t alternative_end_idx;
-	char rule;
+	uint16_t rule;
 };
 
 struct input_info {
@@ -55,14 +53,14 @@ struct input_info {
 
 typedef struct gss_node_idx {
 	uint32_t input_idx;
-	char rule;
+	uint16_t rule;
 } gss_node_idx;
 
 typedef struct gss_edge {
 	gss_node_idx target_node;
 	uint16_t alternative_start_idx;
 	uint16_t alternative_end_idx;
-	char rule;
+	uint16_t rule;
 	uint8_t label_type;
 } gss_edge;
 
@@ -86,8 +84,8 @@ typedef struct u_descriptors {
 	uint32_t input_idx;
 	uint16_t alternative_start_idx;
 	uint16_t alternative_end_idx;
+	uint16_t rule;
 	uint8_t label_type;
-	char rule;
 } u_descriptors;
 
 typedef struct descriptors {
@@ -95,8 +93,8 @@ typedef struct descriptors {
 	gss_node_idx gss_node_idx;
 	uint16_t alternative_start_idx;
 	uint16_t alternative_end_idx;
+	uint16_t rule;
 	uint8_t label_type;
-	char rule;
 } descriptors;
 
 
