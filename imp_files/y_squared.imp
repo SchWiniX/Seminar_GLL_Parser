@@ -1,0 +1,6 @@
+y := 1;
+z := 0;
+while z < x do
+y := (y * 2);
+z := (z + 1)
+end

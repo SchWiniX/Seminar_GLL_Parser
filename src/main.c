@@ -67,6 +67,7 @@ int main(int argc, char *argv[]) {
 	//find follow
 	create_follow(rule_arr);
 
+#ifdef DEBUG
 	if(rule_arr.rules_alloc_size == rule_arr.rule_size + 1) {
 		rule_arr.rules_alloc_size *= 2;
 		rule_arr.rules = realloc(rule_arr.rules, rule_arr.rules_alloc_size);
@@ -75,7 +76,6 @@ int main(int argc, char *argv[]) {
 	rule_arr.rules[rule_arr.rule_size].name = "special_rule1";
 	rule_arr.rules[rule_arr.rule_size + 1].name = "special_rule2";
 
-#ifdef DEBUG
 	print_rules(&rule_arr);
 #endif
 	

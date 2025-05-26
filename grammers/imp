@@ -10,8 +10,16 @@
 'op' -> + | - | *
 'Bexp' -> ( 'Bexp'\ or\ 'Bexp' ) | ( 'Bexp'\ and\ 'Bexp' )
 'Bexp' -> not\ 'Bexp' | 'Aexp'\ 'Rop'\ 'Aexp'
+'Bexp' -> \#true | \#false
 'Rop' -> == | != | < | <= | > | >=
-'stm' -> skip | 'var'\ :=\ 'Aexp' | ( 'stm' ;\ 'stm' ) | 'if' | 'while'
+'stm' -> skip | 'var'\ :=\ 'Aexp' | ( 'stm';\ 'stm' ) | 'if' | 'while'
 'stm' -> 'stm';\n 'stm'
 'if' -> if\ 'Bexp'\ then\ 'stm'\ else\ 'stm'\ end |if\ 'Bexp'\ then\n 'stm'\n else\n 'stm'\n end
 'while' -> while\ 'Bexp'\ do\ 'stm'\ end | while\ 'Bexp'\ do\n 'stm'\n end
+#
+if n != 0 then x := x * n else x := 1 end#0
+if n != 0 then x := (x * n) else x := 1 end#1
+while \#true do skip end#1
+while \#false do skip end#1
+while \#false < 1 do x := 1 end#1
+while \#false do x = (x + 1) end#0

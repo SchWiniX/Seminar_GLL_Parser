@@ -1,0 +1,9 @@
+(y := 0; z := 0);
+while (y * y) < n do
+y := (y + 1);
+if (y * y) <= n then
+z := (z + 1)
+else
+skip
+end
+end

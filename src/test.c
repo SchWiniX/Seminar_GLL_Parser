@@ -47,6 +47,7 @@ int do_inputs(char* file, uint32_t repetitions) {
 	//find follow
 	create_follow(rule_arr);
 
+#ifdef DEBUG
 	if(rule_arr.rules_alloc_size == rule_arr.rule_size + 1) {
 		rule_arr.rules_alloc_size *= 2;
 		rule_arr.rules = realloc(rule_arr.rules, rule_arr.rules_alloc_size);
@@ -54,6 +55,7 @@ int do_inputs(char* file, uint32_t repetitions) {
 	}
 	rule_arr.rules[rule_arr.rule_size].name = "special_rule1";
 	rule_arr.rules[rule_arr.rule_size + 1].name = "special_rule2";
+#endif
 
 	rule_init_ticks = clock() - rule_init_ticks;
 
