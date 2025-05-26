@@ -239,6 +239,10 @@ int main(int argc, char *argv[]) {
 								j1 = ESCAPE;
 								j2 = EMPTYCHAR;
 								break;
+							case(EOG):
+								j1 = ESCAPE;
+								j2 = EOG;
+								break;
 							case(' '):
 								j1 = ESCAPE;
 								j2 = ' ';

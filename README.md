@@ -2,14 +2,11 @@ GLL Recogniser Implementation
 =========================
 
 # Introduction
-A C program that implements a toy version of the GLL Parsing algorithm from the paper [GLL Parsing](https://dotat.at/tmp/gll.pdf) by Elizabeth Scott and Adrian Johnstone. The implementation is my attempt at making it fairly memory efficient/cache local in hopes that cache locality will provide enought of a speed boost to compete with higher level implementation that have data structures such as sets.
+A C program that implements a toy version of the GLL Parsing algorithm from the paper [GLL Parsing](https://dotat.at/tmp/gll.pdf) by Elizabeth Scott and Adrian Johnstone.
 
 # Usage
 Assumptions:
 - The compiler used, should use the ASCII character set as signed chars (0-127).
-- Inputs strings may not contain '\0', '|', '_', ' ', or capitilized letters as they are used inside the algorithm
-- '_' on the right hand side of a grammer rule is used to represent the empty string
-- Capitilized letters are used as non terminals, the set of terminals is then the remainder of characters not mentioned above
 
 ## Compilation
 The makefile uses the gcc compiler and gives (3 + 1) options and compiles to 'builds/':
@@ -30,7 +27,7 @@ Builds input_gen who's usage is explained in the [Input Generator](#input_genera
 ### Default Parser
 Executes the algorithm one with the provided grammer and input.
 
-    gll_parser 'file_path' 'input'
+    gll_parser 'file_path' [-l\L | -f\F] 'input'
 - `'file_path'` is a path to a file containing a grammer of format:
 
         X -> X1 | X2 | ...
@@ -38,7 +35,9 @@ Executes the algorithm one with the provided grammer and input.
         Y -> Y1 | Y2 | ...
         ...
         [#]
-- `'input'` is a string of terminals that will be parsed
+- `'-l\L'` flag to indicate 'input' to be a string
+- `'-f\F'` flag to indicate 'input' to be a file containing a string
+- `'input'` is a string or file path containing a string of terminals that will be parsed
 
 
 ### File Testing
@@ -60,7 +59,7 @@ For each grammer file in the folder at `'folder_path'` executes the algorithm `'
 ### Generative Testing
 Executes the algorithm 'repetition' times on an input concatinated of all substrings provided where second (with an odd index) substring is repeated. The amount of repetition is changed by 'op' every iteration. And the algorithm terminates after 'count' tests or will not terminate if 'count' == -1
 
-    gll_parser_test 'grammer_file' 'repetitions' 'count' 'op' 'substr0' 'substr1' ...
+    gll_parser_test 'grammer_file' 'repetitions' 'count' 'start_repetition' 'op' 'substr0' 'substr1' ...
  - 'grammer_file' should be a path to a file containing grammers of format:
 
         X -> X_1 | X_2 | ...
@@ -69,6 +68,7 @@ Executes the algorithm 'repetition' times on an input concatinated of all substr
    
  - `'repetition'` is a natural number denoting the amount of times each test is executed. (Execution time is then averaged)
  - `'count'` will be the amounts of tests generated (-1 to never terminate)
+ - `'start_repetition'` Is the amount each odd substring will be repeated at the beginning
  - `'op'` is of form \"+N\" or \"*N\" (N being a natural umber) denoting the growth of the input per new test
  - `'substr0...n'` the input given to the parse is the concatination of these substring where all substr's with odd indicies are repeated
 
@@ -94,7 +94,7 @@ The following section will discuss how the algorithm of the paper was implemente
 
 ## Labels
 The pseudo code from the paper uses some form of dynamic label onwhich they call goto. Clearly this is not something directly supported by C. Hence we will need a different approach.
-We differentiate between 4 different label types: 
+We differentiate between 4 different label types:
 - `base_loop` ~ $L_0$
 - `init_rule` ~ $code(A, j)$
 - `start_new_alternative` ~ $code(A::= \alpha_k, j)$
@@ -103,13 +103,13 @@ We differentiate between 4 different label types:
 We can then implement each of these types as its seperate function and just store a enums (and state information) instead of a label in all data structures and index into the correct functions.
 This however leaves us with a new problem. Since we are jumping from function to function we will at some point fill our call stack.
 We can of course solve this quite quickly we could just change our `base_loop` from a function that is called everytime to a while loop that checks if $R$ is empty and all other functions just return back when done.
-For this implementation we have however choosen a slightly different approach (not because of it having much of an advantage but mostly just cause we wanted to). We instead of following the normal call/return structure most are familiar with instead use `longjump` and `setjmp`. Hence we call `setjmp` in the `base_loop` function and all the other function when they reach the end of a derivation call `longjump` to return to the `base_loop` conviniently ereasing the call stack used by the derivation.
-The only caviat in this approach is that we must store all changes we want to keep accross jumps in either heap memory or stack memory assigned before the call to `set_jump`
+For this implementation we have however choosen a slightly different approach (not because of it having much of an advantage but mostly cause funni). We instead of following the normal call/return structure, use `longjump` and `setjmp`. Hence we can call `setjmp` in the `base_loop` function and all the other function when they reach the end of a derivation will call `longjump` to return to the `base_loop` conviniently ereasing the call stack used by the derivation.
+The only caviat in this approach is that we must store all changes we want to keep accross jumps in a pointer whose address cannot be changed
 
 ## GSS
 The GSS graph was implemented with the improvments described in [Faster, Practical GLL Parsing](https://ir.cwi.nl/pub/24026/24026B.pdf). Since we must search both edges and nodes for existance and these graphs can get quite large its (as you might see for yourself in the [Performance](#performance) section) important to have these checks be fast.
-Hence what this implementation does is allocate space for the maximal amount of gss nodes possible. This uses alot of memory which is its main disadvandage. We know this amount at the start of our program since gss nodes are of from `(char non-terminal, uint32_t input_position)` and we know the amount of nonterminals and input_size as soon as we know the grammer and the input.
-We can then just allocate a dynamic array of edges for each node at where that node indexes when it's "created" hence signaling is existance and allowing for checking for it's existance in O(1). For the edges we can then just add them to that same dynamic array allowing us to check for its existans in O(m) where m is the out degree of its source node.
+Hence what this implementation does is allocate space for the maximal amount of gss nodes possible as pointers. This uses alot of memory which is its main disadvandage. We know this amount at the start of our program since gss nodes are of from `(uint16_t non-terminal, uint32_t input_position)` and we know the amount of nonterminals and input_size as soon as we know the grammer and the input.
+We can then just allocate a new node with additional space for an edge array / U_set ring buffer and two uint32_t for the P set.
 
 ## Sets
 This is arguable the most interesting part of any implementation as there is quite a bit of room here for how these sets are implemented. In a higher level language it is probably a good idea to just use some form of a set implementation if that language provieds a good one. C does however to my knowledge not provide such a data structure in its standart library. Hence since I'm quite attached to my sanity we'll need to find a different approach.
@@ -130,5 +130,42 @@ If we analyse the original pseudo code given in the paper we can see that the on
 
 This modification and the behavior (mainly the sorting) of our ring buffer ensures that we will always try every possibility at a given input position before moving to the next position.
 
+##### Making it GSS local
+Since the algorithm requires lookup both in the $U$ set and the $P$ set and we liniar search for that lookup its in our interest to make these as small as possible. As such we can make them local to the GSS node. It was already mentioned earlier that our GSS gives us the ability to lookup nodes in O(1) we can use that and make a gss local ringbuffer for each node for the $U$ set. This leads to much smaller $U$ sets. The problem that now arises is cleaning up the $U$ set when our input rises it is clearly not optimal to run through all nodes and clean each on up individually. What we do instead is do it lazily since each time we wish to modify (add) something to some $U$ set we need to search through it anyway we can also clean up in the same step by checking the current `lower input position`. We can do the same with the $P$ set but even simpler. Since the $P$ set is just a node and an input position but we know we are at any point at most at two different input position we can simply allocate an static array of size 2 per node and clean in up in the same way when nessessary.
+
 # Performance
-ToDo
+Here are 3 Grammers and how they perform
+
+g1:
+S -> aSB | B
+A -> ab
+B -> A | B
+TODO: Image
+
+g6:
+S -> aBc | abC | Abc
+A -> a' | a'' | D
+B -> b' | b'' | E
+C -> c' | c'' | D
+D -> d | dD | ddD | dddD | ddddD | dddddD | ddddddD | dddddddD | ddddddddD
+E -> e | Ee | Eeee | Eeeeeeee | Eeeeeeeeeeeeeeee
+TODO: Image
+
+g13:
+S -> \[ E \]
+E -> I | E , E
+I -> M K | N
+K -> K K | K
+N -> 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 0
+M -> 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
+TODO: Image
+
+g14:
+S -> C a | d
+B -> _ | a
+C -> b | B C b | b b
+TODO: Image
+
+g15:
+S -> b | S S | S S S
+TODO: Image

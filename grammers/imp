@@ -21,5 +21,5 @@ if n != 0 then x := x * n else x := 1 end#0
 if n != 0 then x := (x * n) else x := 1 end#1
 while \#true do skip end#1
 while \#false do skip end#1
-while \#false < 1 do x := 1 end#1
+while \#false < 1 do x := 1 end#0
 while \#false do x = (x + 1) end#0

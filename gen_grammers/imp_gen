@@ -8,7 +8,7 @@
 'var' -> 'ident'
 'Aexp' -> ('Aexp'\ 'op'\ 'Aexp') | 'var' | 'numeral'
 'op' -> + | - | *
-'Bexp' -> ('Bexp'\ or\ 'Bexp') | ('Bexp'\ and\ 'Bexp') | not\ 'Bexp' | 'Aexp'\ 'Rop'\ 'Aexp'
+'Bexp' -> ('Bexp'\ or\ 'Bexp') | ('Bexp'\ and\ 'Bexp') | not\ 'Bexp' | 'Aexp'\ 'Rop'\ 'Aexp' | \#true | \#false
 'Rop' -> == | != | < | <= | > | >=
 'if' -> if\ 'Bexp'\ then\ 'stm'\ else\ 'stm'\ end | if\ 'Bexp'\ then\n'stm'\nelse\n'stm'\nend
 'while' -> while\ 'Bexp'\ do\ 'stm'\ end | while\ 'Bexp'\ do\n'stm'\nend
@@ -17,12 +17,40 @@ skip#1
 (skip; skip)#1
 skip;
 skip#1
+while #true do skip end#1
+while #false do skip end#1
+while #true do
+skip
+end#1
+while #false do
+skip
+end#1
 (skip; (skip; skip))#1
 (skip; skip;
 skip)#1
 ((skip; skip); skip)#1
 (skip;
 skip; skip)#1
+if #true then skip else skip end#1
+if #false then skip else skip end#1
+if #true then
+skip
+else
+skip
+end#1
+if #false then
+skip
+else
+skip
+end#1
+while not #true do skip end#1
+while not #false do skip end#1
+while not #true do
+skip
+end#1
+while not #false do
+skip
+end#1
 skip;
 (skip; skip)#1
 skip;
@@ -33,12 +61,144 @@ skip#1
 skip;
 skip;
 skip#1
+(skip; while #true do skip end)#1
+(skip; while #false do skip end)#1
+(skip; while #true do
+skip
+end)#1
+(skip; while #false do
+skip
+end)#1
+(while #true do skip end; skip)#1
+(while #false do skip end; skip)#1
+(while #true do
+skip
+end; skip)#1
+(while #false do
+skip
+end; skip)#1
+if not #true then skip else skip end#1
+if not #false then skip else skip end#1
+if not #true then
+skip
+else
+skip
+end#1
+if not #false then
+skip
+else
+skip
+end#1
+while (#true or #true) do skip end#1
+while (#true or #false) do skip end#1
+while (#false or #true) do skip end#1
+while (#false or #false) do skip end#1
+while (#true and #true) do skip end#1
+while (#true and #false) do skip end#1
+while (#false and #true) do skip end#1
+while (#false and #false) do skip end#1
+while not not #true do skip end#1
+while not not #false do skip end#1
+while #true do (skip; skip) end#1
+while #true do skip;
+skip end#1
+while #false do (skip; skip) end#1
+while #false do skip;
+skip end#1
+while (#true or #true) do
+skip
+end#1
+while (#true or #false) do
+skip
+end#1
+while (#false or #true) do
+skip
+end#1
+while (#false or #false) do
+skip
+end#1
+while (#true and #true) do
+skip
+end#1
+while (#true and #false) do
+skip
+end#1
+while (#false and #true) do
+skip
+end#1
+while (#false and #false) do
+skip
+end#1
+while not not #true do
+skip
+end#1
+while not not #false do
+skip
+end#1
+while #true do
+(skip; skip)
+end#1
+while #true do
+skip;
+skip
+end#1
+while #false do
+(skip; skip)
+end#1
+while #false do
+skip;
+skip
+end#1
+skip;
+while #true do skip end#1
+skip;
+while #false do skip end#1
+skip;
+while #true do
+skip
+end#1
+skip;
+while #false do
+skip
+end#1
+while #true do skip end;
+skip#1
+while #false do skip end;
+skip#1
+while #true do
+skip
+end;
+skip#1
+while #false do
+skip
+end;
+skip#1
 (skip; (skip; (skip; skip)))#1
 (skip; (skip; skip;
 skip))#1
 (skip; ((skip; skip); skip))#1
 (skip; (skip;
 skip; skip))#1
+(skip; if #true then skip else skip end)#1
+(skip; if #false then skip else skip end)#1
+(skip; if #true then
+skip
+else
+skip
+end)#1
+(skip; if #false then
+skip
+else
+skip
+end)#1
+(skip; while not #true do skip end)#1
+(skip; while not #false do skip end)#1
+(skip; while not #true do
+skip
+end)#1
+(skip; while not #false do
+skip
+end)#1
 (skip; skip;
 (skip; skip))#1
 (skip; skip;
@@ -58,6 +218,26 @@ skip; skip); skip)#1
 ((skip; skip); (skip; skip))#1
 ((skip; skip); skip;
 skip)#1
+(if #true then skip else skip end; skip)#1
+(if #false then skip else skip end; skip)#1
+(if #true then
+skip
+else
+skip
+end; skip)#1
+(if #false then
+skip
+else
+skip
+end; skip)#1
+(while not #true do skip end; skip)#1
+(while not #false do skip end; skip)#1
+(while not #true do
+skip
+end; skip)#1
+(while not #false do
+skip
+end; skip)#1
 (skip;
 (skip; skip); skip)#1
 (skip;
@@ -73,6 +253,294 @@ skip; (skip; skip))#1
 (skip;
 skip; skip;
 skip)#1
+if (#true or #true) then skip else skip end#1
+if (#true or #false) then skip else skip end#1
+if (#false or #true) then skip else skip end#1
+if (#false or #false) then skip else skip end#1
+if (#true and #true) then skip else skip end#1
+if (#true and #false) then skip else skip end#1
+if (#false and #true) then skip else skip end#1
+if (#false and #false) then skip else skip end#1
+if not not #true then skip else skip end#1
+if not not #false then skip else skip end#1
+if #true then skip else (skip; skip) end#1
+if #true then skip else skip;
+skip end#1
+if #true then (skip; skip) else skip end#1
+if #true then skip;
+skip else skip end#1
+if #false then skip else (skip; skip) end#1
+if #false then skip else skip;
+skip end#1
+if #false then (skip; skip) else skip end#1
+if #false then skip;
+skip else skip end#1
+if (#true or #true) then
+skip
+else
+skip
+end#1
+if (#true or #false) then
+skip
+else
+skip
+end#1
+if (#false or #true) then
+skip
+else
+skip
+end#1
+if (#false or #false) then
+skip
+else
+skip
+end#1
+if (#true and #true) then
+skip
+else
+skip
+end#1
+if (#true and #false) then
+skip
+else
+skip
+end#1
+if (#false and #true) then
+skip
+else
+skip
+end#1
+if (#false and #false) then
+skip
+else
+skip
+end#1
+if not not #true then
+skip
+else
+skip
+end#1
+if not not #false then
+skip
+else
+skip
+end#1
+if #true then
+skip
+else
+(skip; skip)
+end#1
+if #true then
+skip
+else
+skip;
+skip
+end#1
+if #true then
+(skip; skip)
+else
+skip
+end#1
+if #true then
+skip;
+skip
+else
+skip
+end#1
+if #false then
+skip
+else
+(skip; skip)
+end#1
+if #false then
+skip
+else
+skip;
+skip
+end#1
+if #false then
+(skip; skip)
+else
+skip
+end#1
+if #false then
+skip;
+skip
+else
+skip
+end#1
+while (not #true or #true) do skip end#1
+while (not #false or #true) do skip end#1
+while (not #true or #false) do skip end#1
+while (not #false or #false) do skip end#1
+while (#true or not #true) do skip end#1
+while (#true or not #false) do skip end#1
+while (#false or not #true) do skip end#1
+while (#false or not #false) do skip end#1
+while (not #true and #true) do skip end#1
+while (not #false and #true) do skip end#1
+while (not #true and #false) do skip end#1
+while (not #false and #false) do skip end#1
+while (#true and not #true) do skip end#1
+while (#true and not #false) do skip end#1
+while (#false and not #true) do skip end#1
+while (#false and not #false) do skip end#1
+while not (#true or #true) do skip end#1
+while not (#true or #false) do skip end#1
+while not (#false or #true) do skip end#1
+while not (#false or #false) do skip end#1
+while not (#true and #true) do skip end#1
+while not (#true and #false) do skip end#1
+while not (#false and #true) do skip end#1
+while not (#false and #false) do skip end#1
+while not not not #true do skip end#1
+while not not not #false do skip end#1
+while not #true do (skip; skip) end#1
+while not #false do (skip; skip) end#1
+while not #true do skip;
+skip end#1
+while not #false do skip;
+skip end#1
+while #true do while #true do skip end end#1
+while #true do while #false do skip end end#1
+while #true do while #true do
+skip
+end end#1
+while #true do while #false do
+skip
+end end#1
+while #false do while #true do skip end end#1
+while #false do while #false do skip end end#1
+while #false do while #true do
+skip
+end end#1
+while #false do while #false do
+skip
+end end#1
+while (not #true or #true) do
+skip
+end#1
+while (not #false or #true) do
+skip
+end#1
+while (not #true or #false) do
+skip
+end#1
+while (not #false or #false) do
+skip
+end#1
+while (#true or not #true) do
+skip
+end#1
+while (#true or not #false) do
+skip
+end#1
+while (#false or not #true) do
+skip
+end#1
+while (#false or not #false) do
+skip
+end#1
+while (not #true and #true) do
+skip
+end#1
+while (not #false and #true) do
+skip
+end#1
+while (not #true and #false) do
+skip
+end#1
+while (not #false and #false) do
+skip
+end#1
+while (#true and not #true) do
+skip
+end#1
+while (#true and not #false) do
+skip
+end#1
+while (#false and not #true) do
+skip
+end#1
+while (#false and not #false) do
+skip
+end#1
+while not (#true or #true) do
+skip
+end#1
+while not (#true or #false) do
+skip
+end#1
+while not (#false or #true) do
+skip
+end#1
+while not (#false or #false) do
+skip
+end#1
+while not (#true and #true) do
+skip
+end#1
+while not (#true and #false) do
+skip
+end#1
+while not (#false and #true) do
+skip
+end#1
+while not (#false and #false) do
+skip
+end#1
+while not not not #true do
+skip
+end#1
+while not not not #false do
+skip
+end#1
+while not #true do
+(skip; skip)
+end#1
+while not #false do
+(skip; skip)
+end#1
+while not #true do
+skip;
+skip
+end#1
+while not #false do
+skip;
+skip
+end#1
+while #true do
+while #true do skip end
+end#1
+while #true do
+while #false do skip end
+end#1
+while #true do
+while #true do
+skip
+end
+end#1
+while #true do
+while #false do
+skip
+end
+end#1
+while #false do
+while #true do skip end
+end#1
+while #false do
+while #false do skip end
+end#1
+while #false do
+while #true do
+skip
+end
+end#1
+while #false do
+while #false do
+skip
+end
+end#1
 skip;
 (skip; (skip; skip))#1
 skip;
@@ -83,6 +551,34 @@ skip;
 skip;
 (skip;
 skip; skip)#1
+skip;
+if #true then skip else skip end#1
+skip;
+if #false then skip else skip end#1
+skip;
+if #true then
+skip
+else
+skip
+end#1
+skip;
+if #false then
+skip
+else
+skip
+end#1
+skip;
+while not #true do skip end#1
+skip;
+while not #false do skip end#1
+skip;
+while not #true do
+skip
+end#1
+skip;
+while not #false do
+skip
+end#1
 skip;
 skip;
 (skip; skip)#1
@@ -111,6 +607,34 @@ skip#1
 (skip; skip)#1
 (skip; skip);
 skip;
+skip#1
+if #true then skip else skip end;
+skip#1
+if #false then skip else skip end;
+skip#1
+if #true then
+skip
+else
+skip
+end;
+skip#1
+if #false then
+skip
+else
+skip
+end;
+skip#1
+while not #true do skip end;
+skip#1
+while not #false do skip end;
+skip#1
+while not #true do
+skip
+end;
+skip#1
+while not #false do
+skip
+end;
 skip#1
 skip;
 (skip; skip);
@@ -633,6 +1157,1798 @@ z := 6#1
 z := 7#1
 z := 8#1
 z := 9#1
+(skip; (skip; while #true do skip end))#1
+(skip; (skip; while #false do skip end))#1
+(skip; (skip; while #true do
+skip
+end))#1
+(skip; (skip; while #false do
+skip
+end))#1
+(skip; (while #true do skip end; skip))#1
+(skip; (while #false do skip end; skip))#1
+(skip; (while #true do
+skip
+end; skip))#1
+(skip; (while #false do
+skip
+end; skip))#1
+(skip; if not #true then skip else skip end)#1
+(skip; if not #false then skip else skip end)#1
+(skip; if not #true then
+skip
+else
+skip
+end)#1
+(skip; if not #false then
+skip
+else
+skip
+end)#1
+(skip; while (#true or #true) do skip end)#1
+(skip; while (#true or #false) do skip end)#1
+(skip; while (#false or #true) do skip end)#1
+(skip; while (#false or #false) do skip end)#1
+(skip; while (#true and #true) do skip end)#1
+(skip; while (#true and #false) do skip end)#1
+(skip; while (#false and #true) do skip end)#1
+(skip; while (#false and #false) do skip end)#1
+(skip; while not not #true do skip end)#1
+(skip; while not not #false do skip end)#1
+(skip; while #true do (skip; skip) end)#1
+(skip; while #true do skip;
+skip end)#1
+(skip; while #false do (skip; skip) end)#1
+(skip; while #false do skip;
+skip end)#1
+(skip; while (#true or #true) do
+skip
+end)#1
+(skip; while (#true or #false) do
+skip
+end)#1
+(skip; while (#false or #true) do
+skip
+end)#1
+(skip; while (#false or #false) do
+skip
+end)#1
+(skip; while (#true and #true) do
+skip
+end)#1
+(skip; while (#true and #false) do
+skip
+end)#1
+(skip; while (#false and #true) do
+skip
+end)#1
+(skip; while (#false and #false) do
+skip
+end)#1
+(skip; while not not #true do
+skip
+end)#1
+(skip; while not not #false do
+skip
+end)#1
+(skip; while #true do
+(skip; skip)
+end)#1
+(skip; while #true do
+skip;
+skip
+end)#1
+(skip; while #false do
+(skip; skip)
+end)#1
+(skip; while #false do
+skip;
+skip
+end)#1
+(skip; skip;
+while #true do skip end)#1
+(skip; skip;
+while #false do skip end)#1
+(skip; skip;
+while #true do
+skip
+end)#1
+(skip; skip;
+while #false do
+skip
+end)#1
+(skip; while #true do skip end;
+skip)#1
+(skip; while #false do skip end;
+skip)#1
+(skip; while #true do
+skip
+end;
+skip)#1
+(skip; while #false do
+skip
+end;
+skip)#1
+((skip; while #true do skip end); skip)#1
+((skip; while #false do skip end); skip)#1
+((skip; while #true do
+skip
+end); skip)#1
+((skip; while #false do
+skip
+end); skip)#1
+((while #true do skip end; skip); skip)#1
+((while #false do skip end; skip); skip)#1
+((while #true do
+skip
+end; skip); skip)#1
+((while #false do
+skip
+end; skip); skip)#1
+((skip; skip); while #true do skip end)#1
+((skip; skip); while #false do skip end)#1
+((skip; skip); while #true do
+skip
+end)#1
+((skip; skip); while #false do
+skip
+end)#1
+(if not #true then skip else skip end; skip)#1
+(if not #false then skip else skip end; skip)#1
+(if not #true then
+skip
+else
+skip
+end; skip)#1
+(if not #false then
+skip
+else
+skip
+end; skip)#1
+(while (#true or #true) do skip end; skip)#1
+(while (#true or #false) do skip end; skip)#1
+(while (#false or #true) do skip end; skip)#1
+(while (#false or #false) do skip end; skip)#1
+(while (#true and #true) do skip end; skip)#1
+(while (#true and #false) do skip end; skip)#1
+(while (#false and #true) do skip end; skip)#1
+(while (#false and #false) do skip end; skip)#1
+(while not not #true do skip end; skip)#1
+(while not not #false do skip end; skip)#1
+(while #true do (skip; skip) end; skip)#1
+(while #true do skip;
+skip end; skip)#1
+(while #false do (skip; skip) end; skip)#1
+(while #false do skip;
+skip end; skip)#1
+(while (#true or #true) do
+skip
+end; skip)#1
+(while (#true or #false) do
+skip
+end; skip)#1
+(while (#false or #true) do
+skip
+end; skip)#1
+(while (#false or #false) do
+skip
+end; skip)#1
+(while (#true and #true) do
+skip
+end; skip)#1
+(while (#true and #false) do
+skip
+end; skip)#1
+(while (#false and #true) do
+skip
+end; skip)#1
+(while (#false and #false) do
+skip
+end; skip)#1
+(while not not #true do
+skip
+end; skip)#1
+(while not not #false do
+skip
+end; skip)#1
+(while #true do
+(skip; skip)
+end; skip)#1
+(while #true do
+skip;
+skip
+end; skip)#1
+(while #false do
+(skip; skip)
+end; skip)#1
+(while #false do
+skip;
+skip
+end; skip)#1
+(while #true do skip end; (skip; skip))#1
+(while #false do skip end; (skip; skip))#1
+(while #true do
+skip
+end; (skip; skip))#1
+(while #false do
+skip
+end; (skip; skip))#1
+(while #true do skip end; skip;
+skip)#1
+(while #false do skip end; skip;
+skip)#1
+(while #true do
+skip
+end; skip;
+skip)#1
+(while #false do
+skip
+end; skip;
+skip)#1
+(skip;
+while #true do skip end; skip)#1
+(skip;
+while #false do skip end; skip)#1
+(skip;
+while #true do
+skip
+end; skip)#1
+(skip;
+while #false do
+skip
+end; skip)#1
+(while #true do skip end;
+skip; skip)#1
+(while #false do skip end;
+skip; skip)#1
+(while #true do
+skip
+end;
+skip; skip)#1
+(while #false do
+skip
+end;
+skip; skip)#1
+(skip;
+skip; while #true do skip end)#1
+(skip;
+skip; while #false do skip end)#1
+(skip;
+skip; while #true do
+skip
+end)#1
+(skip;
+skip; while #false do
+skip
+end)#1
+if (not #true or #true) then skip else skip end#1
+if (not #false or #true) then skip else skip end#1
+if (not #true or #false) then skip else skip end#1
+if (not #false or #false) then skip else skip end#1
+if (#true or not #true) then skip else skip end#1
+if (#true or not #false) then skip else skip end#1
+if (#false or not #true) then skip else skip end#1
+if (#false or not #false) then skip else skip end#1
+if (not #true and #true) then skip else skip end#1
+if (not #false and #true) then skip else skip end#1
+if (not #true and #false) then skip else skip end#1
+if (not #false and #false) then skip else skip end#1
+if (#true and not #true) then skip else skip end#1
+if (#true and not #false) then skip else skip end#1
+if (#false and not #true) then skip else skip end#1
+if (#false and not #false) then skip else skip end#1
+if not (#true or #true) then skip else skip end#1
+if not (#true or #false) then skip else skip end#1
+if not (#false or #true) then skip else skip end#1
+if not (#false or #false) then skip else skip end#1
+if not (#true and #true) then skip else skip end#1
+if not (#true and #false) then skip else skip end#1
+if not (#false and #true) then skip else skip end#1
+if not (#false and #false) then skip else skip end#1
+if not not not #true then skip else skip end#1
+if not not not #false then skip else skip end#1
+if not #true then skip else (skip; skip) end#1
+if not #false then skip else (skip; skip) end#1
+if not #true then skip else skip;
+skip end#1
+if not #false then skip else skip;
+skip end#1
+if not #true then (skip; skip) else skip end#1
+if not #false then (skip; skip) else skip end#1
+if not #true then skip;
+skip else skip end#1
+if not #false then skip;
+skip else skip end#1
+if #true then skip else while #true do skip end end#1
+if #true then skip else while #false do skip end end#1
+if #true then skip else while #true do
+skip
+end end#1
+if #true then skip else while #false do
+skip
+end end#1
+if #true then while #true do skip end else skip end#1
+if #true then while #false do skip end else skip end#1
+if #true then while #true do
+skip
+end else skip end#1
+if #true then while #false do
+skip
+end else skip end#1
+if #false then skip else while #true do skip end end#1
+if #false then skip else while #false do skip end end#1
+if #false then skip else while #true do
+skip
+end end#1
+if #false then skip else while #false do
+skip
+end end#1
+if #false then while #true do skip end else skip end#1
+if #false then while #false do skip end else skip end#1
+if #false then while #true do
+skip
+end else skip end#1
+if #false then while #false do
+skip
+end else skip end#1
+if (not #true or #true) then
+skip
+else
+skip
+end#1
+if (not #false or #true) then
+skip
+else
+skip
+end#1
+if (not #true or #false) then
+skip
+else
+skip
+end#1
+if (not #false or #false) then
+skip
+else
+skip
+end#1
+if (#true or not #true) then
+skip
+else
+skip
+end#1
+if (#true or not #false) then
+skip
+else
+skip
+end#1
+if (#false or not #true) then
+skip
+else
+skip
+end#1
+if (#false or not #false) then
+skip
+else
+skip
+end#1
+if (not #true and #true) then
+skip
+else
+skip
+end#1
+if (not #false and #true) then
+skip
+else
+skip
+end#1
+if (not #true and #false) then
+skip
+else
+skip
+end#1
+if (not #false and #false) then
+skip
+else
+skip
+end#1
+if (#true and not #true) then
+skip
+else
+skip
+end#1
+if (#true and not #false) then
+skip
+else
+skip
+end#1
+if (#false and not #true) then
+skip
+else
+skip
+end#1
+if (#false and not #false) then
+skip
+else
+skip
+end#1
+if not (#true or #true) then
+skip
+else
+skip
+end#1
+if not (#true or #false) then
+skip
+else
+skip
+end#1
+if not (#false or #true) then
+skip
+else
+skip
+end#1
+if not (#false or #false) then
+skip
+else
+skip
+end#1
+if not (#true and #true) then
+skip
+else
+skip
+end#1
+if not (#true and #false) then
+skip
+else
+skip
+end#1
+if not (#false and #true) then
+skip
+else
+skip
+end#1
+if not (#false and #false) then
+skip
+else
+skip
+end#1
+if not not not #true then
+skip
+else
+skip
+end#1
+if not not not #false then
+skip
+else
+skip
+end#1
+if not #true then
+skip
+else
+(skip; skip)
+end#1
+if not #false then
+skip
+else
+(skip; skip)
+end#1
+if not #true then
+skip
+else
+skip;
+skip
+end#1
+if not #false then
+skip
+else
+skip;
+skip
+end#1
+if not #true then
+(skip; skip)
+else
+skip
+end#1
+if not #false then
+(skip; skip)
+else
+skip
+end#1
+if not #true then
+skip;
+skip
+else
+skip
+end#1
+if not #false then
+skip;
+skip
+else
+skip
+end#1
+if #true then
+skip
+else
+while #true do skip end
+end#1
+if #true then
+skip
+else
+while #false do skip end
+end#1
+if #true then
+skip
+else
+while #true do
+skip
+end
+end#1
+if #true then
+skip
+else
+while #false do
+skip
+end
+end#1
+if #true then
+while #true do skip end
+else
+skip
+end#1
+if #true then
+while #false do skip end
+else
+skip
+end#1
+if #true then
+while #true do
+skip
+end
+else
+skip
+end#1
+if #true then
+while #false do
+skip
+end
+else
+skip
+end#1
+if #false then
+skip
+else
+while #true do skip end
+end#1
+if #false then
+skip
+else
+while #false do skip end
+end#1
+if #false then
+skip
+else
+while #true do
+skip
+end
+end#1
+if #false then
+skip
+else
+while #false do
+skip
+end
+end#1
+if #false then
+while #true do skip end
+else
+skip
+end#1
+if #false then
+while #false do skip end
+else
+skip
+end#1
+if #false then
+while #true do
+skip
+end
+else
+skip
+end#1
+if #false then
+while #false do
+skip
+end
+else
+skip
+end#1
+while ((#true or #true) or #true) do skip end#1
+while ((#true or #false) or #true) do skip end#1
+while ((#false or #true) or #true) do skip end#1
+while ((#false or #false) or #true) do skip end#1
+while ((#true or #true) or #false) do skip end#1
+while ((#true or #false) or #false) do skip end#1
+while ((#false or #true) or #false) do skip end#1
+while ((#false or #false) or #false) do skip end#1
+while ((#true and #true) or #true) do skip end#1
+while ((#true and #false) or #true) do skip end#1
+while ((#false and #true) or #true) do skip end#1
+while ((#false and #false) or #true) do skip end#1
+while ((#true and #true) or #false) do skip end#1
+while ((#true and #false) or #false) do skip end#1
+while ((#false and #true) or #false) do skip end#1
+while ((#false and #false) or #false) do skip end#1
+while (not #true or not #true) do skip end#1
+while (not #true or not #false) do skip end#1
+while (not #false or not #true) do skip end#1
+while (not #false or not #false) do skip end#1
+while (not not #true or #true) do skip end#1
+while (not not #false or #true) do skip end#1
+while (not not #true or #false) do skip end#1
+while (not not #false or #false) do skip end#1
+while (#true or (#true or #true)) do skip end#1
+while (#true or (#true or #false)) do skip end#1
+while (#true or (#false or #true)) do skip end#1
+while (#true or (#false or #false)) do skip end#1
+while (#true or (#true and #true)) do skip end#1
+while (#true or (#true and #false)) do skip end#1
+while (#true or (#false and #true)) do skip end#1
+while (#true or (#false and #false)) do skip end#1
+while (#true or not not #true) do skip end#1
+while (#true or not not #false) do skip end#1
+while (#false or (#true or #true)) do skip end#1
+while (#false or (#true or #false)) do skip end#1
+while (#false or (#false or #true)) do skip end#1
+while (#false or (#false or #false)) do skip end#1
+while (#false or (#true and #true)) do skip end#1
+while (#false or (#true and #false)) do skip end#1
+while (#false or (#false and #true)) do skip end#1
+while (#false or (#false and #false)) do skip end#1
+while (#false or not not #true) do skip end#1
+while (#false or not not #false) do skip end#1
+while (#true or #true) do (skip; skip) end#1
+while (#true or #false) do (skip; skip) end#1
+while (#false or #true) do (skip; skip) end#1
+while (#false or #false) do (skip; skip) end#1
+while (#true or #true) do skip;
+skip end#1
+while (#true or #false) do skip;
+skip end#1
+while (#false or #true) do skip;
+skip end#1
+while (#false or #false) do skip;
+skip end#1
+while ((#true or #true) and #true) do skip end#1
+while ((#true or #false) and #true) do skip end#1
+while ((#false or #true) and #true) do skip end#1
+while ((#false or #false) and #true) do skip end#1
+while ((#true or #true) and #false) do skip end#1
+while ((#true or #false) and #false) do skip end#1
+while ((#false or #true) and #false) do skip end#1
+while ((#false or #false) and #false) do skip end#1
+while ((#true and #true) and #true) do skip end#1
+while ((#true and #false) and #true) do skip end#1
+while ((#false and #true) and #true) do skip end#1
+while ((#false and #false) and #true) do skip end#1
+while ((#true and #true) and #false) do skip end#1
+while ((#true and #false) and #false) do skip end#1
+while ((#false and #true) and #false) do skip end#1
+while ((#false and #false) and #false) do skip end#1
+while (not #true and not #true) do skip end#1
+while (not #true and not #false) do skip end#1
+while (not #false and not #true) do skip end#1
+while (not #false and not #false) do skip end#1
+while (not not #true and #true) do skip end#1
+while (not not #false and #true) do skip end#1
+while (not not #true and #false) do skip end#1
+while (not not #false and #false) do skip end#1
+while (#true and (#true or #true)) do skip end#1
+while (#true and (#true or #false)) do skip end#1
+while (#true and (#false or #true)) do skip end#1
+while (#true and (#false or #false)) do skip end#1
+while (#true and (#true and #true)) do skip end#1
+while (#true and (#true and #false)) do skip end#1
+while (#true and (#false and #true)) do skip end#1
+while (#true and (#false and #false)) do skip end#1
+while (#true and not not #true) do skip end#1
+while (#true and not not #false) do skip end#1
+while (#false and (#true or #true)) do skip end#1
+while (#false and (#true or #false)) do skip end#1
+while (#false and (#false or #true)) do skip end#1
+while (#false and (#false or #false)) do skip end#1
+while (#false and (#true and #true)) do skip end#1
+while (#false and (#true and #false)) do skip end#1
+while (#false and (#false and #true)) do skip end#1
+while (#false and (#false and #false)) do skip end#1
+while (#false and not not #true) do skip end#1
+while (#false and not not #false) do skip end#1
+while (#true and #true) do (skip; skip) end#1
+while (#true and #false) do (skip; skip) end#1
+while (#false and #true) do (skip; skip) end#1
+while (#false and #false) do (skip; skip) end#1
+while (#true and #true) do skip;
+skip end#1
+while (#true and #false) do skip;
+skip end#1
+while (#false and #true) do skip;
+skip end#1
+while (#false and #false) do skip;
+skip end#1
+while not (not #true or #true) do skip end#1
+while not (not #false or #true) do skip end#1
+while not (not #true or #false) do skip end#1
+while not (not #false or #false) do skip end#1
+while not (#true or not #true) do skip end#1
+while not (#true or not #false) do skip end#1
+while not (#false or not #true) do skip end#1
+while not (#false or not #false) do skip end#1
+while not (not #true and #true) do skip end#1
+while not (not #false and #true) do skip end#1
+while not (not #true and #false) do skip end#1
+while not (not #false and #false) do skip end#1
+while not (#true and not #true) do skip end#1
+while not (#true and not #false) do skip end#1
+while not (#false and not #true) do skip end#1
+while not (#false and not #false) do skip end#1
+while not not (#true or #true) do skip end#1
+while not not (#true or #false) do skip end#1
+while not not (#false or #true) do skip end#1
+while not not (#false or #false) do skip end#1
+while not not (#true and #true) do skip end#1
+while not not (#true and #false) do skip end#1
+while not not (#false and #true) do skip end#1
+while not not (#false and #false) do skip end#1
+while not not not not #true do skip end#1
+while not not not not #false do skip end#1
+while not not #true do (skip; skip) end#1
+while not not #false do (skip; skip) end#1
+while not #true do while #true do skip end end#1
+while not #true do while #false do skip end end#1
+while not #true do while #true do
+skip
+end end#1
+while not #true do while #false do
+skip
+end end#1
+while not #false do while #true do skip end end#1
+while not #false do while #false do skip end end#1
+while not #false do while #true do
+skip
+end end#1
+while not #false do while #false do
+skip
+end end#1
+while not not #true do skip;
+skip end#1
+while not not #false do skip;
+skip end#1
+while #true do (skip; (skip; skip)) end#1
+while #true do (skip; skip;
+skip) end#1
+while #true do ((skip; skip); skip) end#1
+while #true do (skip;
+skip; skip) end#1
+while #true do if #true then skip else skip end end#1
+while #true do if #false then skip else skip end end#1
+while #true do if #true then
+skip
+else
+skip
+end end#1
+while #true do if #false then
+skip
+else
+skip
+end end#1
+while #true do while not #true do skip end end#1
+while #true do while not #false do skip end end#1
+while #true do while not #true do
+skip
+end end#1
+while #true do while not #false do
+skip
+end end#1
+while #true do skip;
+(skip; skip) end#1
+while #true do skip;
+skip;
+skip end#1
+while #true do (skip; skip);
+skip end#1
+while #true do skip;
+skip;
+skip end#1
+while #false do (skip; (skip; skip)) end#1
+while #false do (skip; skip;
+skip) end#1
+while #false do ((skip; skip); skip) end#1
+while #false do (skip;
+skip; skip) end#1
+while #false do if #true then skip else skip end end#1
+while #false do if #false then skip else skip end end#1
+while #false do if #true then
+skip
+else
+skip
+end end#1
+while #false do if #false then
+skip
+else
+skip
+end end#1
+while #false do while not #true do skip end end#1
+while #false do while not #false do skip end end#1
+while #false do while not #true do
+skip
+end end#1
+while #false do while not #false do
+skip
+end end#1
+while #false do skip;
+(skip; skip) end#1
+while #false do skip;
+skip;
+skip end#1
+while #false do (skip; skip);
+skip end#1
+while #false do skip;
+skip;
+skip end#1
+while ((#true or #true) or #true) do
+skip
+end#1
+while ((#true or #false) or #true) do
+skip
+end#1
+while ((#false or #true) or #true) do
+skip
+end#1
+while ((#false or #false) or #true) do
+skip
+end#1
+while ((#true or #true) or #false) do
+skip
+end#1
+while ((#true or #false) or #false) do
+skip
+end#1
+while ((#false or #true) or #false) do
+skip
+end#1
+while ((#false or #false) or #false) do
+skip
+end#1
+while ((#true and #true) or #true) do
+skip
+end#1
+while ((#true and #false) or #true) do
+skip
+end#1
+while ((#false and #true) or #true) do
+skip
+end#1
+while ((#false and #false) or #true) do
+skip
+end#1
+while ((#true and #true) or #false) do
+skip
+end#1
+while ((#true and #false) or #false) do
+skip
+end#1
+while ((#false and #true) or #false) do
+skip
+end#1
+while ((#false and #false) or #false) do
+skip
+end#1
+while (not #true or not #true) do
+skip
+end#1
+while (not #true or not #false) do
+skip
+end#1
+while (not #false or not #true) do
+skip
+end#1
+while (not #false or not #false) do
+skip
+end#1
+while (not not #true or #true) do
+skip
+end#1
+while (not not #false or #true) do
+skip
+end#1
+while (not not #true or #false) do
+skip
+end#1
+while (not not #false or #false) do
+skip
+end#1
+while (#true or (#true or #true)) do
+skip
+end#1
+while (#true or (#true or #false)) do
+skip
+end#1
+while (#true or (#false or #true)) do
+skip
+end#1
+while (#true or (#false or #false)) do
+skip
+end#1
+while (#true or (#true and #true)) do
+skip
+end#1
+while (#true or (#true and #false)) do
+skip
+end#1
+while (#true or (#false and #true)) do
+skip
+end#1
+while (#true or (#false and #false)) do
+skip
+end#1
+while (#true or not not #true) do
+skip
+end#1
+while (#true or not not #false) do
+skip
+end#1
+while (#false or (#true or #true)) do
+skip
+end#1
+while (#false or (#true or #false)) do
+skip
+end#1
+while (#false or (#false or #true)) do
+skip
+end#1
+while (#false or (#false or #false)) do
+skip
+end#1
+while (#false or (#true and #true)) do
+skip
+end#1
+while (#false or (#true and #false)) do
+skip
+end#1
+while (#false or (#false and #true)) do
+skip
+end#1
+while (#false or (#false and #false)) do
+skip
+end#1
+while (#false or not not #true) do
+skip
+end#1
+while (#false or not not #false) do
+skip
+end#1
+while (#true or #true) do
+(skip; skip)
+end#1
+while (#true or #false) do
+(skip; skip)
+end#1
+while (#false or #true) do
+(skip; skip)
+end#1
+while (#false or #false) do
+(skip; skip)
+end#1
+while (#true or #true) do
+skip;
+skip
+end#1
+while (#true or #false) do
+skip;
+skip
+end#1
+while (#false or #true) do
+skip;
+skip
+end#1
+while (#false or #false) do
+skip;
+skip
+end#1
+while ((#true or #true) and #true) do
+skip
+end#1
+while ((#true or #false) and #true) do
+skip
+end#1
+while ((#false or #true) and #true) do
+skip
+end#1
+while ((#false or #false) and #true) do
+skip
+end#1
+while ((#true or #true) and #false) do
+skip
+end#1
+while ((#true or #false) and #false) do
+skip
+end#1
+while ((#false or #true) and #false) do
+skip
+end#1
+while ((#false or #false) and #false) do
+skip
+end#1
+while ((#true and #true) and #true) do
+skip
+end#1
+while ((#true and #false) and #true) do
+skip
+end#1
+while ((#false and #true) and #true) do
+skip
+end#1
+while ((#false and #false) and #true) do
+skip
+end#1
+while ((#true and #true) and #false) do
+skip
+end#1
+while ((#true and #false) and #false) do
+skip
+end#1
+while ((#false and #true) and #false) do
+skip
+end#1
+while ((#false and #false) and #false) do
+skip
+end#1
+while (not #true and not #true) do
+skip
+end#1
+while (not #true and not #false) do
+skip
+end#1
+while (not #false and not #true) do
+skip
+end#1
+while (not #false and not #false) do
+skip
+end#1
+while (not not #true and #true) do
+skip
+end#1
+while (not not #false and #true) do
+skip
+end#1
+while (not not #true and #false) do
+skip
+end#1
+while (not not #false and #false) do
+skip
+end#1
+while (#true and (#true or #true)) do
+skip
+end#1
+while (#true and (#true or #false)) do
+skip
+end#1
+while (#true and (#false or #true)) do
+skip
+end#1
+while (#true and (#false or #false)) do
+skip
+end#1
+while (#true and (#true and #true)) do
+skip
+end#1
+while (#true and (#true and #false)) do
+skip
+end#1
+while (#true and (#false and #true)) do
+skip
+end#1
+while (#true and (#false and #false)) do
+skip
+end#1
+while (#true and not not #true) do
+skip
+end#1
+while (#true and not not #false) do
+skip
+end#1
+while (#false and (#true or #true)) do
+skip
+end#1
+while (#false and (#true or #false)) do
+skip
+end#1
+while (#false and (#false or #true)) do
+skip
+end#1
+while (#false and (#false or #false)) do
+skip
+end#1
+while (#false and (#true and #true)) do
+skip
+end#1
+while (#false and (#true and #false)) do
+skip
+end#1
+while (#false and (#false and #true)) do
+skip
+end#1
+while (#false and (#false and #false)) do
+skip
+end#1
+while (#false and not not #true) do
+skip
+end#1
+while (#false and not not #false) do
+skip
+end#1
+while (#true and #true) do
+(skip; skip)
+end#1
+while (#true and #false) do
+(skip; skip)
+end#1
+while (#false and #true) do
+(skip; skip)
+end#1
+while (#false and #false) do
+(skip; skip)
+end#1
+while (#true and #true) do
+skip;
+skip
+end#1
+while (#true and #false) do
+skip;
+skip
+end#1
+while (#false and #true) do
+skip;
+skip
+end#1
+while (#false and #false) do
+skip;
+skip
+end#1
+while not (not #true or #true) do
+skip
+end#1
+while not (not #false or #true) do
+skip
+end#1
+while not (not #true or #false) do
+skip
+end#1
+while not (not #false or #false) do
+skip
+end#1
+while not (#true or not #true) do
+skip
+end#1
+while not (#true or not #false) do
+skip
+end#1
+while not (#false or not #true) do
+skip
+end#1
+while not (#false or not #false) do
+skip
+end#1
+while not (not #true and #true) do
+skip
+end#1
+while not (not #false and #true) do
+skip
+end#1
+while not (not #true and #false) do
+skip
+end#1
+while not (not #false and #false) do
+skip
+end#1
+while not (#true and not #true) do
+skip
+end#1
+while not (#true and not #false) do
+skip
+end#1
+while not (#false and not #true) do
+skip
+end#1
+while not (#false and not #false) do
+skip
+end#1
+while not not (#true or #true) do
+skip
+end#1
+while not not (#true or #false) do
+skip
+end#1
+while not not (#false or #true) do
+skip
+end#1
+while not not (#false or #false) do
+skip
+end#1
+while not not (#true and #true) do
+skip
+end#1
+while not not (#true and #false) do
+skip
+end#1
+while not not (#false and #true) do
+skip
+end#1
+while not not (#false and #false) do
+skip
+end#1
+while not not not not #true do
+skip
+end#1
+while not not not not #false do
+skip
+end#1
+while not not #true do
+(skip; skip)
+end#1
+while not not #false do
+(skip; skip)
+end#1
+while not #true do
+while #true do skip end
+end#1
+while not #true do
+while #false do skip end
+end#1
+while not #true do
+while #true do
+skip
+end
+end#1
+while not #true do
+while #false do
+skip
+end
+end#1
+while not #false do
+while #true do skip end
+end#1
+while not #false do
+while #false do skip end
+end#1
+while not #false do
+while #true do
+skip
+end
+end#1
+while not #false do
+while #false do
+skip
+end
+end#1
+while not not #true do
+skip;
+skip
+end#1
+while not not #false do
+skip;
+skip
+end#1
+while #true do
+(skip; (skip; skip))
+end#1
+while #true do
+(skip; skip;
+skip)
+end#1
+while #true do
+((skip; skip); skip)
+end#1
+while #true do
+(skip;
+skip; skip)
+end#1
+while #true do
+if #true then skip else skip end
+end#1
+while #true do
+if #false then skip else skip end
+end#1
+while #true do
+if #true then
+skip
+else
+skip
+end
+end#1
+while #true do
+if #false then
+skip
+else
+skip
+end
+end#1
+while #true do
+while not #true do skip end
+end#1
+while #true do
+while not #false do skip end
+end#1
+while #true do
+while not #true do
+skip
+end
+end#1
+while #true do
+while not #false do
+skip
+end
+end#1
+while #true do
+skip;
+(skip; skip)
+end#1
+while #true do
+skip;
+skip;
+skip
+end#1
+while #true do
+(skip; skip);
+skip
+end#1
+while #true do
+skip;
+skip;
+skip
+end#1
+while #false do
+(skip; (skip; skip))
+end#1
+while #false do
+(skip; skip;
+skip)
+end#1
+while #false do
+((skip; skip); skip)
+end#1
+while #false do
+(skip;
+skip; skip)
+end#1
+while #false do
+if #true then skip else skip end
+end#1
+while #false do
+if #false then skip else skip end
+end#1
+while #false do
+if #true then
+skip
+else
+skip
+end
+end#1
+while #false do
+if #false then
+skip
+else
+skip
+end
+end#1
+while #false do
+while not #true do skip end
+end#1
+while #false do
+while not #false do skip end
+end#1
+while #false do
+while not #true do
+skip
+end
+end#1
+while #false do
+while not #false do
+skip
+end
+end#1
+while #false do
+skip;
+(skip; skip)
+end#1
+while #false do
+skip;
+skip;
+skip
+end#1
+while #false do
+(skip; skip);
+skip
+end#1
+while #false do
+skip;
+skip;
+skip
+end#1
+skip;
+(skip; while #true do skip end)#1
+skip;
+(skip; while #false do skip end)#1
+skip;
+(skip; while #true do
+skip
+end)#1
+skip;
+(skip; while #false do
+skip
+end)#1
+skip;
+(while #true do skip end; skip)#1
+skip;
+(while #false do skip end; skip)#1
+skip;
+(while #true do
+skip
+end; skip)#1
+skip;
+(while #false do
+skip
+end; skip)#1
+skip;
+if not #true then skip else skip end#1
+skip;
+if not #false then skip else skip end#1
+skip;
+if not #true then
+skip
+else
+skip
+end#1
+skip;
+if not #false then
+skip
+else
+skip
+end#1
+skip;
+while (#true or #true) do skip end#1
+skip;
+while (#true or #false) do skip end#1
+skip;
+while (#false or #true) do skip end#1
+skip;
+while (#false or #false) do skip end#1
+skip;
+while (#true and #true) do skip end#1
+skip;
+while (#true and #false) do skip end#1
+skip;
+while (#false and #true) do skip end#1
+skip;
+while (#false and #false) do skip end#1
+skip;
+while not not #true do skip end#1
+skip;
+while not not #false do skip end#1
+skip;
+while #true do (skip; skip) end#1
+skip;
+while #true do skip;
+skip end#1
+skip;
+while #false do (skip; skip) end#1
+skip;
+while #false do skip;
+skip end#1
+skip;
+while (#true or #true) do
+skip
+end#1
+skip;
+while (#true or #false) do
+skip
+end#1
+skip;
+while (#false or #true) do
+skip
+end#1
+skip;
+while (#false or #false) do
+skip
+end#1
+skip;
+while (#true and #true) do
+skip
+end#1
+skip;
+while (#true and #false) do
+skip
+end#1
+skip;
+while (#false and #true) do
+skip
+end#1
+skip;
+while (#false and #false) do
+skip
+end#1
+skip;
+while not not #true do
+skip
+end#1
+skip;
+while not not #false do
+skip
+end#1
+skip;
+while #true do
+(skip; skip)
+end#1
+skip;
+while #true do
+skip;
+skip
+end#1
+skip;
+while #false do
+(skip; skip)
+end#1
+skip;
+while #false do
+skip;
+skip
+end#1
+skip;
+skip;
+while #true do skip end#1
+skip;
+skip;
+while #false do skip end#1
+skip;
+skip;
+while #true do
+skip
+end#1
+skip;
+skip;
+while #false do
+skip
+end#1
+skip;
+while #true do skip end;
+skip#1
+skip;
+while #false do skip end;
+skip#1
+skip;
+while #true do
+skip
+end;
+skip#1
+skip;
+while #false do
+skip
+end;
+skip#1
+(skip; while #true do skip end);
+skip#1
+(skip; while #false do skip end);
+skip#1
+(skip; while #true do
+skip
+end);
+skip#1
+(skip; while #false do
+skip
+end);
+skip#1
+(while #true do skip end; skip);
+skip#1
+(while #false do skip end; skip);
+skip#1
+(while #true do
+skip
+end; skip);
+skip#1
+(while #false do
+skip
+end; skip);
+skip#1
+(skip; skip);
+while #true do skip end#1
+(skip; skip);
+while #false do skip end#1
+(skip; skip);
+while #true do
+skip
+end#1
+(skip; skip);
+while #false do
+skip
+end#1
+if not #true then skip else skip end;
+skip#1
+if not #false then skip else skip end;
+skip#1
+if not #true then
+skip
+else
+skip
+end;
+skip#1
+if not #false then
+skip
+else
+skip
+end;
+skip#1
+while (#true or #true) do skip end;
+skip#1
+while (#true or #false) do skip end;
+skip#1
+while (#false or #true) do skip end;
+skip#1
+while (#false or #false) do skip end;
+skip#1
+while (#true and #true) do skip end;
+skip#1
+while (#true and #false) do skip end;
+skip#1
+while (#false and #true) do skip end;
+skip#1
+while (#false and #false) do skip end;
+skip#1
+while not not #true do skip end;
+skip#1
+while not not #false do skip end;
+skip#1
+while #true do (skip; skip) end;
+skip#1
+while #true do skip;
+skip end;
+skip#1
+while #false do (skip; skip) end;
+skip#1
+while #false do skip;
+skip end;
+skip#1
+while (#true or #true) do
+skip
+end;
+skip#1
+while (#true or #false) do
+skip
+end;
+skip#1
+while (#false or #true) do
+skip
+end;
+skip#1
+while (#false or #false) do
+skip
+end;
+skip#1
+while (#true and #true) do
+skip
+end;
+skip#1
+while (#true and #false) do
+skip
+end;
+skip#1
+while (#false and #true) do
+skip
+end;
+skip#1
+while (#false and #false) do
+skip
+end;
+skip#1
+while not not #true do
+skip
+end;
+skip#1
+while not not #false do
+skip
+end;
+skip#1
+while #true do
+(skip; skip)
+end;
+skip#1
+while #true do
+skip;
+skip
+end;
+skip#1
+while #false do
+(skip; skip)
+end;
+skip#1
+while #false do
+skip;
+skip
+end;
+skip#1
+while #true do skip end;
+(skip; skip)#1
+while #false do skip end;
+(skip; skip)#1
+while #true do
+skip
+end;
+(skip; skip)#1
+while #false do
+skip
+end;
+(skip; skip)#1
+while #true do skip end;
+skip;
+skip#1
+while #false do skip end;
+skip;
+skip#1
+while #true do
+skip
+end;
+skip;
+skip#1
+while #false do
+skip
+end;
+skip;
+skip#1
+skip;
+while #true do skip end;
+skip#1
+skip;
+while #false do skip end;
+skip#1
+skip;
+while #true do
+skip
+end;
+skip#1
+skip;
+while #false do
+skip
+end;
+skip#1
+while #true do skip end;
+skip;
+skip#1
+while #false do skip end;
+skip;
+skip#1
+while #true do
+skip
+end;
+skip;
+skip#1
+while #false do
+skip
+end;
+skip;
+skip#1
+skip;
+skip;
+while #true do skip end#1
+skip;
+skip;
+while #false do skip end#1
+skip;
+skip;
+while #true do
+skip
+end#1
+skip;
+skip;
+while #false do
+skip
+end#1
 AA := 0#1
 AB := 0#1
 AC := 0#1
@@ -9206,879 +11522,3 @@ OU := 3#1
 OV := 3#1
 OW := 3#1
 OX := 3#1
-OY := 3#1
-OZ := 3#1
-Oa := 3#1
-Ob := 3#1
-Oc := 3#1
-Od := 3#1
-Oe := 3#1
-Of := 3#1
-Og := 3#1
-Oh := 3#1
-Oi := 3#1
-Oj := 3#1
-Ok := 3#1
-Ol := 3#1
-Om := 3#1
-On := 3#1
-Oo := 3#1
-Op := 3#1
-Oq := 3#1
-Or := 3#1
-Os := 3#1
-Ou := 3#1
-Ov := 3#1
-Ow := 3#1
-Ox := 3#1
-Oy := 3#1
-Oz := 3#1
-OA := 4#1
-OB := 4#1
-OC := 4#1
-OD := 4#1
-OE := 4#1
-OF := 4#1
-OG := 4#1
-OH := 4#1
-OI := 4#1
-OJ := 4#1
-OK := 4#1
-OL := 4#1
-OM := 4#1
-ON := 4#1
-OO := 4#1
-OP := 4#1
-OQ := 4#1
-OR := 4#1
-OS := 4#1
-OU := 4#1
-OV := 4#1
-OW := 4#1
-OX := 4#1
-OY := 4#1
-OZ := 4#1
-Oa := 4#1
-Ob := 4#1
-Oc := 4#1
-Od := 4#1
-Oe := 4#1
-Of := 4#1
-Og := 4#1
-Oh := 4#1
-Oi := 4#1
-Oj := 4#1
-Ok := 4#1
-Ol := 4#1
-Om := 4#1
-On := 4#1
-Oo := 4#1
-Op := 4#1
-Oq := 4#1
-Or := 4#1
-Os := 4#1
-Ou := 4#1
-Ov := 4#1
-Ow := 4#1
-Ox := 4#1
-Oy := 4#1
-Oz := 4#1
-OA := 5#1
-OB := 5#1
-OC := 5#1
-OD := 5#1
-OE := 5#1
-OF := 5#1
-OG := 5#1
-OH := 5#1
-OI := 5#1
-OJ := 5#1
-OK := 5#1
-OL := 5#1
-OM := 5#1
-ON := 5#1
-OO := 5#1
-OP := 5#1
-OQ := 5#1
-OR := 5#1
-OS := 5#1
-OU := 5#1
-OV := 5#1
-OW := 5#1
-OX := 5#1
-OY := 5#1
-OZ := 5#1
-Oa := 5#1
-Ob := 5#1
-Oc := 5#1
-Od := 5#1
-Oe := 5#1
-Of := 5#1
-Og := 5#1
-Oh := 5#1
-Oi := 5#1
-Oj := 5#1
-Ok := 5#1
-Ol := 5#1
-Om := 5#1
-On := 5#1
-Oo := 5#1
-Op := 5#1
-Oq := 5#1
-Or := 5#1
-Os := 5#1
-Ou := 5#1
-Ov := 5#1
-Ow := 5#1
-Ox := 5#1
-Oy := 5#1
-Oz := 5#1
-OA := 6#1
-OB := 6#1
-OC := 6#1
-OD := 6#1
-OE := 6#1
-OF := 6#1
-OG := 6#1
-OH := 6#1
-OI := 6#1
-OJ := 6#1
-OK := 6#1
-OL := 6#1
-OM := 6#1
-ON := 6#1
-OO := 6#1
-OP := 6#1
-OQ := 6#1
-OR := 6#1
-OS := 6#1
-OU := 6#1
-OV := 6#1
-OW := 6#1
-OX := 6#1
-OY := 6#1
-OZ := 6#1
-Oa := 6#1
-Ob := 6#1
-Oc := 6#1
-Od := 6#1
-Oe := 6#1
-Of := 6#1
-Og := 6#1
-Oh := 6#1
-Oi := 6#1
-Oj := 6#1
-Ok := 6#1
-Ol := 6#1
-Om := 6#1
-On := 6#1
-Oo := 6#1
-Op := 6#1
-Oq := 6#1
-Or := 6#1
-Os := 6#1
-Ou := 6#1
-Ov := 6#1
-Ow := 6#1
-Ox := 6#1
-Oy := 6#1
-Oz := 6#1
-OA := 7#1
-OB := 7#1
-OC := 7#1
-OD := 7#1
-OE := 7#1
-OF := 7#1
-OG := 7#1
-OH := 7#1
-OI := 7#1
-OJ := 7#1
-OK := 7#1
-OL := 7#1
-OM := 7#1
-ON := 7#1
-OO := 7#1
-OP := 7#1
-OQ := 7#1
-OR := 7#1
-OS := 7#1
-OU := 7#1
-OV := 7#1
-OW := 7#1
-OX := 7#1
-OY := 7#1
-OZ := 7#1
-Oa := 7#1
-Ob := 7#1
-Oc := 7#1
-Od := 7#1
-Oe := 7#1
-Of := 7#1
-Og := 7#1
-Oh := 7#1
-Oi := 7#1
-Oj := 7#1
-Ok := 7#1
-Ol := 7#1
-Om := 7#1
-On := 7#1
-Oo := 7#1
-Op := 7#1
-Oq := 7#1
-Or := 7#1
-Os := 7#1
-Ou := 7#1
-Ov := 7#1
-Ow := 7#1
-Ox := 7#1
-Oy := 7#1
-Oz := 7#1
-OA := 8#1
-OB := 8#1
-OC := 8#1
-OD := 8#1
-OE := 8#1
-OF := 8#1
-OG := 8#1
-OH := 8#1
-OI := 8#1
-OJ := 8#1
-OK := 8#1
-OL := 8#1
-OM := 8#1
-ON := 8#1
-OO := 8#1
-OP := 8#1
-OQ := 8#1
-OR := 8#1
-OS := 8#1
-OU := 8#1
-OV := 8#1
-OW := 8#1
-OX := 8#1
-OY := 8#1
-OZ := 8#1
-Oa := 8#1
-Ob := 8#1
-Oc := 8#1
-Od := 8#1
-Oe := 8#1
-Of := 8#1
-Og := 8#1
-Oh := 8#1
-Oi := 8#1
-Oj := 8#1
-Ok := 8#1
-Ol := 8#1
-Om := 8#1
-On := 8#1
-Oo := 8#1
-Op := 8#1
-Oq := 8#1
-Or := 8#1
-Os := 8#1
-Ou := 8#1
-Ov := 8#1
-Ow := 8#1
-Ox := 8#1
-Oy := 8#1
-Oz := 8#1
-OA := 9#1
-OB := 9#1
-OC := 9#1
-OD := 9#1
-OE := 9#1
-OF := 9#1
-OG := 9#1
-OH := 9#1
-OI := 9#1
-OJ := 9#1
-OK := 9#1
-OL := 9#1
-OM := 9#1
-ON := 9#1
-OO := 9#1
-OP := 9#1
-OQ := 9#1
-OR := 9#1
-OS := 9#1
-OU := 9#1
-OV := 9#1
-OW := 9#1
-OX := 9#1
-OY := 9#1
-OZ := 9#1
-Oa := 9#1
-Ob := 9#1
-Oc := 9#1
-Od := 9#1
-Oe := 9#1
-Of := 9#1
-Og := 9#1
-Oh := 9#1
-Oi := 9#1
-Oj := 9#1
-Ok := 9#1
-Ol := 9#1
-Om := 9#1
-On := 9#1
-Oo := 9#1
-Op := 9#1
-Oq := 9#1
-Or := 9#1
-Os := 9#1
-Ou := 9#1
-Ov := 9#1
-Ow := 9#1
-Ox := 9#1
-Oy := 9#1
-Oz := 9#1
-O0 := 0#1
-O1 := 0#1
-O2 := 0#1
-O3 := 0#1
-O4 := 0#1
-O5 := 0#1
-O6 := 0#1
-O7 := 0#1
-O8 := 0#1
-O9 := 0#1
-O0 := 1#1
-O1 := 1#1
-O2 := 1#1
-O3 := 1#1
-O4 := 1#1
-O5 := 1#1
-O6 := 1#1
-O7 := 1#1
-O8 := 1#1
-O9 := 1#1
-O0 := 2#1
-O1 := 2#1
-O2 := 2#1
-O3 := 2#1
-O4 := 2#1
-O5 := 2#1
-O6 := 2#1
-O7 := 2#1
-O8 := 2#1
-O9 := 2#1
-O0 := 3#1
-O1 := 3#1
-O2 := 3#1
-O3 := 3#1
-O4 := 3#1
-O5 := 3#1
-O6 := 3#1
-O7 := 3#1
-O8 := 3#1
-O9 := 3#1
-O0 := 4#1
-O1 := 4#1
-O2 := 4#1
-O3 := 4#1
-O4 := 4#1
-O5 := 4#1
-O6 := 4#1
-O7 := 4#1
-O8 := 4#1
-O9 := 4#1
-O0 := 5#1
-O1 := 5#1
-O2 := 5#1
-O3 := 5#1
-O4 := 5#1
-O5 := 5#1
-O6 := 5#1
-O7 := 5#1
-O8 := 5#1
-O9 := 5#1
-O0 := 6#1
-O1 := 6#1
-O2 := 6#1
-O3 := 6#1
-O4 := 6#1
-O5 := 6#1
-O6 := 6#1
-O7 := 6#1
-O8 := 6#1
-O9 := 6#1
-O0 := 7#1
-O1 := 7#1
-O2 := 7#1
-O3 := 7#1
-O4 := 7#1
-O5 := 7#1
-O6 := 7#1
-O7 := 7#1
-O8 := 7#1
-O9 := 7#1
-O0 := 8#1
-O1 := 8#1
-O2 := 8#1
-O3 := 8#1
-O4 := 8#1
-O5 := 8#1
-O6 := 8#1
-O7 := 8#1
-O8 := 8#1
-O9 := 8#1
-O0 := 9#1
-O1 := 9#1
-O2 := 9#1
-O3 := 9#1
-O4 := 9#1
-O5 := 9#1
-O6 := 9#1
-O7 := 9#1
-O8 := 9#1
-O9 := 9#1
-PA := 0#1
-PB := 0#1
-PC := 0#1
-PD := 0#1
-PE := 0#1
-PF := 0#1
-PG := 0#1
-PH := 0#1
-PI := 0#1
-PJ := 0#1
-PK := 0#1
-PL := 0#1
-PM := 0#1
-PN := 0#1
-PO := 0#1
-PP := 0#1
-PQ := 0#1
-PR := 0#1
-PS := 0#1
-PU := 0#1
-PV := 0#1
-PW := 0#1
-PX := 0#1
-PY := 0#1
-PZ := 0#1
-Pa := 0#1
-Pb := 0#1
-Pc := 0#1
-Pd := 0#1
-Pe := 0#1
-Pf := 0#1
-Pg := 0#1
-Ph := 0#1
-Pi := 0#1
-Pj := 0#1
-Pk := 0#1
-Pl := 0#1
-Pm := 0#1
-Pn := 0#1
-Po := 0#1
-Pp := 0#1
-Pq := 0#1
-Pr := 0#1
-Ps := 0#1
-Pu := 0#1
-Pv := 0#1
-Pw := 0#1
-Px := 0#1
-Py := 0#1
-Pz := 0#1
-PA := 1#1
-PB := 1#1
-PC := 1#1
-PD := 1#1
-PE := 1#1
-PF := 1#1
-PG := 1#1
-PH := 1#1
-PI := 1#1
-PJ := 1#1
-PK := 1#1
-PL := 1#1
-PM := 1#1
-PN := 1#1
-PO := 1#1
-PP := 1#1
-PQ := 1#1
-PR := 1#1
-PS := 1#1
-PU := 1#1
-PV := 1#1
-PW := 1#1
-PX := 1#1
-PY := 1#1
-PZ := 1#1
-Pa := 1#1
-Pb := 1#1
-Pc := 1#1
-Pd := 1#1
-Pe := 1#1
-Pf := 1#1
-Pg := 1#1
-Ph := 1#1
-Pi := 1#1
-Pj := 1#1
-Pk := 1#1
-Pl := 1#1
-Pm := 1#1
-Pn := 1#1
-Po := 1#1
-Pp := 1#1
-Pq := 1#1
-Pr := 1#1
-Ps := 1#1
-Pu := 1#1
-Pv := 1#1
-Pw := 1#1
-Px := 1#1
-Py := 1#1
-Pz := 1#1
-PA := 2#1
-PB := 2#1
-PC := 2#1
-PD := 2#1
-PE := 2#1
-PF := 2#1
-PG := 2#1
-PH := 2#1
-PI := 2#1
-PJ := 2#1
-PK := 2#1
-PL := 2#1
-PM := 2#1
-PN := 2#1
-PO := 2#1
-PP := 2#1
-PQ := 2#1
-PR := 2#1
-PS := 2#1
-PU := 2#1
-PV := 2#1
-PW := 2#1
-PX := 2#1
-PY := 2#1
-PZ := 2#1
-Pa := 2#1
-Pb := 2#1
-Pc := 2#1
-Pd := 2#1
-Pe := 2#1
-Pf := 2#1
-Pg := 2#1
-Ph := 2#1
-Pi := 2#1
-Pj := 2#1
-Pk := 2#1
-Pl := 2#1
-Pm := 2#1
-Pn := 2#1
-Po := 2#1
-Pp := 2#1
-Pq := 2#1
-Pr := 2#1
-Ps := 2#1
-Pu := 2#1
-Pv := 2#1
-Pw := 2#1
-Px := 2#1
-Py := 2#1
-Pz := 2#1
-PA := 3#1
-PB := 3#1
-PC := 3#1
-PD := 3#1
-PE := 3#1
-PF := 3#1
-PG := 3#1
-PH := 3#1
-PI := 3#1
-PJ := 3#1
-PK := 3#1
-PL := 3#1
-PM := 3#1
-PN := 3#1
-PO := 3#1
-PP := 3#1
-PQ := 3#1
-PR := 3#1
-PS := 3#1
-PU := 3#1
-PV := 3#1
-PW := 3#1
-PX := 3#1
-PY := 3#1
-PZ := 3#1
-Pa := 3#1
-Pb := 3#1
-Pc := 3#1
-Pd := 3#1
-Pe := 3#1
-Pf := 3#1
-Pg := 3#1
-Ph := 3#1
-Pi := 3#1
-Pj := 3#1
-Pk := 3#1
-Pl := 3#1
-Pm := 3#1
-Pn := 3#1
-Po := 3#1
-Pp := 3#1
-Pq := 3#1
-Pr := 3#1
-Ps := 3#1
-Pu := 3#1
-Pv := 3#1
-Pw := 3#1
-Px := 3#1
-Py := 3#1
-Pz := 3#1
-PA := 4#1
-PB := 4#1
-PC := 4#1
-PD := 4#1
-PE := 4#1
-PF := 4#1
-PG := 4#1
-PH := 4#1
-PI := 4#1
-PJ := 4#1
-PK := 4#1
-PL := 4#1
-PM := 4#1
-PN := 4#1
-PO := 4#1
-PP := 4#1
-PQ := 4#1
-PR := 4#1
-PS := 4#1
-PU := 4#1
-PV := 4#1
-PW := 4#1
-PX := 4#1
-PY := 4#1
-PZ := 4#1
-Pa := 4#1
-Pb := 4#1
-Pc := 4#1
-Pd := 4#1
-Pe := 4#1
-Pf := 4#1
-Pg := 4#1
-Ph := 4#1
-Pi := 4#1
-Pj := 4#1
-Pk := 4#1
-Pl := 4#1
-Pm := 4#1
-Pn := 4#1
-Po := 4#1
-Pp := 4#1
-Pq := 4#1
-Pr := 4#1
-Ps := 4#1
-Pu := 4#1
-Pv := 4#1
-Pw := 4#1
-Px := 4#1
-Py := 4#1
-Pz := 4#1
-PA := 5#1
-PB := 5#1
-PC := 5#1
-PD := 5#1
-PE := 5#1
-PF := 5#1
-PG := 5#1
-PH := 5#1
-PI := 5#1
-PJ := 5#1
-PK := 5#1
-PL := 5#1
-PM := 5#1
-PN := 5#1
-PO := 5#1
-PP := 5#1
-PQ := 5#1
-PR := 5#1
-PS := 5#1
-PU := 5#1
-PV := 5#1
-PW := 5#1
-PX := 5#1
-PY := 5#1
-PZ := 5#1
-Pa := 5#1
-Pb := 5#1
-Pc := 5#1
-Pd := 5#1
-Pe := 5#1
-Pf := 5#1
-Pg := 5#1
-Ph := 5#1
-Pi := 5#1
-Pj := 5#1
-Pk := 5#1
-Pl := 5#1
-Pm := 5#1
-Pn := 5#1
-Po := 5#1
-Pp := 5#1
-Pq := 5#1
-Pr := 5#1
-Ps := 5#1
-Pu := 5#1
-Pv := 5#1
-Pw := 5#1
-Px := 5#1
-Py := 5#1
-Pz := 5#1
-PA := 6#1
-PB := 6#1
-PC := 6#1
-PD := 6#1
-PE := 6#1
-PF := 6#1
-PG := 6#1
-PH := 6#1
-PI := 6#1
-PJ := 6#1
-PK := 6#1
-PL := 6#1
-PM := 6#1
-PN := 6#1
-PO := 6#1
-PP := 6#1
-PQ := 6#1
-PR := 6#1
-PS := 6#1
-PU := 6#1
-PV := 6#1
-PW := 6#1
-PX := 6#1
-PY := 6#1
-PZ := 6#1
-Pa := 6#1
-Pb := 6#1
-Pc := 6#1
-Pd := 6#1
-Pe := 6#1
-Pf := 6#1
-Pg := 6#1
-Ph := 6#1
-Pi := 6#1
-Pj := 6#1
-Pk := 6#1
-Pl := 6#1
-Pm := 6#1
-Pn := 6#1
-Po := 6#1
-Pp := 6#1
-Pq := 6#1
-Pr := 6#1
-Ps := 6#1
-Pu := 6#1
-Pv := 6#1
-Pw := 6#1
-Px := 6#1
-Py := 6#1
-Pz := 6#1
-PA := 7#1
-PB := 7#1
-PC := 7#1
-PD := 7#1
-PE := 7#1
-PF := 7#1
-PG := 7#1
-PH := 7#1
-PI := 7#1
-PJ := 7#1
-PK := 7#1
-PL := 7#1
-PM := 7#1
-PN := 7#1
-PO := 7#1
-PP := 7#1
-PQ := 7#1
-PR := 7#1
-PS := 7#1
-PU := 7#1
-PV := 7#1
-PW := 7#1
-PX := 7#1
-PY := 7#1
-PZ := 7#1
-Pa := 7#1
-Pb := 7#1
-Pc := 7#1
-Pd := 7#1
-Pe := 7#1
-Pf := 7#1
-Pg := 7#1
-Ph := 7#1
-Pi := 7#1
-Pj := 7#1
-Pk := 7#1
-Pl := 7#1
-Pm := 7#1
-Pn := 7#1
-Po := 7#1
-Pp := 7#1
-Pq := 7#1
-Pr := 7#1
-Ps := 7#1
-Pu := 7#1
-Pv := 7#1
-Pw := 7#1
-Px := 7#1
-Py := 7#1
-Pz := 7#1
-PA := 8#1
-PB := 8#1
-PC := 8#1
-PD := 8#1
-PE := 8#1
-PF := 8#1
-PG := 8#1
-PH := 8#1
-PI := 8#1
-PJ := 8#1
-PK := 8#1
-PL := 8#1
-PM := 8#1
-PN := 8#1
-PO := 8#1
-PP := 8#1
-PQ := 8#1
-PR := 8#1
-PS := 8#1
-PU := 8#1
-PV := 8#1
-PW := 8#1
-PX := 8#1
-PY := 8#1
-PZ := 8#1
-Pa := 8#1
-Pb := 8#1
-Pc := 8#1
-Pd := 8#1
-Pe := 8#1
-Pf := 8#1
-Pg := 8#1
-Ph := 8#1
-Pi := 8#1
-Pj := 8#1
-Pk := 8#1
-Pl := 8#1
-Pm := 8#1
-Pn := 8#1
-Po := 8#1
-Pp := 8#1
-Pq := 8#1
-Pr := 8#1
-Ps := 8#1
-Pu := 8#1
-Pv := 8#1
-Pw := 8#1
-Px := 8#1
-Py := 8#1
