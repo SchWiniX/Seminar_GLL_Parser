@@ -18,10 +18,10 @@ Builds gll_parser without any additional debug information
 Also builds gll_parser but with the -g flag (see man page of gcc) and additinal log statments. Who print information about the data structure state during execution.
 
     make test
-Build both gll_parser_test and gll_parser_inf_test who's usage is explained in the [#File Testing](#file_testing) and [#Generative Testing](#generative_testing) section respectifly.
+Build both gll_parser_test and gll_parser_inf_test who's usage is explained in the [File Testing](#file-testing) and [Generative Testing](#generative-testing) section respectifly.
 
     make generator
-Builds input_gen who's usage is explained in the [Input Generator](#input_generator) section.
+Builds input_gen who's usage is explained in the [Input Generator](#input-generator) section.
 
 ## Execution
 ### Default Parser
@@ -88,7 +88,7 @@ Generates for a given grammer valid inputs.
 # Implementation details
 The following section will discuss how the algorithm of the paper was implemented as a C program. It is assumed the reader has some understanding of the working pseudo code from the paper.
 ## Topics
-1. [Labels](#label)
+1. [Labels](#labels)
 2. [GSS](#gss)
 3. [Sets](#sets)
 
