@@ -136,36 +136,36 @@ Since the algorithm requires lookup both in the $U$ set and the $P$ set and we l
 # Performance
 Here are 3 Grammers and how they perform
 
-g1:
-S -> aSB | B
-A -> ab
-B -> A | B
-TODO: Image
+g1:\
+S -> aSB | B\
+A -> ab\
+B -> A | B\
+![g1 benchmark](https://github.com/schwinix/Seminar_GLL_Recognizer/blob/main/benchmarking/gll_g1_ab.png?raw=true)
 
-g6:
-S -> aBc | abC | Abc
-A -> a' | a'' | D
-B -> b' | b'' | E
-C -> c' | c'' | D
-D -> d | dD | ddD | dddD | ddddD | dddddD | ddddddD | dddddddD | ddddddddD
-E -> e | Ee | Eeee | Eeeeeeee | Eeeeeeeeeeeeeeee
-TODO: Image
+g6:\
+S -> aBc | abC | Abc\
+A -> a' | a'' | D\
+B -> b' | b'' | E\
+C -> c' | c'' | D\
+D -> d | dD | ddD | dddD | ddddD | dddddD | ddddddD | dddddddD | ddddddddD\
+E -> e | Ee | Eeee | Eeeeeeee | Eeeeeeeeeeeeeeee\
+![g6 benchmark](https://github.com/schwinix/Seminar_GLL_Recognizer/blob/main/benchmarking/gll_g6_abd.png?raw=true)
 
-g13:
-S -> \[ E \]
-E -> I | E , E
-I -> M K | N
-K -> K K | K
-N -> 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 0
-M -> 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
-TODO: Image
+g13:\
+S -> \[ E \]\
+E -> I | E , E\
+I -> M K | N\
+K -> K K | K\
+N -> 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 0\
+M -> 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9\
+![g13 benchmark](https://github.com/schwinix/Seminar_GLL_Recognizer/blob/main/benchmarking/gll_g13_list.png?raw=true)
 
-g14:
-S -> C a | d
-B -> _ | a
-C -> b | B C b | b b
-TODO: Image
+g14:\
+S -> C a | d\
+B -> _ | a\
+C -> b | B C b | b b\
+![g14 benchmark](https://github.com/schwinix/Seminar_GLL_Recognizer/blob/main/benchmarking/gll_g14_abbbbba.png?raw=true)
 
-g15:
-S -> b | S S | S S S
-TODO: Image
+g15:\
+S -> b | S S | S S S\
+![g15 benchmark](https://github.com/schwinix/Seminar_GLL_Recognizer/blob/main/benchmarking/gll_g15_b.png?raw=true)
