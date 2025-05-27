@@ -53,9 +53,6 @@ def create_graph():
     #get data
     data = get_data(sys.argv[1])
 
-    for i in data.values:
-        print(str(i) + ": " + str(data.maximum[i]))
-
     #create plot
     fig, host = plt.subplots(figsize=(8,5), layout='constrained')
     
@@ -76,7 +73,7 @@ def create_graph():
     ax3.set_ylabel("Total")
 
     #set colors of axes
-    colors = ['#FF0000', '#006400', '#00FF00', '#000080', '#007791', '#1E90FF', '#6F00FF']
+    colors = ['#006400', '#000080', '#00FFFF', '#FF0000', '#E97451', '#FFC300', '#880808']
     
     #plot axes
     p1 = host.plot(data.info[1], data.info[4], color=colors[0], label="Time", zorder=10)
@@ -92,10 +89,16 @@ def create_graph():
     ax3.set_yscale('function', functions=(forward10, inverse10))
 
     #set ticks of axis 2 and 3
+    arr2 = [2**x for x in range(0, (int(np.log2(math.ceil(data.get_max([6, 11]) / 100.0) * 100))) + 1)]
+    arr2.append(float(math.ceil(data.get_max([6, 11]) / 100.0) * 100))
     ax2.yaxis.set_minor_formatter(tick.NullFormatter())
-    ax2.yaxis.set_major_locator(tick.FixedLocator(np.append(np.array([2**x for x in range(0, (int(np.log2(math.ceil(data.get_max([6, 11]) / 100.0) * 100)) + 1))]), math.ceil(data.get_max([6, 11]) / 100.0) * 100)))
+    ax2.yaxis.set_major_locator(tick.FixedLocator(arr2))
+    ax2.ticklabel_format(style='plain')
+    arr3 = [10**x for x in range(0, (int(np.log10(math.ceil(data.get_max([7, 8, 9, 10]) / 100.0) * 100))) + 1)]
+    arr3.append(float(math.ceil(data.get_max([7, 8, 9, 10]) / 100.0) * 100))
     ax3.yaxis.set_minor_formatter(tick.NullFormatter())
-    ax3.yaxis.set_major_locator(tick.FixedLocator(np.append(np.array([10**x for x in range(0, (int(np.log2(math.ceil(data.get_max([7, 8, 9, 10]) / 100.0) * 100)) + 1))]), math.ceil(data.get_max([7, 8, 9, 10]) / 100.0) * 100)))
+    ax3.yaxis.set_major_locator(tick.FixedLocator(arr3))
+    ax3.ticklabel_format(style='plain')
 
     #move axis 3 to the side
     ax3.spines['right'].set_position(('outward', 60))
@@ -134,6 +137,7 @@ def main():
         print("Please give a file")
     else:
         create_graph()
+
 
 if __name__ == "__main__":
     main()
